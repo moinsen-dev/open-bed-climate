@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+target/
+secrets.yaml
+.esphome/
+.wrangler/
+.DS_Store

@@ -1,0 +1,276 @@
+---
+// Island 2: the night-curve editor. Server-rendered as a static chart of the default program (works without JS);
+// the script makes points draggable, editable in the table, and generates the hub YAML. State lives in memory only.
+// CSP-safe: the SVG changes only through attributes (cx, cy, d, x) and class toggles, never style.
+import { MODEL } from "../lib/kits.ts";
+import { clockLabel, wakeOffset, type Schedule } from "../lib/schedule.ts";
+import { curvePath, xOf, yOf, type Frame } from "../lib/chart.ts";
+import { hubYaml } from "../lib/hub-yaml.ts";
+
+const S = MODEL.schedule_default as Schedule;
+const L = MODEL.limits;
+const BED = 23 * 60, WAKE_DAY = 7 * 60;
+const WAKE = wakeOffset(BED, WAKE_DAY);
+const F: Frame = { w: 760, h: 340, left: 52, right: 20, top: 20, bottom: 40, minEnd: WAKE + 30, cMin: L.setpoint_min_c, cMax: L.setpoint_max_c };
+const curve = curvePath(F, S, WAKE);
+const grid = [13, 18, 23, 28, 33, 38, 43];
+const hours = Array.from({ length: Math.floor(F.minEnd / 60) + 1 }, (_, i) => i * 60);
+const toTime = (m: number) => clockLabel(m);
+---
+<div class="sched" data-sched data-points={JSON.stringify(S.points)} data-ramp={S.wake_ramp_min} data-target={S.wake_target_c}
+  data-min={L.setpoint_min_c} data-max={L.setpoint_max_c}>
+  <div class="sched__controls js-only">
+    <label>Bedtime <input type="time" value={toTime(BED)} data-in="bed" step="300" /></label>
+    <label>Wake <input type="time" value={toTime(WAKE_DAY)} data-in="wake" step="300" /></label>
+    <label>Wake ramp <span class="unit"><input type="number" value={S.wake_ramp_min} min="5" max="120" step="5" data-in="ramp" /> min</span></label>
+    <label>Wake temperature <span class="unit"><input type="number" value={S.wake_target_c} min={L.setpoint_min_c} max={L.setpoint_max_c} step="0.5" data-in="target" /> °C</span></label>
+  </div>
+
+  <div class="sched__chart">
+    <svg viewBox={`0 0 ${F.w} ${F.h}`} role="img" aria-label="Night curve: default program, 24 °C at bedtime, 20 °C in deep sleep, wake ramp to 32 °C." data-svg>
+      <defs>
+        <linearGradient id="sched-grad" gradientUnits="userSpaceOnUse" x1="0" y1={yOf(F, 13)} x2="0" y2={yOf(F, 43)}>
+          <stop offset="0" stop-color="#4C9BFF"></stop><stop offset="0.233" stop-color="#5CD3F0"></stop><stop offset="0.5" stop-color="#D8E4EC"></stop><stop offset="0.767" stop-color="#FFB547"></stop><stop offset="1" stop-color="#FF8F4A"></stop>
+        </linearGradient>
+      </defs>
+      <rect class="sc-hit" x={F.left} y={F.top} width={F.w - F.left - F.right} height={F.h - F.top - F.bottom} data-hit></rect>
+      {grid.map((c) => (
+        <g>
+          <line class="sc-grid" x1={F.left} x2={F.w - F.right} y1={yOf(F, c)} y2={yOf(F, c)}></line>
+          <text class="sc-label" x={F.left - 10} y={yOf(F, c) + 4} text-anchor="end">{c} °C</text>
+        </g>
+      ))}
+      <g data-hours>
+        {hours.map((m) => <text class="sc-label" x={xOf(F, m)} y={F.h - 14} text-anchor="middle">{toTime(BED + m)}</text>)}
+      </g>
+      <rect class="sc-ramp" data-ramp-rect x={xOf(F, WAKE - S.wake_ramp_min)} y={F.top} width={xOf(F, WAKE) - xOf(F, WAKE - S.wake_ramp_min)} height={F.h - F.top - F.bottom}></rect>
+      <line class="sc-wake" data-wake-line x1={xOf(F, WAKE)} x2={xOf(F, WAKE)} y1={F.top} y2={F.h - F.bottom}></line>
+      <text class="sc-label sc-label--wake" data-wake-label x={xOf(F, WAKE) - 6} y={F.top + 14} text-anchor="end">WAKE</text>
+      <path class="sc-curve" d={curve.on} data-curve></path>
+      <path class="sc-off" d={`M${xOf(F, WAKE)} ${yOf(F, S.wake_target_c)} H${F.w - F.right}`} data-off></path>
+      <text class="sc-label" x={F.w - F.right} y={yOf(F, S.wake_target_c) - 8} text-anchor="end" data-off-label>OFF</text>
+      <g data-handles>
+        {S.points.map(([m, c]) => <circle class="sc-handle" cx={xOf(F, m)} cy={yOf(F, c)} r="7"></circle>)}
+      </g>
+    </svg>
+  </div>
+  <p class="small muted sched__hint js-only">Drag a point, or focus it and use the arrow keys (up/down 0.5 °C, left/right 5 min). Double-click the chart to add a point; press Delete to remove the focused one.</p>
+  <p class="sched__error" role="alert" data-error></p>
+
+  <div class="sched__out">
+    <div class="table-wrap">
+      <table class="data-table sched__table">
+        <caption class="visually-hidden">Schedule points</caption>
+        <thead><tr><th scope="col">Clock</th><th scope="col">Minutes after bedtime</th><th scope="col">Setpoint</th></tr></thead>
+        <tbody data-rows>
+          {S.points.map(([m, c]) => <tr><td class="mono">{toTime(BED + m)}</td><td class="mono">{m}</td><td class="mono">{c.toFixed(1)} °C</td></tr>)}
+        </tbody>
+      </table>
+    </div>
+    <div class="sched__yaml">
+      <div class="sched__yaml-head">
+        <p class="eyebrow">For your hub (ESPHome YAML)</p>
+        <button type="button" class="btn btn--secondary btn--small js-only" data-copy>Copy for your hub</button>
+      </div>
+      <pre><code data-yaml>{hubYaml(S)}</code></pre>
+      <p class="small muted">Paste into the <code>switch: - platform: opod</code> block of your hub config. Nothing is stored or sent anywhere.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  import { setpoint, clockLabel, wakeOffset, validate, type Point, type Schedule } from "../lib/schedule.ts";
+  import { curvePath, xOf, yOf, minuteOf, cOf, type Frame } from "../lib/chart.ts";
+  import { hubYaml } from "../lib/hub-yaml.ts";
+
+  const root = document.querySelector<HTMLElement>("[data-sched]");
+  if (root) {
+    const NS = "http://www.w3.org/2000/svg";
+    const MIN = Number(root.dataset.min), MAX = Number(root.dataset.max);
+    const st = {
+      points: JSON.parse(root.dataset.points!) as Point[],
+      ramp: Number(root.dataset.ramp), target: Number(root.dataset.target),
+      bed: 23 * 60, wakeDay: 7 * 60,
+    };
+    const q = <T extends Element>(s: string) => root.querySelector<T>(s)!;
+    const svg = q<SVGSVGElement>("[data-svg]");
+    const handles = q<SVGGElement>("[data-handles]");
+    const hoursG = q<SVGGElement>("[data-hours]");
+    let focusIdx = -1;
+
+    const frame = (): Frame => {
+      const wake = wakeOffset(st.bed, st.wakeDay);
+      const last = st.points[st.points.length - 1][0];
+      return { w: 760, h: 340, left: 52, right: 20, top: 20, bottom: 40, minEnd: Math.max(wake, last) + 30, cMin: MIN, cMax: MAX };
+    };
+    const sched = (): Schedule => ({ points: st.points, wake_ramp_min: st.ramp, wake_target_c: st.target });
+    const set = (el: Element, attrs: Record<string, string | number>) => { for (const k in attrs) el.setAttribute(k, String(attrs[k])); };
+
+    const render = () => {
+      const F = frame();
+      const wake = wakeOffset(st.bed, st.wakeDay);
+      const err = validate(st.points, { setpoint_min_c: MIN, setpoint_max_c: MAX }) ??
+        (st.ramp <= 0 ? "wake ramp must be positive" : st.target < MIN || st.target > MAX ? `wake temperature outside ${MIN}..${MAX}` : null);
+      q("[data-error]").textContent = err ? `Not a valid schedule: ${err}.` : "";
+      const s = sched();
+      set(q("[data-curve]"), { d: curvePath(F, s, wake).on });
+      const xw = xOf(F, wake);
+      set(q("[data-wake-line]"), { x1: xw, x2: xw });
+      set(q("[data-wake-label]"), { x: xw - 6 });
+      const xr = xOf(F, Math.max(0, wake - st.ramp));
+      set(q("[data-ramp-rect]"), { x: xr, width: Math.max(0, xw - xr) });
+      const yOff = yOf(F, st.target);
+      set(q("[data-off]"), { d: `M${xw} ${yOff} H${F.w - F.right}` });
+      set(q("[data-off-label]"), { y: yOff - 8 });
+      hoursG.replaceChildren(...Array.from({ length: Math.floor(F.minEnd / 60) + 1 }, (_, i) => {
+        const t = document.createElementNS(NS, "text");
+        set(t, { class: "sc-label", x: xOf(F, i * 60), y: F.h - 14, "text-anchor": "middle" });
+        t.textContent = clockLabel(st.bed + i * 60);
+        return t;
+      }));
+      handles.replaceChildren(...st.points.map(([m, c], i) => {
+        const h = document.createElementNS(NS, "circle");
+        set(h, {
+          class: "sc-handle sc-handle--live", cx: xOf(F, m), cy: yOf(F, c), r: 8, tabindex: 0, role: "slider",
+          "aria-label": `Point ${i + 1} at ${clockLabel(st.bed + m)}`, "aria-valuemin": MIN, "aria-valuemax": MAX,
+          "aria-valuenow": c, "aria-valuetext": `${c.toFixed(1)} °C at ${clockLabel(st.bed + m)}`, "data-i": i,
+        });
+        return h;
+      }));
+      if (focusIdx >= 0) (handles.children[Math.min(focusIdx, st.points.length - 1)] as SVGElement | undefined)?.focus();
+      // Table mirror (editable).
+      q("[data-rows]").replaceChildren(...st.points.map(([m, c], i) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td class="mono"></td><td><input type="number" min="0" max="1440" step="5" aria-label="Minutes after bedtime, point ${i + 1}"></td><td><input type="number" min="${MIN}" max="${MAX}" step="0.5" aria-label="Setpoint in °C, point ${i + 1}"></td>`;
+        tr.children[0].textContent = clockLabel(st.bed + m);
+        const [mi, ci] = tr.querySelectorAll("input");
+        mi.value = String(m);
+        ci.value = String(c);
+        mi.addEventListener("change", () => { st.points[i] = [Number(mi.value), st.points[i][1]]; st.points.sort((a, b) => a[0] - b[0]); render(); });
+        ci.addEventListener("change", () => { st.points[i] = [st.points[i][0], Number(ci.value)]; render(); });
+        return tr;
+      }));
+      q("[data-yaml]").textContent = hubYaml(s);
+      const deep = Math.min(...st.points.map((p) => p[1]));
+      svg.setAttribute("aria-label", `Night curve: ${st.points[0][1]} °C at bedtime, coolest ${deep} °C, wake ramp of ${st.ramp} minutes to ${st.target} °C at ${clockLabel(st.wakeDay)}; ${setpoint(s, 0, wake)?.toFixed(1)} °C at the start.`);
+    };
+
+    const toSvg = (ev: PointerEvent | MouseEvent) => {
+      const p = new DOMPoint(ev.clientX, ev.clientY).matrixTransform(svg.getScreenCTM()!.inverse());
+      return { x: p.x, y: p.y };
+    };
+    const move = (i: number, m: number, c: number) => {
+      const lo = i > 0 ? st.points[i - 1][0] + 5 : 0;
+      const hi = i < st.points.length - 1 ? st.points[i + 1][0] - 5 : 1440;
+      const mm = Math.min(hi, Math.max(lo, Math.round(m / 5) * 5));
+      const cc = Math.min(MAX, Math.max(MIN, Math.round(c * 2) / 2));
+      st.points[i] = [mm, cc];
+    };
+
+    let drag = -1;
+    handles.addEventListener("pointerdown", (ev) => {
+      const t = ev.target as SVGElement;
+      if (!t.dataset.i) return;
+      drag = Number(t.dataset.i);
+      focusIdx = drag;
+      handles.setPointerCapture(ev.pointerId);
+      ev.preventDefault();
+    });
+    handles.addEventListener("pointermove", (ev) => {
+      if (drag < 0) return;
+      const F = frame();
+      const p = toSvg(ev);
+      move(drag, minuteOf(F, p.x), cOf(F, p.y));
+      render();
+    });
+    const end = () => { drag = -1; };
+    handles.addEventListener("pointerup", end);
+    handles.addEventListener("pointercancel", end);
+    handles.addEventListener("focusin", (ev) => { focusIdx = Number((ev.target as SVGElement).dataset.i ?? -1); });
+    handles.addEventListener("keydown", (ev) => {
+      const i = Number((ev.target as SVGElement).dataset.i);
+      if (Number.isNaN(i)) return;
+      const [m, c] = st.points[i];
+      const k = ev.key;
+      if (k === "ArrowUp") move(i, m, c + 0.5);
+      else if (k === "ArrowDown") move(i, m, c - 0.5);
+      else if (k === "ArrowLeft") move(i, m - 5, c);
+      else if (k === "ArrowRight") move(i, m + 5, c);
+      else if ((k === "Delete" || k === "Backspace") && st.points.length > 1) { st.points.splice(i, 1); focusIdx = Math.max(0, i - 1); }
+      else return;
+      ev.preventDefault();
+      focusIdx = Math.min(focusIdx < 0 ? i : focusIdx, st.points.length - 1);
+      render();
+    });
+    svg.addEventListener("dblclick", (ev) => {
+      const F = frame();
+      const p = toSvg(ev);
+      const m = Math.max(0, Math.round(minuteOf(F, p.x) / 5) * 5);
+      if (st.points.some(([pm]) => Math.abs(pm - m) < 5)) return;
+      const c = Math.min(MAX, Math.max(MIN, Math.round(cOf(F, p.y) * 2) / 2));
+      st.points.push([m, c]);
+      st.points.sort((a, b) => a[0] - b[0]);
+      focusIdx = st.points.findIndex(([pm]) => pm === m);
+      render();
+    });
+    const toMin = (v: string) => { const [h, mm] = v.split(":").map(Number); return h * 60 + mm; };
+    root.querySelectorAll<HTMLInputElement>("[data-in]").forEach((inp) => inp.addEventListener("change", () => {
+      const k = inp.dataset.in;
+      if (k === "bed" && inp.value) st.bed = toMin(inp.value);
+      if (k === "wake" && inp.value) st.wakeDay = toMin(inp.value);
+      if (k === "ramp") st.ramp = Number(inp.value);
+      if (k === "target") st.target = Number(inp.value);
+      render();
+    }));
+    const copy = q<HTMLButtonElement>("[data-copy]");
+    copy.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(q("[data-yaml]").textContent ?? "");
+        copy.textContent = "Copied";
+      } catch {
+        copy.textContent = "Select the text to copy";
+      }
+      setTimeout(() => { copy.textContent = "Copy for your hub"; }, 2000);
+    });
+    render();
+  }
+</script>
+
+<style is:global>
+  .sched { display: grid; gap: var(--s-lg); }
+  .sched__controls { display: grid; gap: var(--s-md); grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @media (min-width: 900px) { .sched__controls { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  .sched__controls label { display: grid; gap: 6px; font-weight: 600; font-size: 0.875rem; }
+  .sched input {
+    min-height: 44px; padding: 0 12px; width: 100%;
+    background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--r-md);
+    font-family: var(--font-mono); font-feature-settings: "tnum" 1;
+  }
+  .sched input:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+  .unit { display: flex; align-items: center; gap: 8px; font-weight: 400; color: var(--ink-muted); }
+  .sched__chart { border: 1px solid var(--hairline); border-radius: var(--r-lg); background: var(--surface); padding: var(--s-sm); overflow: hidden; }
+  .sched__chart svg { width: 100%; height: auto; touch-action: none; user-select: none; }
+  .sc-hit { fill: transparent; }
+  .sc-grid { stroke: var(--hairline); stroke-width: 1; stroke-dasharray: 2 4; }
+  .sc-label { font-family: var(--font-mono); font-size: 11px; fill: var(--ink-muted); }
+  .sc-label--wake { fill: var(--warm); font-weight: 600; letter-spacing: 0.08em; }
+  .sc-ramp { fill: var(--warm); opacity: 0.08; }
+  .sc-wake { stroke: var(--warm); stroke-width: 1; stroke-dasharray: 4 3; }
+  .sc-curve { fill: none; stroke: url(#sched-grad); stroke-width: 3; stroke-linejoin: round; stroke-linecap: round; }
+  .sc-off { fill: none; stroke: var(--ink-muted); stroke-width: 1.5; stroke-dasharray: 3 5; }
+  .sc-handle { fill: var(--canvas); stroke: var(--ink); stroke-width: 2; }
+  .sc-handle--live { cursor: grab; }
+  .sc-handle--live:hover, .sc-handle--live:focus-visible { fill: var(--primary); stroke: var(--ink); outline: none; }
+  .sc-handle--live:active { cursor: grabbing; }
+  /* The chart scales down ~2x on phones: keep handles big enough to grab (the table stays the precise input). */
+  @media (max-width: 640px) { .sc-handle--live { r: 17px; stroke-width: 3; } }
+  :root[data-theme="light"] .sc-curve { stroke: var(--stroke-cold); }
+  @media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .sc-curve { stroke: var(--stroke-cold); } }
+  .sched__error { color: var(--danger); font-weight: 600; min-height: 1.5em; }
+  .sched__error:empty { min-height: 0; }
+  .sched__out { display: grid; gap: var(--s-lg); grid-template-columns: minmax(0, 1fr); align-items: start; }
+  @media (min-width: 900px) { .sched__out { grid-template-columns: 1fr 1fr; } }
+  .sched__table td input { max-width: 9rem; min-height: 40px; }
+  .sched__yaml { display: grid; gap: var(--s-sm); }
+  .sched__yaml-head { display: flex; justify-content: space-between; align-items: center; gap: var(--s-sm); flex-wrap: wrap; }
+</style>

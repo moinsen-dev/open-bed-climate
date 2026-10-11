@@ -1,0 +1,56 @@
+---
+import { getCollection } from "astro:content";
+import Base from "../../layouts/Base.astro";
+import { repoBlob, repoTree } from "../../site.ts";
+
+const docs = await getCollection("docs");
+const titleOf = (body: string | undefined, id: string) => /^#\s+(.+)$/m.exec(body ?? "")?.[1] ?? id;
+const groups = [
+  { title: "Start here", ids: ["safety", "contributing", "code_of_conduct"] },
+  { title: "Design", ids: docs.map((d) => d.id).filter((id) => id.startsWith("design/")).sort() },
+  { title: "Hardware", ids: ["hardware/wiring"] },
+];
+const byId = new Map(docs.map((d) => [d.id, d]));
+const repoOnly = [
+  { label: "Open decisions and measurements", path: "docs/design/OPEN-DECISIONS.md" },
+  { label: "Bill of materials (v0.1, rough)", path: "docs/design/BOM.md" },
+  { label: "Prior art and research", path: "docs/research/prior-art.md" },
+  { label: "Hardware overview and module map", path: "hardware/README.md" },
+];
+---
+<Base title="Docs" description="Safety concept, design documents and wiring, rendered from the repository.">
+  <div class="container docs-index">
+    <header class="section-head">
+      <p class="eyebrow">Docs</p>
+      <h1 class="h-lg">The design, in the open.</h1>
+      <p class="lead muted">These pages are rendered straight from the repository at build time, so they never drift from the source. Everything else links to the repository.</p>
+    </header>
+    <div class="grid grid--3">
+      {groups.map((g) => (
+        <section class="card">
+          <h2 class="eyebrow">{g.title}</h2>
+          <ul class="doc-list">
+            {g.ids.filter((id) => byId.has(id)).map((id) => {
+              const d = byId.get(id)!;
+              return <li><a href={`/docs/${id}/`}>{titleOf(d.body, id).replace(/^Open Bed Climate\s+[—–-]\s+/, "")}</a></li>;
+            })}
+          </ul>
+        </section>
+      ))}
+    </div>
+    <section class="repo-only">
+      <h2 class="h-sm">In the repository</h2>
+      <ul class="doc-list">
+        {repoOnly.map((r) => <li><a href={repoBlob(r.path)}>{r.label}</a> <span class="mono small muted">{r.path}</span></li>)}
+        <li><a href={repoTree("software/opod")}>Reference model (Python)</a> <span class="mono small muted">software/opod</span></li>
+      </ul>
+    </section>
+  </div>
+</Base>
+<style>
+  .docs-index { padding-block: var(--s-2xl); }
+  .doc-list { list-style: none; padding: 0; margin-top: var(--s-sm); display: grid; gap: 10px; }
+  .doc-list a { font-weight: 600; }
+  .repo-only { margin-top: var(--s-2xl); }
+  .repo-only .doc-list li { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; }
+</style>

@@ -1,0 +1,12 @@
+---
+// Every temperature on the site renders through this component (honesty rule H4): mono, temperature-colored,
+// with the printed value (color is never the only carrier) and a "model estimate" marker.
+import { tempClass } from "../lib/temp.ts";
+interface Props { c: number; approx?: boolean; mark?: boolean; digits?: number }
+const { c, approx = false, mark = true, digits = 1 } = Astro.props;
+---
+<span class={`model-est num ${tempClass(c)}`} title="Model estimate: no prototype has been measured yet">{approx ? "~" : ""}{c.toFixed(digits)}&nbsp;°C{mark && <sup aria-label="model estimate">*</sup>}</span>
+<style>
+  .model-est { font-weight: 600; }
+  .model-est sup { font-size: 0.7em; color: var(--ink-muted); margin-left: 1px; }
+</style>

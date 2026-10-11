@@ -1,0 +1,5 @@
+[workspace]
+resolver = "2"
+members = ["opod-core"]
+# opod-pico2 is built separately for the thumbv8m target: see README.md
+exclude = ["opod-pico2"]

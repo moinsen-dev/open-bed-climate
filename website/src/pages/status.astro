@@ -1,0 +1,73 @@
+---
+import { getCollection } from "astro:content";
+import Base from "../layouts/Base.astro";
+import { inFileOrder } from "../lib/file-order.ts";
+import Status from "../components/Status.astro";
+import { repoBlob } from "../site.ts";
+
+const items = inFileOrder(await getCollection("roadmap"), "src/data/roadmap.yaml");
+const by = (s: string) => items.filter((i) => i.data.state === s);
+const decisions = [
+  ["D1", "Licenses", "Hardware CERN-OHL-S-2.0; software and docs Apache-2.0."],
+  ["D2", "Control MCU", "Raspberry Pi Pico 2 (RP2350) in both tiers."],
+  ["D3", "Hub", "ESP32-S3 with ESPHome as the default; a Raspberry Pi as an option for heavier biometrics."],
+];
+---
+<Base title="Status" description="What works in software, what's next, and the five measurements only a first prototype can give us.">
+  <section class="container page-head">
+    <p class="eyebrow">Status and roadmap</p>
+    <h1 class="h-lg">Design phase: tested in software, not yet built.</h1>
+    <p class="lead muted">No unit has been built or measured yet. Below is what exists and is tested, what comes next, and what only a physical prototype can tell us.</p>
+  </section>
+  <div class="container status">
+    <section aria-labelledby="done" class="col">
+      <h2 id="done" class="h-md"><Status state="done" /> Works in software</h2>
+      <ol class="timeline">
+        {by("done").map((i) => <li><span class="eyebrow">{i.data.area}</span><p>{i.data.text}</p></li>)}
+      </ol>
+    </section>
+    <section aria-labelledby="next" class="col">
+      <h2 id="next" class="h-md"><Status state="next" /> Next</h2>
+      <ol class="timeline timeline--next">
+        {by("next").map((i) => <li><span class="eyebrow">{i.data.area}</span><p>{i.data.text}</p></li>)}
+      </ol>
+    </section>
+    <section aria-labelledby="measure" class="col col--help">
+      <h2 id="measure" class="h-md"><Status state="measure" /> Measurements needed from prototype 0</h2>
+      <p class="small muted">Every temperature on this site is a model estimate. These five measurements replace estimates with data.</p>
+      <ol class="measure">
+        {by("measure").map((i) => <li>{i.data.text}</li>)}
+      </ol>
+      <a class="btn btn--primary" href="/contribute/#builder">Help measure</a>
+    </section>
+  </div>
+  <section class="section" aria-labelledby="decisions">
+    <div class="container">
+      <header class="section-head"><p class="eyebrow">Decided</p><h2 id="decisions" class="h-md">Open decisions that are settled</h2></header>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th scope="col">#</th><th scope="col">Topic</th><th scope="col">Decision</th></tr></thead>
+          <tbody>{decisions.map(([n, t, d]) => <tr><td class="mono">{n}</td><th scope="row">{t}</th><td>{d}</td></tr>)}</tbody>
+        </table>
+      </div>
+      <p class="small muted note">Still open: a medical cooling pad for the first mat (D4) and a vibration alarm in v1 (D5). See <a href={repoBlob("docs/design/OPEN-DECISIONS.md")}>OPEN-DECISIONS.md</a>.</p>
+    </div>
+  </section>
+</Base>
+<style>
+  .page-head { padding-block: var(--s-2xl) var(--s-xl); display: grid; gap: var(--s-md); }
+  .page-head .lead { max-width: 72ch; }
+  .status { display: grid; gap: var(--s-xl); padding-bottom: var(--s-2xl); grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 900px) { .status { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  .col { display: grid; gap: var(--s-md); align-content: start; }
+  .col h2 { display: grid; gap: var(--s-sm); justify-items: start; }
+  .col--help { background: var(--surface); border: 1px solid color-mix(in oklab, var(--warm) 40%, var(--hairline)); border-radius: var(--r-lg); padding: var(--s-lg); justify-items: start; }
+  .timeline { list-style: none; padding: 0; display: grid; gap: 0; border-left: 1px solid var(--hairline); margin-left: 6px; }
+  .timeline li { position: relative; padding: 0 0 var(--s-md) var(--s-lg); }
+  .timeline li::before { content: ""; position: absolute; left: -6px; top: 3px; width: 11px; height: 11px; border-radius: 50%; background: var(--success); box-shadow: 0 0 0 3px var(--canvas); }
+  .timeline--next li::before { background: var(--canvas); border: 2px solid var(--cold); box-sizing: border-box; }
+  .timeline p { color: var(--ink); margin-top: 2px; }
+  .measure { padding-left: 1.3em; display: grid; gap: var(--s-sm); color: var(--ink); }
+  .measure li::marker { font-family: var(--font-mono); color: var(--warm); }
+  .note { margin-top: var(--s-md); }
+</style>

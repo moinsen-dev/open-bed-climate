@@ -1,0 +1,273 @@
+---
+// Signature hero (04-design §6): a two-zone bed playing the real default night program from the reference code.
+// Server-rendered at minute 120 (deep sleep); the island animates it. Right side runs the same curve +1.5 °C.
+import { MODEL } from "../lib/kits.ts";
+import { setpoint, clockLabel, type Schedule } from "../lib/schedule.ts";
+import { tempColor, tempClass } from "../lib/temp.ts";
+import { curvePath, xOf, yOf, type Frame } from "../lib/chart.ts";
+import { HERO_BEDTIME_MIN_OF_DAY, HERO_WAKE_OFFSET_MIN } from "../site.ts";
+
+const S = MODEL.schedule_default as Schedule;
+const WAKE = HERO_WAKE_OFFSET_MIN;
+const OFFSET = 1.5;
+const STATIC_MIN = 120;
+const F: Frame = { w: 560, h: 120, left: 44, right: 12, top: 12, bottom: 26, minEnd: WAKE, cMin: 13, cMax: 43 };
+const cL = setpoint(S, STATIC_MIN, WAKE)!;
+const cR = cL + OFFSET;
+const left = curvePath(F, S, WAKE);
+const right = curvePath(F, S, WAKE, OFFSET);
+const ticks = [0, 120, 240, 360, 480];
+const rampX0 = xOf(F, WAKE - S.wake_ramp_min);
+
+// Bed geometry (top view, head at the left). One serpentine water channel per zone (top = left side of the sleeper).
+const zone = (y: number) => {
+  const x0 = 126, x1 = 372, y0 = y + 10, y1 = y + 94, step = 12;
+  let d = `M${x0} ${y0}`;
+  let k = 0;
+  for (let yy = y0; yy + step <= y1; yy += step, k++) {
+    d += k % 2 === 0 ? ` H${x1} a6 6 0 0 1 0 ${step}` : ` H${x0} a6 6 0 0 0 0 ${step}`;
+  }
+  return d;
+};
+const zones = [
+  { id: "L", y: 36, c: cL },
+  { id: "R", y: 150, c: cR },
+];
+const phases = [
+  [0, "Bedtime"], [30, "Falling asleep"], [90, "Deep sleep"], [240, "Easing warmer"], [390, "Late sleep"], [450, "Wake ramp"],
+] as const;
+const phaseAt = (m: number) => phases.filter(([t]) => m >= t).at(-1)![1];
+---
+<div class="hero-night" data-hero
+  data-points={JSON.stringify(S.points)} data-ramp={S.wake_ramp_min} data-wake-target={S.wake_target_c}
+  data-wake={WAKE} data-bedtime={HERO_BEDTIME_MIN_OF_DAY} data-offset={OFFSET} data-static={STATIC_MIN}>
+  <p class="visually-hidden">Default night program: 24 °C at bedtime, 20 °C in deep sleep, warming to 32 °C at wake. Each side of the bed can run its own curve.</p>
+  <div class="hero-night__stage" aria-hidden="true">
+    <svg class="bed" viewBox="0 0 560 290" focusable="false">
+      <defs>
+        <filter id="hero-blur" x="-30%" y="-50%" width="160%" height="200%"><feGaussianBlur stdDeviation="14"></feGaussianBlur></filter>
+      </defs>
+      {zones.map((z) => <rect class="bed__glow" data-glow={z.id} x="112" y={z.y + 4} width="270" height="96" rx="14" fill={tempColor(z.c)} filter="url(#hero-blur)"></rect>)}
+      <line class="bed__construct" x1="8" y1="145" x2="416" y2="145"></line>
+      <line class="bed__construct" x1="100" y1="6" x2="100" y2="284"></line>
+      <rect class="bed__line" x="20" y="20" width="380" height="250" rx="14"></rect>
+      <rect class="bed__line bed__line--soft" x="28" y="28" width="364" height="234" rx="9"></rect>
+      <rect class="bed__line" x="38" y="42" width="48" height="92" rx="12"></rect>
+      <rect class="bed__line" x="38" y="156" width="48" height="92" rx="12"></rect>
+      {zones.map((z) => (
+        <g>
+          <rect class="bed__mat" data-mat={z.id} x="112" y={z.y} width="276" height="104" rx="6" fill={tempColor(z.c)}></rect>
+          <path class="bed__water" data-water={z.id} d={zone(z.y)} stroke={tempColor(z.c)}></path>
+        </g>
+      ))}
+      <path class="bed__umbilical" data-water="L" d="M388 112 H414 V208 H436" stroke={tempColor(cL)}></path>
+      <path class="bed__umbilical" data-water="R" d="M388 200 H406 V222 H436" stroke={tempColor(cR)}></path>
+      <rect class="bed__hub" x="436" y="176" width="114" height="94" rx="4"></rect>
+      <line class="bed__construct" x1="436" y1="206" x2="550" y2="206"></line>
+      <text class="bed__label" x="446" y="196">HUB</text>
+      <text class="bed__label bed__label--muted" x="446" y="226">PELTIER · PUMP</text>
+      <text class="bed__label bed__label--muted" x="446" y="242">PICO 2 · ESP32</text>
+      <text class="bed__label bed__label--muted" x="446" y="258">NO CLOUD</text>
+      <path class="bed__leader" d="M372 52 H436"></path>
+      <text class="bed__label" x="442" y="56">WATER MAT</text>
+      <text class="bed__label bed__label--muted" x="442" y="72">ONE ZONE</text>
+      <text class="bed__label bed__label--muted" x="442" y="86">PER SIDE</text>
+      <text class="bed__label bed__label--muted" x="62" y="14" text-anchor="middle">HEAD</text>
+    </svg>
+
+    <div class="readout">
+      <div class="readout__time">
+        <span class="readout__clock num" data-clock>{clockLabel(HERO_BEDTIME_MIN_OF_DAY + STATIC_MIN)}</span>
+        <span class="readout__phase eyebrow" data-phase>{phaseAt(STATIC_MIN)}</span>
+      </div>
+      <div class="readout__sides">
+        {zones.map((z) => (
+          <div class="readout__side">
+            <span class="eyebrow">{z.id === "L" ? "Left" : "Right"}</span>
+            <span class={`readout__temp num ${tempClass(z.c)}`} data-temp={z.id}>{z.c.toFixed(1)}<span class="readout__unit"> °C</span></span>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <svg class="strip" viewBox={`0 0 ${F.w} ${F.h}`} focusable="false">
+      <defs>
+        <linearGradient id="hero-grad" gradientUnits="userSpaceOnUse" x1="0" y1={yOf(F, 13)} x2="0" y2={yOf(F, 43)}>
+          {[13, 20, 28, 36, 43].map((c, i) => <stop offset={String(i === 0 ? 0 : (c - 13) / 30)} stop-color={tempColor(c)}></stop>)}
+        </linearGradient>
+        <linearGradient id="hero-grad-dawn" gradientUnits="userSpaceOnUse" x1="0" y1={yOf(F, 13)} x2="0" y2={yOf(F, 43)}>
+          <stop offset="0" stop-color="#0A6E8C"></stop><stop offset="0.5" stop-color="#0A6E8C"></stop><stop offset="0.6" stop-color="#9C5200"></stop><stop offset="1" stop-color="#9C5200"></stop>
+        </linearGradient>
+      </defs>
+      {[13, 28, 43].map((c) => (
+        <g>
+          <line class="strip__grid" x1={F.left} x2={F.w - F.right} y1={yOf(F, c)} y2={yOf(F, c)}></line>
+          <text class="strip__label" x={F.left - 8} y={yOf(F, c) + 3.5} text-anchor="end">{c}°</text>
+        </g>
+      ))}
+      <rect class="strip__ramp" x={rampX0} y={F.top} width={xOf(F, WAKE) - rampX0} height={F.h - F.top - F.bottom}></rect>
+      {ticks.map((m) => (
+        <g>
+          <line class="strip__tick" x1={xOf(F, m)} x2={xOf(F, m)} y1={F.h - F.bottom} y2={F.h - F.bottom + 5}></line>
+          <text class="strip__label" x={xOf(F, m)} y={F.h - 6} text-anchor="middle">{clockLabel(HERO_BEDTIME_MIN_OF_DAY + m)}</text>
+        </g>
+      ))}
+      <path class="strip__curve strip__curve--r" d={right.on}></path>
+      <path class="strip__curve" d={left.on}></path>
+      <line class="strip__playhead" data-playhead x1={xOf(F, STATIC_MIN)} x2={xOf(F, STATIC_MIN)} y1={F.top - 4} y2={F.h - F.bottom}></line>
+      <circle class="strip__dot" data-dot="L" cx={xOf(F, STATIC_MIN)} cy={yOf(F, cL)} r="4.5"></circle>
+      <circle class="strip__dot strip__dot--r" data-dot="R" cx={xOf(F, STATIC_MIN)} cy={yOf(F, cR)} r="3.5"></circle>
+    </svg>
+  </div>
+  <div class="hero-night__foot">
+    <p class="small muted">The default night program, from the reference code. Model data, not a measurement.</p>
+    <button type="button" class="hero-night__pause js-only" data-pause aria-pressed="false" aria-label="Pause animation">
+      <svg class="i-pause" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M8 5v14M16 5v14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"></path></svg>
+      <svg class="i-play" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M7 5.5v13l11-6.5-11-6.5Z" fill="currentColor"></path></svg>
+    </button>
+  </div>
+</div>
+
+<script>
+  import { setpoint, clockLabel, type Schedule } from "../lib/schedule.ts";
+  import { tempColor, tempClass } from "../lib/temp.ts";
+  import { xOf, yOf, type Frame } from "../lib/chart.ts";
+
+  const root = document.querySelector<HTMLElement>("[data-hero]");
+  if (root) {
+    const d = root.dataset;
+    const S: Schedule = { points: JSON.parse(d.points!), wake_ramp_min: Number(d.ramp), wake_target_c: Number(d.wakeTarget) };
+    const WAKE = Number(d.wake), BED = Number(d.bedtime), OFF = Number(d.offset);
+    const F: Frame = { w: 560, h: 120, left: 44, right: 12, top: 12, bottom: 26, minEnd: WAKE, cMin: 13, cMax: 43 };
+    const LOOP_MS = 16000;
+    const $ = <T extends Element>(sel: string) => root.querySelector<T>(sel)!;
+    const all = (sel: string) => [...root.querySelectorAll<SVGElement>(sel)];
+    const clock = $("[data-clock]"), phase = $("[data-phase]"), btn = $<HTMLButtonElement>("[data-pause]");
+    const temps = { L: $("[data-temp=L]"), R: $("[data-temp=R]") };
+    const playhead = $<SVGLineElement>("[data-playhead]");
+    const dots = { L: $<SVGCircleElement>("[data-dot=L]"), R: $<SVGCircleElement>("[data-dot=R]") };
+    const glows = { L: all("[data-glow=L]"), R: all("[data-glow=R]") };
+    const water = { L: all("[data-water=L]"), R: all("[data-water=R]") };
+    const mats = { L: all("[data-mat=L]"), R: all("[data-mat=R]") };
+    const PHASES: [number, string][] = [[0, "Bedtime"], [30, "Falling asleep"], [90, "Deep sleep"], [240, "Easing warmer"], [390, "Late sleep"], [450, "Wake ramp"]];
+
+    const render = (m: number) => {
+      // Hold the wake target for the last frame instead of "off", so the loop ends on the warm wake value.
+      const cL = m >= WAKE ? S.wake_target_c : setpoint(S, m, WAKE)!;
+      const vals = { L: cL, R: cL + OFF };
+      clock.textContent = clockLabel(BED + m);
+      phase.textContent = m >= WAKE - 0.5 ? "Wake" : PHASES.filter(([t]) => m >= t).at(-1)![1];
+      const x = xOf(F, m).toFixed(1);
+      playhead.setAttribute("x1", x);
+      playhead.setAttribute("x2", x);
+      for (const side of ["L", "R"] as const) {
+        const c = vals[side];
+        temps[side].firstChild!.textContent = c.toFixed(1);
+        const tc = tempClass(c);
+        if (!temps[side].classList.contains(tc)) {
+          temps[side].classList.forEach((k) => { if (k.startsWith("tc-")) temps[side].classList.remove(k); });
+          temps[side].classList.add(tc);
+        }
+        dots[side].setAttribute("cx", x);
+        dots[side].setAttribute("cy", yOf(F, c).toFixed(1));
+        const col = tempColor(c);
+        glows[side].forEach((g) => g.setAttribute("fill", col));
+        water[side].forEach((w) => w.setAttribute("stroke", col));
+        mats[side].forEach((w) => w.setAttribute("fill", col));
+      }
+    };
+
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let paused = false, visible = true, raf = 0, last = 0;
+    let t = (Number(d.static) / WAKE) * LOOP_MS; // start from the static frame, no jump
+    const running = () => !paused && visible && !document.hidden && !reduce.matches;
+    const tick = (now: number) => {
+      if (!running()) { raf = 0; return; }
+      if (last) t = (t + Math.min(now - last, 100)) % (LOOP_MS + 1200); // short hold at wake
+      last = now;
+      render(Math.min(WAKE, (t / LOOP_MS) * WAKE));
+      raf = requestAnimationFrame(tick);
+    };
+    const update = () => {
+      if (running() && !raf) { last = 0; raf = requestAnimationFrame(tick); }
+      if (reduce.matches) render(Number(d.static));
+    };
+    btn.addEventListener("click", () => {
+      paused = !paused;
+      btn.setAttribute("aria-pressed", String(paused));
+      btn.setAttribute("aria-label", paused ? "Play animation" : "Pause animation");
+      update();
+    });
+    new IntersectionObserver(([e]) => { visible = e.isIntersecting; update(); }).observe(root);
+    document.addEventListener("visibilitychange", update);
+    reduce.addEventListener("change", update);
+    if (reduce.matches) btn.hidden = true;
+    update();
+  }
+</script>
+
+<style>
+  .hero-night { position: relative; }
+  .hero-night__stage {
+    position: relative; display: grid; gap: var(--s-md);
+    background: linear-gradient(180deg, var(--surface), var(--canvas));
+    border: 1px solid var(--hairline); border-radius: var(--r-lg);
+    padding: var(--s-md) var(--s-md) var(--s-sm);
+    overflow: hidden;
+  }
+  .bed { width: 100%; height: auto; }
+  .bed__glow { opacity: var(--glow-opacity); }
+  .bed__line { fill: none; stroke: var(--ink-muted); stroke-width: 1.5; }
+  .bed__line--soft { stroke: var(--hairline); }
+  .bed__construct { stroke: var(--hairline); stroke-width: 1; stroke-dasharray: 2 4; }
+  .bed__mat { fill-opacity: 0.07; stroke: var(--ink-muted); stroke-width: 1.5; }
+  .bed__water { fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; opacity: 0.95; }
+  .bed__umbilical { fill: none; stroke-width: 2; stroke-linejoin: round; opacity: 0.85; }
+  .bed__hub { fill: var(--surface); stroke: var(--ink-muted); stroke-width: 1.5; }
+  .bed__leader { stroke: var(--ink-muted); stroke-width: 1; fill: none; }
+  .bed__label { font-family: var(--font-mono); font-size: 11px; font-weight: 600; letter-spacing: 0.08em; fill: var(--ink); }
+  .bed__label--muted { fill: var(--ink-muted); font-weight: 400; font-size: 10px; }
+
+  .readout {
+    display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: var(--s-sm) var(--s-lg);
+    padding-top: var(--s-sm); border-top: 1px solid var(--hairline);
+  }
+  .readout__time { display: grid; gap: 2px; }
+  .readout__clock { font-size: 1.375rem; font-weight: 600; color: var(--ink); line-height: 1.1; }
+  .readout__phase { color: var(--cold); min-width: 14ch; }
+  .readout__sides { display: flex; gap: var(--s-lg); }
+  .readout__side { display: grid; gap: 2px; }
+  .readout__temp { font-size: var(--fs-readout-lg); font-weight: 600; letter-spacing: -0.02em; line-height: 1; }
+  .readout__unit { font-size: 0.45em; color: var(--ink-muted); font-weight: 400; letter-spacing: 0; }
+
+  .strip { width: 100%; height: auto; }
+  .strip__grid { stroke: var(--hairline); stroke-width: 1; stroke-dasharray: 2 4; }
+  .strip__tick { stroke: var(--ink-muted); stroke-width: 1; }
+  .strip__label { font-family: var(--font-mono); font-size: 10px; fill: var(--ink-muted); }
+  .strip__ramp { fill: var(--warm); opacity: 0.08; }
+  .strip__curve { fill: none; stroke: url(#hero-grad); stroke-width: 2.25; stroke-linecap: round; stroke-linejoin: round; }
+  .strip__curve--r { stroke-width: 1.25; stroke-dasharray: 3 3; opacity: 0.8; }
+  .strip__playhead { stroke: var(--ink); stroke-width: 1; opacity: 0.6; }
+  .strip__dot { fill: var(--canvas); stroke: var(--ink); stroke-width: 2; }
+  .strip__dot--r { stroke-width: 1.5; opacity: 0.85; }
+  :global(:root[data-theme="light"]) .strip__curve { stroke: url(#hero-grad-dawn); }
+  @media (prefers-color-scheme: light) {
+    :global(:root:not([data-theme="dark"])) .strip__curve { stroke: url(#hero-grad-dawn); }
+  }
+
+  /* Dawn: mid-tone stops are too light as strokes on paper; darken them but keep the temperature hue. */
+  :global(:root[data-theme="light"]) .bed__water, :global(:root[data-theme="light"]) .bed__umbilical { filter: brightness(0.62) saturate(1.4); }
+  @media (prefers-color-scheme: light) {
+    :global(:root:not([data-theme="dark"])) .bed__water, :global(:root:not([data-theme="dark"])) .bed__umbilical { filter: brightness(0.62) saturate(1.4); }
+  }
+  .hero-night__foot { display: flex; align-items: center; justify-content: space-between; gap: var(--s-md); margin-top: var(--s-sm); }
+  .hero-night__pause {
+    flex: none; width: 44px; height: 44px; display: inline-grid; place-items: center;
+    border-radius: var(--r-full); border: 1px solid var(--border-strong); background: var(--surface); color: var(--ink);
+  }
+  .hero-night__pause:hover { background: var(--surface-raised); }
+  .hero-night__pause[hidden] { display: none; }
+  .hero-night__pause .i-play { display: none; }
+  .hero-night__pause[aria-pressed="true"] .i-play { display: block; }
+  .hero-night__pause[aria-pressed="true"] .i-pause { display: none; }
+</style>

@@ -1,0 +1,102 @@
+---
+import { getCollection } from "astro:content";
+import Base from "../../layouts/Base.astro";
+import KitCard from "../../components/KitCard.astro";
+import KitTable from "../../components/KitTable.astro";
+import KitRoomTable from "../../components/KitRoomTable.astro";
+import KitPicker from "../../components/KitPicker.astro";
+import ModuleMap from "../../components/ModuleMap.astro";
+import SafetyNote from "../../components/SafetyNote.astro";
+import { joinKit, sortKits } from "../../lib/kits.ts";
+import { repoBlob } from "../../site.ts";
+
+const kits = (await getCollection("kits")).map((k) => joinKit(k.id, k.data)).sort(sortKits);
+---
+<Base title="Kits" description="Compare the Solo Starter, Duo Standard and Duo Reference kits. Every kit's claims are checked against an open thermal model.">
+  <section class="container page-head">
+    <p class="eyebrow">Kits</p>
+    <h1 class="h-lg">Pick a kit, then make it yours.</h1>
+    <p class="lead muted">A kit is a short TOML file that sets zones, Peltiers per zone, heatsink, current limit, sensing option and power supplies. It also states what the kit claims to deliver. Our test suite checks those claims against the thermal model, and also checks power-supply load in a warm room and heating without tripping the cutoffs.</p>
+  </section>
+
+  <div class="container stack-lg">
+    <SafetyNote variant="build" />
+    <div class="kit-grid">{kits.map((k) => <KitCard kit={k} headingLevel="h2" />)}</div>
+    <KitPicker kits={kits} />
+  </div>
+
+  <section class="section" aria-labelledby="compare">
+    <div class="container">
+      <header class="section-head">
+        <p class="eyebrow">Compare</p>
+        <h2 id="compare" class="h-lg">Side by side, straight from the kit files.</h2>
+      </header>
+      <KitTable kits={kits} />
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="rooms">
+    <div class="container">
+      <header class="section-head">
+        <p class="eyebrow">What can my kit do?</p>
+        <h2 id="rooms" class="h-lg">Coldest water by room temperature.</h2>
+        <p class="lead muted">A warmer bedroom means warmer water. These values come from the open thermal model with a sleeper in bed, at the power each kit draws at that point. Model estimates, not measurements.</p>
+      </header>
+      <KitRoomTable kits={kits} />
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="tiers">
+    <div class="container">
+      <header class="section-head">
+        <p class="eyebrow">Tiers</p>
+        <h2 id="tiers" class="h-lg">Modules first. Custom boards when you want them.</h2>
+      </header>
+      <div class="grid grid--2">
+        <div class="card">
+          <span class="chip chip--plain">Tier 0</span>
+          <h3 class="h-md">Modules only</h3>
+          <p class="muted">Off-the-shelf boards and PC-watercooling parts on a DIN rail or carrier plate. No custom PCB, and soldering is optional. Power comes from certified plug-in supplies: you never wire mains.</p>
+        </div>
+        <div class="card">
+          <span class="chip chip--plain">Tier 1</span>
+          <h3 class="h-md">Reference PCBs</h3>
+          <p class="muted">A power board and a cover sensor board. Smaller, quieter and cleaner, but it needs PCB assembly, and its mains module must be assembled by a qualified person.</p>
+        </div>
+      </div>
+      <p class="muted tier-note">Both tiers run the same control firmware and speak the same protocol, so parts, software and documentation are shared.</p>
+      <div class="modmap-wrap"><ModuleMap /></div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="own">
+    <div class="container own">
+      <div>
+        <p class="eyebrow">Bring your own kit</p>
+        <h2 id="own" class="h-lg">Copy a TOML. Run the tests.</h2>
+        <p class="lead muted">Copy <code>solo-starter.toml</code>, change it, and run the tests. That is the real estimator: the same checks that guard the three kits above run on yours. Safety limits are not configurable in a kit file, and the loader rejects any attempt.</p>
+        <p><a class="text-link" href={repoBlob("hardware/kits/solo-starter.toml")}>solo-starter.toml in the repository<span class="arrow"></span></a></p>
+      </div>
+      <pre><code><span class="c"># one time</span>
+git clone {"<repo>"} && cd open-bed-climate
+cp hardware/kits/solo-starter.toml hardware/kits/my-kit.toml
+<span class="c"># edit my-kit.toml, then:</span>
+cd software/opod && uv run pytest -q</code></pre>
+    </div>
+  </section>
+</Base>
+<style>
+  .page-head { padding-block: var(--s-2xl) var(--s-xl); display: grid; gap: var(--s-md); }
+  .page-head .lead { max-width: 72ch; }
+  .stack-lg { display: grid; gap: var(--s-xl); padding-bottom: var(--s-2xl); }
+  .kit-grid { display: grid; gap: var(--s-lg); grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 640px) { .kit-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (min-width: 900px) { .kit-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  .grid .card { display: grid; gap: var(--s-sm); justify-items: start; }
+  .tier-note { margin-top: var(--s-lg); }
+  .modmap-wrap { margin-top: var(--s-xl); }
+  .own { display: grid; gap: var(--s-xl); align-items: center; }
+  .own > div { display: grid; gap: var(--s-md); }
+  .c { color: var(--ink-muted); }
+  @media (min-width: 900px) { .own { grid-template-columns: 1fr 1fr; } }
+</style>

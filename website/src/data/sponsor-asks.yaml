@@ -1,0 +1,26 @@
+# What support unlocks right now (01-content §4.5, 02-community §2.4). Rough planning numbers, not quotes.
+- id: prototypes
+  ask: Parts for prototype 0
+  unlocks: A Solo Starter first, then a Duo Standard. Replaces model estimates with measurements.
+  range: "€2,500–3,500"
+  source: 02-community §2.4 bucket 1 · BOM.md v0.1
+- id: pad
+  ask: A medical cooling pad for the v0 mat
+  unlocks: Measures body-to-water heat transfer early, before a custom mat exists (decision D4). Includes TPU weld samples for the custom mat.
+  range: "€500–1,500"
+  source: OPEN-DECISIONS D4 · bucket 5
+- id: instruments
+  ask: Instruments for the five prototype-0 measurements
+  unlocks: Thermocouple logger, flow meter, DC clamp meter, sound level meter, entry thermal camera. Makes build reports comparable.
+  range: "€1,500–2,500"
+  source: OPEN-DECISIONS measurements 1–5 · bucket 2
+- id: boards
+  ask: A first run of the Tier 1 power board and cover sensor board
+  unlocks: Tier 1 can't exist without it. 2–3 revisions.
+  range: "€600–1,500"
+  source: bucket 4
+- id: review
+  ask: A qualified electrical review of the safety concept
+  unlocks: An independent review of SAFETY.md and the electrical design, plus a pre-compliance day for the Tier 1 power module. Evidence, not a certification.
+  range: "€2,000–5,000"
+  source: bucket 3

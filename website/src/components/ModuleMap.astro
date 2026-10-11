@@ -1,0 +1,61 @@
+---
+// I5: the module map from hardware/README.md, redrawn in house style. Text equivalent below.
+const box = (x: number, y: number, w: number, h: number, title: string, lines: string[], tone = "") => ({ x, y, w, h, title, lines, tone });
+const boxes = [
+  box(44, 60, 240, 70, "HUB MODULE", ["ESP32-S3 + ESPHome", "or Raspberry Pi"]),
+  box(316, 60, 220, 70, "CONTROL MODULE", ["Pico 2 control MCU", "safety firmware"], "safety"),
+  box(316, 160, 220, 70, "POWER MODULE", ["certified 24 V + 12 V supplies", "TEC drivers · relays"]),
+  box(316, 260, 220, 80, "THERMAL MODULE ×ZONES", ["TECs · cold plates · heatsinks", "fans · pump · flow · cutoffs"]),
+  box(44, 260, 240, 80, "RESERVOIR + PLUMBING", ["level sensor · fill port", "dry-break couplings"]),
+  box(600, 260, 180, 80, "WATER MAT ×ZONES", ["+ optional blanket", "or pillow cover"], "out"),
+  box(600, 60, 180, 70, "SENSING", ["load cells | pneumatic", "| piezo grid"], "out"),
+  box(600, 160, 180, 70, "ADD-ONS", ["vibration alarm · base", "speaker"], "out"),
+];
+---
+<figure class="modmap">
+  <div class="modmap__scroll" tabindex="0" role="group" aria-label="Module map (scrolls sideways on small screens)">
+    <svg viewBox="0 0 800 380" role="img" aria-labelledby="mm-title mm-desc">
+      <title id="mm-title">Module map</title>
+      <desc id="mm-desc">Inside the hub enclosure next to the bed: the hub module talks to the control module over OPL; the control module drives the power module, which feeds the thermal modules; the reservoir feeds the thermal modules, which exchange water with the water mats. Sensing reports to the hub; add-ons connect through Home Assistant.</desc>
+      <defs>
+        <marker id="mm-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerUnits="userSpaceOnUse" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0 0 8 4 0 8z" class="m-head"></path></marker>
+      </defs>
+      <rect class="m-frame" x="20" y="24" width="540" height="340"></rect>
+      <text class="m-label m-label--muted" x="32" y="44">HUB ENCLOSURE · NEAR THE BED</text>
+      {boxes.map((b) => (
+        <g>
+          <rect class={`m-box ${b.tone === "safety" ? "m-box--safety" : ""} ${b.tone === "out" ? "m-box--out" : ""}`} x={b.x} y={b.y} width={b.w} height={b.h} rx="3"></rect>
+          <text class="m-label" x={b.x + 12} y={b.y + 22}>{b.title}</text>
+          {b.lines.map((l, i) => <text class="m-label m-label--muted" x={b.x + 12} y={b.y + 42 + i * 15}>{l}</text>)}
+        </g>
+      ))}
+      <path class="m-link m-link--signal" d="M284 95 H316" marker-start="url(#mm-arrow)" marker-end="url(#mm-arrow)"></path>
+      <text class="m-label m-label--cold" x="300" y="88" text-anchor="middle">OPL</text>
+      <path class="m-link" d="M426 130 V160" marker-end="url(#mm-arrow)"></path>
+      <path class="m-link" d="M426 230 V260" marker-end="url(#mm-arrow)"></path>
+      <path class="m-link m-link--water" d="M284 300 H316" marker-end="url(#mm-arrow)"></path>
+      <path class="m-link m-link--water" d="M536 300 H600" marker-start="url(#mm-arrow)" marker-end="url(#mm-arrow)"></path>
+      <path class="m-link m-link--signal" d="M690 60 V12 H164 V60" marker-end="url(#mm-arrow)"></path>
+      <path class="m-link m-link--dashed" d="M690 230 V246 H164 V130" marker-end="url(#mm-arrow)"></path>
+      <text class="m-label m-label--muted" x="176" y="242">HOME ASSISTANT</text>
+    </svg>
+  </div>
+  <figcaption class="small muted">Inside the enclosure: hub ⇄ control over OPL, control → power → thermal, reservoir → thermal ⇄ water mat. Outside: sensing reports to the hub, add-ons connect through Home Assistant. The control module is the only safety part.</figcaption>
+</figure>
+<style>
+  .modmap { display: grid; gap: var(--s-sm); }
+  .modmap__scroll { overflow-x: auto; border: 1px solid var(--hairline); border-radius: var(--r-lg); background: var(--surface); padding: var(--s-md); }
+  .modmap__scroll svg { min-width: 640px; width: 100%; max-width: 980px; height: auto; margin-inline: auto; }
+  .m-frame { fill: none; stroke: var(--hairline); stroke-width: 1.5; stroke-dasharray: 6 5; }
+  .m-box { fill: var(--surface-raised); stroke: var(--ink-muted); stroke-width: 1.5; }
+  .m-box--safety { stroke: var(--warning); }
+  .m-box--out { fill: none; }
+  .m-link { fill: none; stroke: var(--ink-muted); stroke-width: 1.5; }
+  .m-link--signal { stroke: var(--cold); stroke-dasharray: 4 3; stroke-width: 1.25; }
+  .m-link--dashed { stroke-dasharray: 2 4; }
+  .m-link--water { stroke: var(--stroke-cold); stroke-width: 2.5; }
+  .m-head { fill: var(--ink-muted); }
+  .m-label { font-family: var(--font-mono); font-size: 11px; font-weight: 600; letter-spacing: 0.08em; fill: var(--ink); }
+  .m-label--muted { fill: var(--ink-muted); font-weight: 400; font-size: 10px; letter-spacing: 0.02em; }
+  .m-label--cold { fill: var(--cold); font-size: 10px; }
+</style>

@@ -1,0 +1,18 @@
+---
+// Honesty rule H1: on every page, not dismissible (no JS, no storage).
+---
+<div class="phase" role="note">
+  <div class="container phase__inner">
+    <span class="phase__dot" aria-hidden="true"></span>
+    <p><strong>Design phase:</strong> no unit has been built or measured yet. <a href="/contribute/">Help build the first one<span class="arrow"></span></a></p>
+  </div>
+</div>
+<style>
+  .phase { background: var(--surface); border-bottom: 1px solid var(--hairline); font-size: var(--fs-body-sm); }
+  .phase__inner { display: flex; align-items: center; gap: 10px; min-height: 40px; padding-block: 8px; }
+  .phase p { color: var(--ink-muted); line-height: 1.4; }
+  .phase strong { color: var(--ink); font-weight: 600; }
+  .phase a { font-weight: 600; text-decoration: none; white-space: nowrap; }
+  .phase a:hover { text-decoration: underline; }
+  .phase__dot { width: 8px; height: 8px; border-radius: 50%; background: var(--warm); flex: none; box-shadow: 0 0 0 4px color-mix(in oklab, var(--warm) 22%, transparent); }
+</style>

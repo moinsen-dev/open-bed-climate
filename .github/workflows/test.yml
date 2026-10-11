@@ -1,0 +1,71 @@
+name: tests
+on: [push, pull_request]
+jobs:
+  reference:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: software/opod
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv run pytest -q
+
+  firmware-core:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: firmware
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo test
+
+  firmware-pico2:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: firmware/opod-pico2
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: thumbv8m.main-none-eabihf
+      - run: cargo build --release
+
+  hub-protocol:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: hub/esphome/components/opod/test
+    steps:
+      - uses: actions/checkout@v4
+      - run: c++ -std=c++17 -Wall -Wextra -Werror -fsanitize=address,undefined -I.. test_opl.cpp -o test_opl && ./test_opl frames.txt
+      - run: c++ -std=c++17 -Wall -Wextra -Werror -fsanitize=address,undefined -I.. test_schedule.cpp -o test_schedule && ./test_schedule schedule.txt
+
+  hub-esphome:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: hub/esphome
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: |
+          printf 'wifi_ssid: "ci"\nwifi_password: "cipassword"\napi_key: "%s"\nota_password: "ci"\n' "$(openssl rand -base64 32)" > secrets.yaml
+          uvx --from esphome==2026.9.1 esphome compile opod-hub.yaml
+
+  website:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: website
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: website/.nvmrc
+          cache: npm
+          cache-dependency-path: website/package-lock.json
+      - run: npm ci
+      - run: npm run verify

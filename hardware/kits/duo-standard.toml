@@ -1,0 +1,25 @@
+# Duo Standard: two independent zones (queen/king), Tier 0 (modules only).
+# Strongest cooling we can get from off-the-shelf parts.
+
+[kit]
+name = "Duo Standard"
+tier = 0
+zones = 2
+
+[thermal]
+tec_per_zone = 4
+heatsink_k_per_w = 0.07   # per zone; ESTIMATE until measured
+max_tec_current_a = 4.5   # per TEC; 4.5 A instead of 6 A: ~0.4 K less cooling, ~45 % less power
+
+[sensing]
+option = "pneumatic"
+
+[power]
+# One certified IEC-inlet 24 V desktop supply per zone for the TECs, plus one 12 V brick for pumps/fans/electronics.
+# No mains wiring by the builder (see SAFETY.md and hardware/PARTS.md, role psu).
+tec_psu_w_per_zone = 280
+aux_psu_w = 120
+
+[claims]
+min_water_c = 18.8
+max_water_c = 43.0

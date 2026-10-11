@@ -1,0 +1,124 @@
+---
+import { getCollection } from "astro:content";
+import Base from "../layouts/Base.astro";
+import { inFileOrder } from "../lib/file-order.ts";
+import RoleIcon from "../components/RoleIcon.astro";
+import { ROLES } from "../lib/roles.ts";
+import { REPO_URL, DISCUSSIONS_URL, repoBlob, issueTemplate } from "../site.ts";
+
+const help = inFileOrder(await getCollection("helpWanted"), "src/data/help-wanted.yaml");
+const parts = (await getCollection("parts")).flatMap((p) => p.data.example);
+const counts = { unverified: parts.filter((e) => e.status === "unverified").length, listing: parts.filter((e) => e.status === "listing").length };
+const fill = (t: string) => t.replace("{unverified}", String(counts.unverified)).replace("{listing}", String(counts.listing));
+const href = (link: string) =>
+  link.startsWith("issue:") ? issueTemplate(link.slice(6)) : link.startsWith("repo:") ? repoBlob(link.slice(5)).replace(/\/blob\/main\/(?!.*\.[a-z]+$)/i, "/tree/main/") : link;
+const templates = (await getCollection("issueTemplates")).map((t) => ({ id: t.id, ...t.data }));
+const rules = [
+  ["Clean-room.", "Public information only. No vendor firmware, decompiled code, leaked documents or rooting instructions."],
+  ["Safety limits are special.", "A change to a safety limit needs its own issue and a review by two maintainers."],
+  ["Claims need evidence.", "A number on a kit or a part needs a datasheet, a measurement or a model run behind it."],
+  ["Parts by role, not by brand.", "Every role keeps several examples; no part is the only option."],
+];
+---
+<Base title="Contribute" description="You don't need to be an engineer. Pick a role: builders, parts hunters, electronics, mechanical, firmware, Home Assistant, research and docs. Each lists tasks open today.">
+  <section class="container page-head">
+    <p class="eyebrow">Contribute</p>
+    <h1 class="h-lg">There is a place for you.</h1>
+    <p class="lead muted">You don't need to be an engineer. Right now, one honest build report with photos and measurements is worth more than any line of code, because every number on this site is still a model estimate. Pick a role below. Each one lists tasks that are open today.</p>
+  </section>
+
+  <div class="container">
+    <div class="first card">
+      <div>
+        <p class="eyebrow">Most valuable right now</p>
+        <h2 class="h-md">The first physical build, with measurements.</h2>
+        <p class="muted">Start with the Solo Starter, complete the commissioning checklist, and post what worked and what didn't.</p>
+      </div>
+      <a class="btn btn--primary" href={issueTemplate("build-report.yml")}>Start a build report</a>
+    </div>
+
+    <nav class="jump" aria-label="Roles">{ROLES.map((r) => <a class="chip chip--plain" href={`#${r.id}`}>{r.title}</a>)}</nav>
+
+    <div class="roles">
+      {ROLES.map((r) => (
+        <section class="role card" id={r.id} aria-labelledby={`h-${r.id}`}>
+          <header class="role__head">
+            <span class="role__icon"><RoleIcon role={r.id} size={28} /></span>
+            <div>
+              <h2 id={`h-${r.id}`} class="h-md">{r.title}</h2>
+              <p class="small muted">{r.skills}</p>
+            </div>
+          </header>
+          <ul class="tasks">
+            {help.filter((h) => h.data.role === r.id).map((h) => (
+              <li>
+                <a href={href(h.data.link)}>{fill(h.data.task)}</a>
+                <span class={`chip chip--plain diff diff--${h.data.difficulty}`}>{h.data.difficulty}</span>
+              </li>
+            ))}
+          </ul>
+          {r.next && <p><a class="text-link small" href={issueTemplate(r.next.template)}>{r.next.label}<span class="arrow"></span></a></p>}
+        </section>
+      ))}
+    </div>
+  </div>
+
+  <section class="section" aria-labelledby="quick">
+    <div class="container two">
+      <div class="stack">
+        <p class="eyebrow">First steps</p>
+        <h2 id="quick" class="h-md">Run it in two minutes, no hardware needed.</h2>
+        <p class="muted">Clone the <a href={REPO_URL}>repository</a> and run the tests. The reference model, the safety logic and the kit checks run in Python; the firmware core runs on your computer against the same golden vectors.</p>
+        <pre><code>git clone {REPO_URL}
+cd open-bed-climate/software/opod && uv run pytest -q
+cd ../../firmware && cargo test</code></pre>
+      </div>
+      <div class="stack">
+        <p class="eyebrow">Ground rules</p>
+        <h2 class="h-md">Four rules we keep.</h2>
+        <ol class="rules">{rules.map(([t, d]) => <li><strong>{t}</strong> <span class="muted">{d}</span></li>)}</ol>
+        <p class="small"><a href="/docs/contributing/">CONTRIBUTING</a> · <a href="/docs/code_of_conduct/">Code of Conduct</a> · <a href="/status/">Status and open decisions</a></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="templates">
+    <div class="container">
+      <header class="section-head"><p class="eyebrow">Issue templates</p><h2 id="templates" class="h-md">Structured, so enthusiasm turns into data.</h2></header>
+      <div class="grid grid--3">
+        {templates.map((t) => <a class="card" href={issueTemplate(t.id)}><h3 class="h-sm">{t.name}</h3><p class="small muted">{t.description}</p></a>)}
+      </div>
+      <p class="small muted note">Questions go to <a href={DISCUSSIONS_URL}>GitHub Discussions</a>, not issues.</p>
+    </div>
+  </section>
+</Base>
+<style>
+  .page-head { padding-block: var(--s-2xl) var(--s-xl); display: grid; gap: var(--s-md); }
+  .page-head .lead { max-width: 72ch; }
+  .first { display: grid; gap: var(--s-lg); align-items: center; border-color: color-mix(in oklab, var(--warm) 45%, var(--hairline)); }
+  .first p.muted { margin-top: var(--s-xs); }
+  @media (min-width: 900px) { .first { grid-template-columns: 1fr auto; } }
+  .jump { display: flex; flex-wrap: wrap; gap: 8px; margin-block: var(--s-xl); }
+  .jump a { text-decoration: none; color: var(--ink); min-height: 32px; }
+  .roles { display: grid; gap: var(--s-lg); grid-template-columns: minmax(0, 1fr); padding-bottom: var(--s-2xl); }
+  @media (min-width: 900px) { .roles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .role { display: grid; gap: var(--s-md); align-content: start; }
+  .role__head { display: flex; gap: var(--s-md); align-items: start; }
+  .role__icon { color: var(--warm); margin-top: 4px; }
+  .tasks { list-style: none; padding: 0; display: grid; gap: 0; }
+  .tasks li { display: flex; gap: var(--s-sm); justify-content: space-between; align-items: baseline; padding-block: 10px; border-top: 1px solid var(--hairline); }
+  .tasks a { font-weight: 500; color: var(--ink); text-decoration: none; }
+  .tasks a:hover { color: var(--link); text-decoration: underline; }
+  .diff { flex: none; }
+  .diff--easy { color: var(--success); }
+  .diff--medium { color: var(--cold); }
+  .diff--hard { color: var(--warm); }
+  .two { display: grid; gap: var(--s-2xl); grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 900px) { .two { grid-template-columns: 1fr 1fr; } }
+  .stack { display: grid; gap: var(--s-md); align-content: start; }
+  .stack > * + * { margin-top: 0; }
+  .rules { padding-left: 1.3em; display: grid; gap: var(--s-sm); }
+  .rules li::marker { font-family: var(--font-mono); color: var(--warm); }
+  .note { margin-top: var(--s-md); }
+  a.card h3 { color: var(--ink); }
+</style>

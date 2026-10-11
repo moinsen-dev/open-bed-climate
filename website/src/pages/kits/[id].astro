@@ -1,0 +1,121 @@
+---
+import { getCollection } from "astro:content";
+import Base from "../../layouts/Base.astro";
+import SafetyNote from "../../components/SafetyNote.astro";
+import ModelEstimate from "../../components/ModelEstimate.astro";
+import KitRoomTable from "../../components/KitRoomTable.astro";
+import ZoneGlyph from "../../components/ZoneGlyph.astro";
+import { joinKit, psuSummary, KIT_BLURB, PSU_MARGIN } from "../../lib/kits.ts";
+import { MODULE_ORDER, SENSING_LABEL, repoBlob, issueTemplate } from "../../site.ts";
+
+export async function getStaticPaths() {
+  const kits = await getCollection("kits");
+  return kits.map((k) => ({ params: { id: k.id }, props: { entry: k } }));
+}
+const { entry } = Astro.props;
+const kit = joinKit(entry.id, entry.data);
+const d = kit.data;
+const roles = (await getCollection("parts")).map((p) => p.data);
+// Sensing roles only apply when the kit has sensing.
+const relevant = roles.filter((r) => d.sensing.option !== "none" || r.module !== "Sensing");
+const modules = [...new Set(relevant.map((r) => r.module))].sort((a, b) => {
+  const ia = MODULE_ORDER.indexOf(a), ib = MODULE_ORDER.indexOf(b);
+  return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+});
+const specs: [string, string][] = [
+  ["Tier", d.kit.tier === 0 ? "0 · modules only" : "1 · reference PCBs"],
+  ["Zones", String(d.kit.zones)],
+  ["Peltiers per zone", String(d.thermal.tec_per_zone)],
+  ["Heatsink", `${d.thermal.heatsink_k_per_w} K/W per zone (estimate until measured)`],
+  ["Current cap", `${d.thermal.max_tec_current_a} A per Peltier · ${kit.model.check.zone_current_limit_a} A per zone`],
+  ["Sensing", SENSING_LABEL[d.sensing.option]],
+  ["Power supplies", psuSummary(d)],
+];
+---
+<Base title={d.kit.name} description={`${d.kit.name}: ${d.kit.zones}-zone, Tier ${d.kit.tier} kit for the open bed climate system. ${KIT_BLURB[kit.id] ?? ""}`}>
+  <div class="container kit">
+    <nav class="crumbs small" aria-label="Breadcrumb"><a href="/kits/">Kits</a> <span aria-hidden="true">/</span> <span>{d.kit.name}</span></nav>
+    <header class="kit__head">
+      <ZoneGlyph zones={d.kit.zones} size={64} />
+      <div>
+        <div class="kit__chips"><span class="chip chip--plain">Tier {d.kit.tier}</span><span class="chip chip--plain">{d.kit.zones} {d.kit.zones === 1 ? "zone" : "zones"}</span><span class="chip chip--plain">{SENSING_LABEL[d.sensing.option]}</span></div>
+        <h1 class="h-lg">{d.kit.name}</h1>
+        {KIT_BLURB[kit.id] && <p class="lead muted">{KIT_BLURB[kit.id]}</p>}
+      </div>
+    </header>
+
+    <dl class="readouts">
+      <div class="readout card"><dt class="eyebrow">Coldest water</dt><dd><ModelEstimate c={d.claims.min_water_c} approx /></dd><dd class="small muted">sleeper in bed, 25 °C room · model <span class="num">{kit.model.check.min_water_c.toFixed(1)} °C</span></dd></div>
+      <div class="readout card"><dt class="eyebrow">Warms to</dt><dd><ModelEstimate c={d.claims.max_water_c} digits={0} mark={false} /></dd><dd class="small muted">the safety cap, for every kit</dd></div>
+      <div class="readout card"><dt class="eyebrow">Peltier input</dt><dd><span class="num">{kit.model.check.tec_input_w_per_zone} W</span></dd><dd class="small muted">per zone at full cooling · {kit.psuMarginOk ? `within ${PSU_MARGIN * 100} % of the supply` : "over the supply limit"}</dd></div>
+      <div class="readout card"><dt class="eyebrow">Kit check</dt><dd>{kit.model.check.problems.length === 0 ? <span class="status chip chip--done">Claims hold</span> : <span class="status chip chip--danger">Problems</span>}</dd><dd class="small muted">checked in CI against the thermal model</dd></div>
+    </dl>
+    <p class="small muted">* Model estimate. No prototype of this kit has been built or measured yet.</p>
+
+    <SafetyNote variant="build" />
+
+    <section class="kit__section" aria-labelledby="specs">
+      <h2 id="specs" class="h-md">Specs from the kit file</h2>
+      <div class="table-wrap">
+        <table class="data-table"><tbody>
+          {specs.map(([k, v]) => <tr><th scope="row">{k}</th><td>{v}</td></tr>)}
+        </tbody></table>
+      </div>
+      <p class="small"><a href={repoBlob(`hardware/kits/${kit.id}.toml`)}>Open {kit.id}.toml in the repository</a></p>
+    </section>
+
+    <section class="kit__section" aria-labelledby="rooms">
+      <h2 id="rooms" class="h-md">Coldest water by room temperature</h2>
+      <KitRoomTable kits={[kit]} />
+    </section>
+
+    <section class="kit__section" aria-labelledby="roles">
+      <h2 id="roles" class="h-md">What you need, by role</h2>
+      <p class="muted">Parts are listed by the job they do. Each role has example parts with a verification status; pick any part that meets the requirement.</p>
+      <div class="roles">
+        {modules.map((m) => (
+          <div class="roles__group">
+            <h3 class="eyebrow">{m}</h3>
+            <ul>
+              {relevant.filter((r) => r.module === m).map((r) => (
+                <li><a href={`/parts/#${r.id}`} class="mono">{r.id}</a>{r.safety && <span class="chip chip--safety">Safety</span>}</li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <section class="kit__cta card">
+      <div>
+        <h2 class="h-md">Build this kit</h2>
+        <p class="muted">Read the safety concept, complete the commissioning checklist, then tell us how it went. A build report with measurements is the most valuable contribution right now.</p>
+      </div>
+      <div class="btn-row">
+        <a class="btn btn--primary" href={issueTemplate("build-report.yml")}>Post a build report</a>
+        <a class="btn btn--secondary" href="/docs/safety/">Safety concept</a>
+      </div>
+    </section>
+  </div>
+</Base>
+<style>
+  .kit { display: grid; gap: var(--s-xl); padding-block: var(--s-xl) var(--s-2xl); }
+  .crumbs { color: var(--ink-muted); }
+  .crumbs a { color: var(--ink-muted); }
+  .kit__head { display: flex; gap: var(--s-lg); align-items: start; }
+  .kit__head > div { display: grid; gap: var(--s-sm); }
+  .kit__chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .readouts { display: grid; gap: var(--s-md); grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @media (min-width: 900px) { .readouts { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  .readout { display: grid; gap: 4px; align-content: start; padding: var(--s-md); }
+  .readout dd:nth-of-type(1) { font-size: 1.75rem; line-height: 1.2; }
+  .readouts + p { margin-top: calc(-1 * var(--s-lg)); }
+  .kit__section { display: grid; gap: var(--s-md); }
+  .kit__section th { color: var(--ink-muted); font-weight: 500; width: 34%; }
+  .roles { display: grid; gap: var(--s-lg); grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
+  .roles ul { list-style: none; padding: 0; margin-top: var(--s-xs); display: grid; gap: 6px; }
+  .roles li { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .kit__cta { display: grid; gap: var(--s-lg); align-items: center; }
+  .kit__cta p { margin-top: var(--s-xs); max-width: 60ch; }
+  @media (min-width: 900px) { .kit__cta { grid-template-columns: 1fr auto; } }
+</style>

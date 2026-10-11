@@ -1,0 +1,249 @@
+---
+import { getCollection } from "astro:content";
+import Base from "../layouts/Base.astro";
+import { inFileOrder } from "../lib/file-order.ts";
+import HeroNight from "../components/HeroNight.astro";
+import WaterLoopDiagram from "../components/WaterLoopDiagram.astro";
+import KitCard from "../components/KitCard.astro";
+import SafetyLayers from "../components/SafetyLayers.astro";
+import Status from "../components/Status.astro";
+import RoleIcon from "../components/RoleIcon.astro";
+import { joinKit, sortKits, MODEL } from "../lib/kits.ts";
+import { SITE_NAME, LICENSES, issueTemplate, SPONSOR_MAILTO } from "../site.ts";
+import { ROLES } from "../lib/roles.ts";
+
+const kits = (await getCollection("kits")).map((k) => joinKit(k.id, k.data)).sort(sortKits);
+const roadmap = inFileOrder(await getCollection("roadmap"), "src/data/roadmap.yaml");
+const done = roadmap.filter((r) => r.data.state === "done");
+const next = roadmap.filter((r) => r.data.state === "next" && r.id !== "rename");
+const help = inFileOrder(await getCollection("helpWanted"), "src/data/help-wanted.yaml");
+const firstTask = (role: string) => help.find((h) => h.data.role === role)?.data.task;
+
+const pillars = [
+  { title: "Yours, locally.", body: "No cloud, no account, no subscription. Your temperature schedule runs on the hub next to your bed, and Home Assistant sees every zone natively.", icon: "M4 11 12 4l8 7M6 9.5V20h12V9.5M10 20v-5h4v5" },
+  { title: "Safety by architecture.", body: "The networked hub can only ask for a temperature. A separate control chip enforces fixed limits, and hardware cutoffs act even if every line of software fails. You never touch mains wiring.", icon: "M12 3 4.5 6v5.5c0 4.5 3.2 8.2 7.5 9.5 4.3-1.3 7.5-5 7.5-9.5V6L12 3ZM9 12l2 2 4-4" },
+  { title: "Standard parts, your kit.", body: "PC-watercooling parts, Peltier modules, a Raspberry Pi Pico 2, an ESP32 and certified plug-in power supplies. Every part is listed by the job it does, so you can swap it.", icon: "M4 7h16v10H4zM8 7V4M16 7V4M8 20v-3M16 20v-3M8 12h8" },
+  { title: "Claims you can check.", body: "Each kit is a small text file. Our test suite checks its temperature claims against an open thermal model. Write your own kit and get the same check.", icon: "M6 3h9l4 4v14H6zM15 3v4h4M9 14l2 2 4-4" },
+];
+---
+<Base>
+  <!-- Hero -->
+  <section class="hero">
+    <div class="container hero__grid">
+      <div class="hero__copy">
+        <p class="eyebrow">Open-source bed climate · Design phase</p>
+        <h1 class="display hero__title">Sleep at your temperature. <span class="hero__accent">On your hardware.</span></h1>
+        <p class="lead hero__lead">{SITE_NAME} is an open-source bed climate system. Water runs through a thin mat on your mattress, and Peltier modules cool or warm it, separately for each side of the bed. It runs locally with Home Assistant, is built from standard parts, and has no cloud and no subscription.</p>
+        <div class="btn-row hero__ctas">
+          <a class="btn btn--primary" href="/contribute/">Help build prototype 0</a>
+          <a class="btn btn--secondary" href="/kits/">Pick a kit</a>
+          <a class="text-link hero__sponsor" href="/sponsor/">Sponsor<span class="arrow"></span></a>
+        </div>
+        <p class="hero__micro small muted">
+          <span>Open hardware ({LICENSES.hardware})</span><span>Open software ({LICENSES.software})</span><span>Not certified, not a medical device</span>
+        </p>
+      </div>
+      <div class="hero__widget">
+        <HeroNight />
+      </div>
+    </div>
+  </section>
+
+  <!-- Pillars -->
+  <section class="section">
+    <div class="container">
+      <div class="grid grid--4">
+        {pillars.map((p) => (
+          <div class="pillar">
+            <svg class="pillar__icon" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d={p.icon} fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            <h2 class="h-sm">{p.title}</h2>
+            <p class="small muted">{p.body}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section class="section" aria-labelledby="how">
+    <div class="container">
+      <header class="section-head">
+        <p class="eyebrow">How it works</p>
+        <h2 id="how" class="h-lg">Water, a heat pump the size of a coaster, and two small computers.</h2>
+      </header>
+      <WaterLoopDiagram />
+      <p class="section-link"><a class="text-link" href="/how-it-works/">How it works in detail<span class="arrow"></span></a></p>
+    </div>
+  </section>
+
+  <!-- Kits teaser -->
+  <section class="section" aria-labelledby="kits">
+    <div class="container">
+      <header class="section-head">
+        <p class="eyebrow">Pick a kit</p>
+        <h2 id="kits" class="h-lg">Start from a kit. Change anything.</h2>
+        <p class="lead muted">All kits warm to 43 °C, the safety cap. The test suite checks every kit's cooling claim against the thermal model.</p>
+      </header>
+      <div class="kit-row">
+        {kits.map((k) => <KitCard kit={k} />)}
+      </div>
+      <p class="footnote small muted">* Model estimate for a sleeper in bed in a 25 °C room. Checked in CI against the thermal model, not yet measured.</p>
+      <p class="section-link"><a class="text-link" href="/kits/">Compare kits or make your own<span class="arrow"></span></a></p>
+    </div>
+  </section>
+
+  <!-- Safety -->
+  <section class="section" aria-labelledby="safety">
+    <div class="container safety-band">
+      <div class="safety-band__copy">
+        <p class="eyebrow">Safety</p>
+        <h2 id="safety" class="h-lg">Water, several hundred watts and a sleeping person.</h2>
+        <p class="lead muted">We take that seriously: fixed limits in firmware, independent hardware cutoffs, certified plug-in supplies only, and a commissioning checklist before the first night. Nothing here is certified, so you build at your own risk.</p>
+        <ul class="safety-band__list">
+          <li><span class="num t-warm">{MODEL.limits.setpoint_max_c} °C</span> maximum setpoint, compiled in, not configurable</li>
+          <li><span class="num t-warm">50 °C</span> bimetal cutoff on every cold plate</li>
+          <li><span class="num t-cold">0.15 L/min</span> flow before any Peltier current</li>
+          <li><span class="num t-cold">10 s</span> without a heartbeat and the bed goes to a safe state</li>
+        </ul>
+        <a class="btn btn--secondary" href="/docs/safety/">Read the safety concept</a>
+      </div>
+      <div class="safety-band__art"><SafetyLayers /></div>
+    </div>
+  </section>
+
+  <!-- Status -->
+  <section class="section" aria-labelledby="status">
+    <div class="container">
+      <header class="section-head">
+        <p class="eyebrow">Where we are</p>
+        <h2 id="status" class="h-lg">Tested in software. Waiting for its first night.</h2>
+      </header>
+      <div class="grid grid--3 status-cols">
+        <div class="card">
+          <Status state="done" />
+          <h3 class="h-sm">Works in software (tested)</h3>
+          <ul>{done.map((r) => <li>{r.data.text}</li>)}</ul>
+        </div>
+        <div class="card">
+          <Status state="next" />
+          <h3 class="h-sm">Next</h3>
+          <ul>{next.map((r) => <li>{r.data.text}</li>)}</ul>
+        </div>
+        <div class="card card--help">
+          <Status state="measure" />
+          <h3 class="h-sm">Needs you</h3>
+          <ul>
+            <li>The first physical build</li>
+            <li>Five measurements only a prototype can give us</li>
+          </ul>
+          <a class="text-link" href="/status/">Full status<span class="arrow"></span></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- First build band -->
+  <section class="first-build" aria-labelledby="first-build">
+    <div class="container first-build__inner">
+      <div>
+        <p class="eyebrow">The most valuable contribution right now</p>
+        <h2 id="first-build" class="h-lg">Build one and measure it.</h2>
+        <p class="muted">Every number on this site is still a model estimate. One honest build report with photos and measurements is worth more than any line of code.</p>
+      </div>
+      <div class="btn-row">
+        <a class="btn btn--primary" href={issueTemplate("build-report.yml")}>Start a build report</a>
+        <a class="btn btn--secondary" href="/kits/solo-starter/">See the Solo Starter</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Get involved -->
+  <section class="section section--flush" aria-labelledby="involved">
+    <div class="container">
+      <header class="section-head">
+        <p class="eyebrow">Get involved</p>
+        <h2 id="involved" class="h-lg">There is a place for you.</h2>
+        <p class="lead muted">You don't need to be an engineer. Each role has tasks that are open today.</p>
+      </header>
+      <div class="grid grid--4">
+        {ROLES.map((r) => (
+          <a class="card role" href={`/contribute/#${r.id}`}>
+            <span class="role__icon"><RoleIcon role={r.id} /></span>
+            <h3 class="h-sm">{r.title}</h3>
+            <p class="small muted">{firstTask(r.id)}</p>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Sponsor teaser -->
+  <section class="section" aria-labelledby="sponsor">
+    <div class="container sponsor-teaser">
+      <div>
+        <p class="eyebrow">Sponsor</p>
+        <h2 id="sponsor" class="h-lg">Fund the first real measurements.</h2>
+        <p class="lead muted">Parts for prototype 0, a test cooling pad, measuring instruments and a first run of reference PCBs. Small and concrete, and everything it produces stays open.</p>
+      </div>
+      <div class="btn-row"><a class="btn btn--primary" href={SPONSOR_MAILTO}>E-mail us about sponsoring</a><a class="btn btn--secondary" href="/sponsor/">What it funds</a></div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .hero { padding-block: clamp(var(--s-xl), 6vw, var(--s-2xl)) clamp(var(--s-2xl), 8vw, var(--s-3xl)); position: relative; overflow: hidden; }
+  .hero::before {
+    content: ""; position: absolute; inset: -20% -10% auto auto; width: 70%; height: 120%; pointer-events: none;
+    background: radial-gradient(closest-side, color-mix(in oklab, var(--temp-20) 12%, transparent), transparent 70%);
+  }
+  .hero__grid { position: relative; display: grid; gap: var(--s-xl); grid-template-columns: minmax(0, 1fr); align-items: center; }
+  .hero__copy { display: grid; gap: var(--s-lg); }
+  .hero__title { max-width: 14ch; }
+  .hero__accent { color: var(--warm); }
+  .hero__lead { color: var(--ink-muted); }
+  .hero__ctas .btn { flex: 1 1 auto; }
+  .hero__sponsor { padding-inline: 8px; }
+  .hero__micro { display: flex; flex-wrap: wrap; gap: 4px 16px; font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.02em; }
+  .hero__micro span { display: inline-flex; align-items: center; gap: 8px; }
+  .hero__micro span::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: var(--border-strong); }
+  @media (min-width: 640px) { .hero__ctas .btn { flex: 0 0 auto; } }
+  @media (min-width: 900px) {
+    .hero__grid { grid-template-columns: 5fr 7fr; gap: var(--s-2xl); }
+  }
+
+  .pillar { display: grid; gap: var(--s-sm); align-content: start; }
+  .pillar__icon { color: var(--cold); }
+
+  .section-link { margin-top: var(--s-lg); }
+  .footnote { margin-top: var(--s-md); }
+  .kit-row { display: grid; gap: var(--s-lg); grid-template-columns: minmax(0, 1fr); }
+  @media (max-width: 899px) {
+    .kit-row { grid-auto-flow: column; grid-auto-columns: minmax(260px, 82%); grid-template-columns: none; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: var(--s-sm); }
+    .kit-row > :global(*) { scroll-snap-align: start; }
+  }
+  @media (min-width: 900px) { .kit-row { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+  .safety-band { display: grid; gap: var(--s-xl); align-items: center; grid-template-columns: minmax(0, 1fr); }
+  .safety-band__copy { display: grid; gap: var(--s-lg); justify-items: start; }
+  .safety-band__list { list-style: none; padding: 0; display: grid; gap: var(--s-sm); }
+  .safety-band__list li { display: grid; grid-template-columns: 7.5rem 1fr; gap: var(--s-sm); align-items: baseline; color: var(--ink-muted); border-top: 1px solid var(--hairline); padding-top: var(--s-sm); }
+  .safety-band__list .num { font-weight: 600; font-size: 1.125rem; }
+  .safety-band__art { display: grid; place-items: center; }
+  @media (min-width: 900px) { .safety-band { grid-template-columns: 7fr 5fr; } }
+
+  .status-cols .card { display: grid; gap: var(--s-sm); align-content: start; justify-items: start; }
+  .status-cols ul { padding-left: 1.1em; color: var(--ink-muted); display: grid; gap: 6px; font-size: 0.9375rem; }
+  .card--help { border-color: color-mix(in oklab, var(--warm) 40%, var(--hairline)); }
+
+  .first-build { background: var(--surface); border-block: 1px solid var(--hairline); padding-block: var(--s-2xl); position: relative; overflow: hidden; }
+  .first-build::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: linear-gradient(90deg, var(--temp-13), var(--temp-20), var(--temp-28), var(--temp-36), var(--temp-43)); }
+  .first-build__inner { display: grid; gap: var(--s-lg); align-items: center; }
+  .first-build__inner p.muted { max-width: 60ch; margin-top: var(--s-sm); }
+  @media (min-width: 900px) { .first-build__inner { grid-template-columns: 1fr auto; } }
+
+  .role { display: grid; gap: var(--s-xs); align-content: start; }
+  .role__icon { color: var(--warm); }
+
+  .sponsor-teaser { display: grid; gap: var(--s-lg); align-items: end; }
+  @media (min-width: 900px) { .sponsor-teaser { grid-template-columns: 1fr auto; } }
+</style>

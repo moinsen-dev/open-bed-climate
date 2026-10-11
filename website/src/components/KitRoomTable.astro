@@ -1,0 +1,33 @@
+---
+// The static "what can my kit do" estimator: coldest water by room temperature, precomputed by opod.site_data.
+// No sliders: the model only means something at the computed points.
+import ModelEstimate from "./ModelEstimate.astro";
+import type { KitView } from "../lib/kits.ts";
+interface Props { kits: KitView[] }
+const { kits } = Astro.props;
+const rooms = kits[0].model.coldest_by_room.map((r) => r.room_c);
+---
+<div class="table-wrap" tabindex="0" role="region" aria-label="Coldest water by room temperature">
+  <table class="data-table room-table">
+    <caption class="visually-hidden">Coldest reachable water by room temperature, sleeper in bed. Model estimates.</caption>
+    <thead>
+      <tr><th scope="col">Room</th>{kits.map((k) => <th scope="col">{k.data.kit.name}</th>)}</tr>
+    </thead>
+    <tbody>
+      {rooms.map((room, i) => (
+        <tr>
+          <th scope="row" class="mono">{room.toFixed(0)} °C room</th>
+          {kits.map((k) => {
+            const r = k.model.coldest_by_room[i];
+            return <td><ModelEstimate c={r.water_c} mark={false} /> <span class="small muted num">{r.tec_input_w} W/zone</span></td>;
+          })}
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
+<style>
+  .room-table { min-width: 520px; }
+  .room-table td { font-size: 1.0625rem; }
+  .room-table tbody th { color: var(--ink-muted); font-weight: 500; }
+</style>

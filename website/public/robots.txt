@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://openbedclimate.moinsen.dev/sitemap-index.xml

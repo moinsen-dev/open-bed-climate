@@ -1,0 +1,25 @@
+# Solo Starter: one zone (twin / one side of a bed), Tier 0 (modules only, no custom PCB).
+# Cheapest way to get a working, safe build. Copy this file to make your own kit.
+
+[kit]
+name = "Solo Starter"
+tier = 0
+zones = 1
+
+[thermal]
+tec_per_zone = 3
+heatsink_k_per_w = 0.11   # per zone, fans on; ESTIMATE until measured (see docs/design/OPEN-DECISIONS.md)
+max_tec_current_a = 5.0   # per TEC; 15 A per zone fits one DPS5020-class driver
+
+[sensing]
+option = "load_cells"     # none | load_cells | pneumatic | piezo_grid
+
+[power]
+# One certified IEC-inlet 24 V desktop supply per zone for the TECs, plus one 12 V brick for pumps/fans/electronics.
+# No mains wiring by the builder (see SAFETY.md and hardware/PARTS.md, role psu).
+tec_psu_w_per_zone = 280
+aux_psu_w = 80
+
+[claims]                  # checked by software/opod tests against the thermal model
+min_water_c = 21.7        # sleeper in bed, 25 degC room
+max_water_c = 43.0        # empty bed, 18 degC room

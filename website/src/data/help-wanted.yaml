@@ -1,0 +1,141 @@
+# Concrete open tasks per contributor role (01-content §5). `role` is the /contribute/#anchor.
+# `link` is a site route, or "repo:<path>" / "issue:<template>" which pages resolve against REPO_URL.
+# Re-check against STATE.md whenever STATE is refrozen.
+- id: build-solo
+  role: builder
+  task: Build the Solo Starter and post a build report
+  source: README · hardware/README.md
+  link: "issue:build-report.yml"
+  difficulty: hard
+- id: commissioning
+  role: builder
+  task: Run the 5-step commissioning checklist and report the results
+  source: SAFETY.md
+  link: /docs/safety/
+  difficulty: medium
+- id: m1
+  role: builder
+  task: Measure body-to-water heat transfer through a typical topper (heated dummy pad at 34 °C)
+  source: OPEN-DECISIONS measurement 1
+  link: "repo:docs/design/OPEN-DECISIONS.md"
+  difficulty: medium
+- id: m2
+  role: builder
+  task: Measure cold-plate thermal resistance per Peltier with real clamping
+  source: OPEN-DECISIONS measurement 2
+  link: "repo:docs/design/OPEN-DECISIONS.md"
+  difficulty: medium
+- id: m3
+  role: builder
+  task: Measure heatsink resistance vs. fan noise (target ≤ 30 dB(A)); replaces the kit heatsink ESTIMATE values
+  source: OPEN-DECISIONS measurement 3 · kit TOML comments
+  link: "repo:docs/design/OPEN-DECISIONS.md"
+  difficulty: medium
+- id: m5
+  role: builder
+  task: Test condensation at 15 °C water and 60 % RH
+  source: OPEN-DECISIONS measurement 5
+  link: "repo:docs/design/OPEN-DECISIONS.md"
+  difficulty: medium
+- id: verify-parts
+  role: parts
+  task: "Verify the {unverified} unverified and {listing} listing-only part examples against datasheets"
+  source: hardware/parts.toml
+  link: /parts/
+  difficulty: easy
+- id: psu-datasheets
+  role: parts
+  task: Confirm the 12 V supply for two-zone kits (GST120A12 class) in the datasheet (current, IEC inlet, connector)
+  source: STATE.md · parts.toml role aux_psu
+  link: /parts/#aux_psu
+  difficulty: easy
+- id: cutoff-relay-leak
+  role: parts
+  task: Find a certified 50 °C normally-closed thermal cutoff, a DC-rated DPDT polarity relay and a leak sensor with a datasheet
+  source: STATE.md next step 1
+  link: "issue:part-substitution.yml"
+  difficulty: easy
+- id: safety-review
+  role: electronics
+  task: Review the safety concept and the "must not change" limits
+  source: SAFETY.md · docs/design/02-electrical-safety.md
+  link: /docs/design/02-electrical-safety/
+  difficulty: hard
+- id: dps5020
+  role: electronics
+  task: Verify the DPS5020 register map, output ripple and EEPROM write behaviour
+  source: STATE.md open friction
+  link: /docs/hardware/wiring/
+  difficulty: medium
+- id: tier1-boards
+  role: electronics
+  task: Design the Tier 1 power board (6 Peltier channels, protection, relays) and the cover sensor board
+  source: CONTRIBUTING · BOM.md items 10, 15
+  link: /docs/contributing/
+  difficulty: hard
+- id: mat
+  role: mechanical
+  task: Prototype the water mat (welded TPU channels), dry-break couplings and an enclosure with drip tray
+  source: CONTRIBUTING · BOM.md
+  link: /docs/design/01-thermal-fluidics/
+  difficulty: hard
+- id: connector
+  role: mechanical
+  task: Design a combined water + data connector (nice to have)
+  source: FEATURES.md (planned)
+  link: /features/
+  difficulty: medium
+- id: bringup
+  role: firmware
+  task: First bring-up of the Pico 2 control firmware on a real board (wiring in WIRING.md)
+  source: README · STATE.md
+  link: /docs/hardware/wiring/
+  difficulty: medium
+- id: pwm
+  role: firmware
+  task: Fan and pump PWM control
+  source: STATE.md next step 3
+  link: "repo:firmware"
+  difficulty: medium
+- id: ota
+  role: firmware
+  task: Firmware update path over OPL
+  source: STATE.md next step 3
+  link: /docs/design/04-firmware-protocol/
+  difficulty: hard
+- id: hub-hw
+  role: software
+  task: Run the ESPHome hub component on real hardware
+  source: README
+  link: "repo:hub/esphome"
+  difficulty: medium
+- id: dewpoint
+  role: software
+  task: Make the dew-point guard easier to set up (room sensors are commented out in the example)
+  source: STATE.md open friction
+  link: "repo:hub/esphome/opod-hub.yaml"
+  difficulty: easy
+- id: presets
+  role: software
+  task: Adaptive schedules, presets (away, nap, hot flash) and a local web UI
+  source: FEATURES.md
+  link: /docs/design/05-bed-software/
+  difficulty: medium
+- id: m4
+  role: research
+  task: Piezo signal quality per grid position (heart-rate detectability across sleeping positions)
+  source: OPEN-DECISIONS measurement 4
+  link: /docs/design/03-sensing-biometrics/
+  difficulty: hard
+- id: bcg
+  role: research
+  task: Open BCG algorithms for heart rate, HRV and breathing on the hub; sleep stages with open algorithms only
+  source: FEATURES.md · CONTRIBUTING
+  link: /docs/design/03-sensing-biometrics/
+  difficulty: hard
+- id: docs
+  role: docs
+  task: Clarify the docs; start a translation under docs/i18n/<lang>/
+  source: CONTRIBUTING
+  link: /docs/contributing/
+  difficulty: easy

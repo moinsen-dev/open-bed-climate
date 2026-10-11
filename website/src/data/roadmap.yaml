@@ -1,0 +1,82 @@
+# Status page data (01-content §3 /status). Sources: README status table (decides "done", C4), STATE.md (decides "next"),
+# docs/design/OPEN-DECISIONS.md measurements 1–5 (state "measure"). Re-check whenever STATE.md is refrozen.
+- id: model
+  area: Reference software
+  state: done
+  text: Thermal model and kit checks
+  source: README status · software/opod
+- id: control
+  area: Reference software
+  state: done
+  text: Control and safety logic (setpoint clamp, flow interlock, heating taper, watchdog)
+  source: README status · software/opod
+- id: protocol
+  area: Protocol
+  state: done
+  text: OPL protocol (Open Peltier Link), with golden frames shared by Python, Rust and C++
+  source: README status · docs/design/04-firmware-protocol.md
+- id: firmware
+  area: Firmware
+  state: done
+  text: Pico 2 firmware core matches the reference (compiles, not yet run on hardware)
+  source: README status · firmware/
+- id: hub
+  area: Hub
+  state: done
+  text: ESPHome hub component with Home Assistant entities and night schedules (compiles for ESP32-S3, not yet run on hardware)
+  source: README status · hub/esphome/
+- id: kits
+  area: Hardware
+  state: done
+  text: Three kits and a parts catalog listed by role (designed, not yet built)
+  source: README status · hardware/
+- id: parts-verify
+  area: Hardware
+  state: next
+  text: Verify the remaining parts against datasheets
+  source: STATE.md next step
+- id: pwm
+  area: Firmware
+  state: next
+  text: Fan and pump PWM control
+  source: STATE.md next step 3
+- id: ota
+  area: Firmware
+  state: next
+  text: Firmware update path over OPL
+  source: STATE.md next step 3
+- id: rename
+  area: Software
+  state: next
+  text: Rename code identifiers to the new project name in one sweep
+  source: STATE.md next step 2
+- id: bringup
+  area: Hardware
+  state: next
+  text: First hardware bring-up of the control board and hub
+  source: README status
+- id: m1
+  area: Measurement
+  state: measure
+  text: Body-to-water heat transfer through a typical topper (heated dummy pad at 34 °C)
+  source: OPEN-DECISIONS measurement 1
+- id: m2
+  area: Measurement
+  state: measure
+  text: Cold-plate thermal resistance per Peltier with real clamping
+  source: OPEN-DECISIONS measurement 2
+- id: m3
+  area: Measurement
+  state: measure
+  text: Heatsink resistance vs. fan noise (target ≤ 30 dB(A))
+  source: OPEN-DECISIONS measurement 3
+- id: m4
+  area: Measurement
+  state: measure
+  text: Piezo signal quality per grid position across sleeping positions
+  source: OPEN-DECISIONS measurement 4
+- id: m5
+  area: Measurement
+  state: measure
+  text: Condensation at 15 °C water and 60 % RH
+  source: OPEN-DECISIONS measurement 5

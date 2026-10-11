@@ -1,0 +1,38 @@
+---
+import ZoneGlyph from "./ZoneGlyph.astro";
+import ModelEstimate from "./ModelEstimate.astro";
+import { KIT_BLURB, type KitView } from "../lib/kits.ts";
+import { SENSING_LABEL } from "../site.ts";
+interface Props { kit: KitView; headingLevel?: "h2" | "h3" }
+const { kit, headingLevel = "h3" } = Astro.props;
+const d = kit.data;
+const H = headingLevel;
+---
+<a class="card kit-card" href={`/kits/${kit.id}/`}>
+  <div class="kit-card__top">
+    <ZoneGlyph zones={d.kit.zones} />
+    <div class="kit-card__chips">
+      <span class="chip chip--plain">Tier {d.kit.tier}</span>
+      <span class="chip chip--plain">{d.kit.zones} {d.kit.zones === 1 ? "zone" : "zones"}</span>
+    </div>
+  </div>
+  <H class="h-md kit-card__name">{d.kit.name}</H>
+  <p class="small muted">{d.thermal.tec_per_zone} Peltiers per side · {SENSING_LABEL[d.sensing.option].toLowerCase()} sensing</p>
+  <dl class="kit-card__readouts">
+    <div><dt class="eyebrow">Coldest water</dt><dd><ModelEstimate c={d.claims.min_water_c} approx /></dd></div>
+    <div><dt class="eyebrow">Warms to</dt><dd><ModelEstimate c={d.claims.max_water_c} digits={0} mark={false} /></dd></div>
+  </dl>
+  {KIT_BLURB[kit.id] && <p class="kit-card__blurb small">{KIT_BLURB[kit.id]}</p>}
+  <span class="kit-card__more small">Kit details<span class="arrow"></span></span>
+</a>
+<style>
+  .kit-card { background: var(--surface-raised); display: grid; gap: var(--s-sm); align-content: start; height: 100%; }
+  a.kit-card:hover { border-color: var(--border-strong); background: color-mix(in oklab, var(--surface-raised) 85%, var(--ink) 4%); }
+  .kit-card__top { display: flex; justify-content: space-between; align-items: start; gap: var(--s-sm); }
+  .kit-card__chips { display: flex; gap: 6px; flex-wrap: wrap; justify-content: end; }
+  .kit-card__name { margin-top: var(--s-xs); }
+  .kit-card__readouts { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-sm); padding-block: var(--s-sm); border-block: 1px solid var(--hairline); margin-block: var(--s-xs); }
+  .kit-card__readouts dd { font-size: 1.5rem; margin-top: 2px; }
+  .kit-card__blurb { color: var(--ink); }
+  .kit-card__more { color: var(--link); font-weight: 600; margin-top: auto; }
+</style>

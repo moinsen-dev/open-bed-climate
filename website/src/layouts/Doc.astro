@@ -1,0 +1,46 @@
+---
+import Base from "./Base.astro";
+import type { MarkdownHeading } from "astro";
+import { repoBlob } from "../site.ts";
+interface Props {
+  title: string;
+  repoPath: string;
+  headings: MarkdownHeading[];
+  eyebrow?: string;
+}
+const { title, repoPath, headings, eyebrow = "Docs" } = Astro.props;
+const toc = headings.filter((h) => h.depth === 2);
+---
+<Base title={title}>
+  <div class="container doc">
+    <nav class="doc__crumbs small" aria-label="Breadcrumb"><a href="/docs/">Docs</a> <span aria-hidden="true">/</span> <span>{eyebrow}</span></nav>
+    <div class="doc__grid">
+      <article class="prose">
+        <slot name="intro" />
+        <slot />
+        <p class="doc__source small muted">Rendered from <code>{repoPath}</code> in the repository. <a href={repoBlob(repoPath)}>View or edit the source</a>.</p>
+      </article>
+      {toc.length > 1 && (
+        <aside class="doc__toc" aria-label="On this page">
+          <p class="eyebrow">On this page</p>
+          <ul>{toc.map((h) => <li><a href={`#${h.slug}`}>{h.text}</a></li>)}</ul>
+        </aside>
+      )}
+    </div>
+  </div>
+</Base>
+<style>
+  .doc { padding-block: var(--s-xl) var(--s-2xl); }
+  .doc__crumbs { color: var(--ink-muted); margin-bottom: var(--s-lg); }
+  .doc__crumbs a { color: var(--ink-muted); }
+  .doc__grid { display: grid; gap: var(--s-xl); grid-template-columns: minmax(0, 1fr); }
+  .doc__source { margin-top: var(--s-2xl) !important; padding-top: var(--s-md); border-top: 1px solid var(--hairline); }
+  .doc__toc ul { list-style: none; padding: 0; margin-top: var(--s-sm); display: grid; gap: 6px; font-size: var(--fs-body-sm); }
+  .doc__toc a { color: var(--ink-muted); text-decoration: none; }
+  .doc__toc a:hover { color: var(--link); }
+  .doc__toc { display: none; }
+  @media (min-width: 1100px) {
+    .doc__grid { grid-template-columns: minmax(0, 1fr) 240px; }
+    .doc__toc { display: block; position: sticky; top: 96px; align-self: start; border-left: 1px solid var(--hairline); padding-left: var(--s-md); }
+  }
+</style>

@@ -1,0 +1,98 @@
+---
+import Wordmark from "./Wordmark.astro";
+import { NAV, REPO_URL } from "../site.ts";
+const path = Astro.url.pathname;
+const isCurrent = (href: string) => (href === "/" ? path === "/" : path.startsWith(href));
+---
+<header class="site-header">
+  <div class="container site-header__inner">
+    <a href="/" class="site-header__brand" aria-label="Home"><Wordmark /></a>
+    <nav class="site-nav" aria-label="Main">
+      <ul>
+        {NAV.map((n) => <li><a href={n.href} aria-current={isCurrent(n.href) ? "page" : undefined}>{n.label}</a></li>)}
+      </ul>
+    </nav>
+    <div class="site-header__actions">
+      <a class="gh-link" href={REPO_URL} aria-label="Source code repository on GitHub">Repo</a>
+      <button type="button" class="theme-toggle js-only" data-theme-toggle aria-label="Switch to light theme">
+        <svg class="i-sun" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="12" cy="12" r="4.2" fill="none" stroke="currentColor" stroke-width="1.6"></circle><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>
+        <svg class="i-moon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M19.5 14.6A8 8 0 0 1 9.4 4.5a8 8 0 1 0 10.1 10.1Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"></path></svg>
+      </button>
+      <a class="btn btn--primary btn--small sponsor-btn" href="/sponsor/">Sponsor</a>
+      <details class="menu">
+        <summary aria-label="Menu"><span class="menu__bars" aria-hidden="true"></span><span class="menu__label">Menu</span></summary>
+        <nav class="menu__panel" aria-label="Main (mobile)">
+          <ul>
+            {NAV.map((n) => <li><a href={n.href} aria-current={isCurrent(n.href) ? "page" : undefined}>{n.label}</a></li>)}
+            <li><a href="/sponsor/">Sponsor</a></li>
+            <li><a href={REPO_URL}>Repository</a></li>
+          </ul>
+        </nav>
+      </details>
+    </div>
+  </div>
+</header>
+<style>
+  .site-header {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--header-bg);
+    -webkit-backdrop-filter: blur(12px) saturate(140%);
+    backdrop-filter: blur(12px) saturate(140%);
+    border-bottom: 1px solid var(--hairline);
+  }
+  .site-header__inner { display: flex; align-items: center; gap: var(--s-lg); height: 64px; }
+  .site-header__brand { text-decoration: none; display: inline-flex; border-radius: var(--r-sm); }
+  .site-nav { display: none; margin-right: auto; }
+  .site-nav ul, .menu__panel ul { list-style: none; padding: 0; }
+  .site-nav ul { display: flex; gap: 4px; }
+  .site-nav a {
+    display: inline-flex; align-items: center; min-height: 40px; padding: 0 12px;
+    border-radius: var(--r-full); color: var(--ink-muted); text-decoration: none; font-size: 0.9375rem; font-weight: 500;
+    transition: color 200ms var(--ease), background-color 200ms var(--ease);
+  }
+  .site-nav a:hover { color: var(--ink); background: var(--surface); }
+  .site-nav a[aria-current="page"] { color: var(--ink); background: var(--surface-raised); }
+  .site-header__actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+  .gh-link { display: none; color: var(--ink-muted); text-decoration: none; font-size: 0.9375rem; padding: 0 8px; min-height: 40px; align-items: center; }
+  .gh-link:hover { color: var(--ink); }
+  .theme-toggle {
+    display: inline-grid; place-items: center; width: 44px; height: 44px;
+    border-radius: var(--r-full); border: 1px solid var(--hairline); background: transparent; color: var(--ink-muted);
+  }
+  .theme-toggle:hover { color: var(--ink); border-color: var(--border-strong); }
+  .i-moon { display: none; }
+  :global(:root[data-theme="light"]) .i-sun { display: none; }
+  :global(:root[data-theme="light"]) .i-moon { display: block; }
+  @media (prefers-color-scheme: light) {
+    :global(:root:not([data-theme="dark"])) .i-sun { display: none; }
+    :global(:root:not([data-theme="dark"])) .i-moon { display: block; }
+  }
+  .sponsor-btn { display: none; }
+  .menu { position: relative; }
+  .menu summary {
+    list-style: none; display: inline-flex; align-items: center; gap: 8px;
+    min-height: 44px; padding: 0 14px; border-radius: var(--r-full); border: 1px solid var(--border-strong);
+    font-weight: 600; font-size: 0.875rem; cursor: pointer;
+  }
+  .menu summary::-webkit-details-marker { display: none; }
+  .menu__bars, .menu__bars::before, .menu__bars::after { display: block; width: 16px; height: 1.5px; background: currentColor; position: relative; }
+  .menu__bars::before, .menu__bars::after { content: ""; position: absolute; left: 0; }
+  .menu__bars::before { top: -5px; }
+  .menu__bars::after { top: 5px; }
+  .menu__panel {
+    position: absolute; right: 0; top: calc(100% + 10px); min-width: 240px;
+    background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--r-lg);
+    padding: 8px; box-shadow: 0 20px 40px rgb(0 0 0 / 0.35);
+  }
+  .menu__panel a { display: flex; min-height: 44px; align-items: center; padding: 0 12px; border-radius: var(--r-md); color: var(--ink); text-decoration: none; }
+  .menu__panel a:hover, .menu__panel a[aria-current="page"] { background: var(--surface-raised); }
+  @media (min-width: 640px) {
+    .sponsor-btn { display: inline-flex; }
+  }
+  @media (min-width: 1000px) {
+    .site-nav { display: block; }
+    .site-header__actions { margin-left: 0; }
+    .gh-link { display: inline-flex; }
+    .menu { display: none; }
+  }
+</style>

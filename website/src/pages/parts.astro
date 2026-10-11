@@ -1,0 +1,96 @@
+---
+import { getCollection } from "astro:content";
+import Base from "../layouts/Base.astro";
+import { MODULE_ORDER, PART_STATUS_LABEL, issueTemplate, repoBlob } from "../site.ts";
+
+const roles = (await getCollection("parts")).map((p) => p.data);
+const order = (m: string) => { const i = MODULE_ORDER.indexOf(m); return i < 0 ? 99 : i; };
+const modules = [...new Set(roles.map((r) => r.module))].sort((a, b) => order(a) - order(b));
+const examples = roles.flatMap((r) => r.example);
+const count = (s: string) => examples.filter((e) => e.status === s).length;
+const tone: Record<string, string> = { datasheet: "done", listing: "next", unverified: "help", rejected: "muted" };
+const slug = (m: string) => m.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+---
+<Base title="Parts" description="The parts catalog, listed by role: what each part must do, with example parts and how well each one is verified.">
+  <section class="container page-head">
+    <p class="eyebrow">Parts catalog</p>
+    <h1 class="h-lg">Roles first, brands second.</h1>
+    <p class="lead muted">Each role says what is needed. Each example is one way to fill it, with a source and the date someone checked it. Find a cheaper, better or local part and it goes in as another option, never as the only one.</p>
+  </section>
+  <div class="container parts">
+    <div class="parts__stats">
+      <div class="stat card"><span class="num stat__n">{roles.length}</span><span class="small muted">roles</span></div>
+      <div class="stat card"><span class="num stat__n">{count("datasheet")}</span><span class="small muted">confirmed in a datasheet</span></div>
+      <div class="stat card"><span class="num stat__n t-cold">{count("listing")}</span><span class="small muted">listing only</span></div>
+      <div class="stat card stat--help"><span class="num stat__n t-warm">{count("unverified")}</span><span class="small muted">unverified: help wanted</span></div>
+    </div>
+    <div class="parts__cta card">
+      <p><strong>Verify a part.</strong> Check one unverified or listing-only example against its datasheet, or suggest a new one. No coding needed.</p>
+      <a class="btn btn--primary btn--small" href={issueTemplate("part-substitution.yml")}>Suggest or verify a part</a>
+    </div>
+    <dl class="legend small">
+      {Object.entries(PART_STATUS_LABEL).map(([k, v]) => <div><dt><span class={`status chip chip--${tone[k]}`}>{v}</span></dt><dd class="muted">{{ datasheet: "key specs confirmed in the manufacturer datasheet", listing: "only seen in a distributor or retailer listing", unverified: "plausible, not yet confirmed: please verify", rejected: "checked and found unsuitable, kept so nobody re-checks it" }[k]}</dd></div>)}
+      <div><dt><span class="chip chip--safety">Safety</span></dt><dd class="muted">the role affects the limits in the safety concept</dd></div>
+    </dl>
+    <nav class="parts__jump" aria-label="Modules">{modules.map((m) => <a class="chip chip--plain" href={`#m-${slug(m)}`}>{m}</a>)}</nav>
+
+    {modules.map((m) => (
+      <section class="module" aria-labelledby={`m-${slug(m)}`}>
+        <h2 id={`m-${slug(m)}`} class="h-md">{m}</h2>
+        {roles.filter((r) => r.module === m).map((r) => (
+          <article class="role card" id={r.id}>
+            <header class="role__head">
+              <h3 class="mono role__id">{r.id}</h3>
+              {r.safety && <span class="chip chip--safety">Safety</span>}
+            </header>
+            <p class="role__req"><strong>Requirement:</strong> {r.requirement}</p>
+            {r.notes && <p class="small muted">{r.notes}</p>}
+            {r.example.length > 0 && (
+              <ul class="examples">
+                {r.example.map((e) => (
+                  <li>
+                    <div class="examples__top">
+                      {e.source ? <a href={e.source} rel="noopener">{e.name}</a> : <span>{e.name}</span>}
+                      <span class={`status chip chip--${tone[e.status]}`}>{PART_STATUS_LABEL[e.status]}</span>
+                      {e.verified_on && <span class="small muted num">checked {e.verified_on}</span>}
+                    </div>
+                    {e.notes && <p class="small muted">{e.notes}</p>}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </article>
+        ))}
+      </section>
+    ))}
+    <p class="small muted">Rendered from <code>hardware/parts.toml</code> at build time. <a href={repoBlob("hardware/parts.toml")}>Source</a>.</p>
+  </div>
+</Base>
+<style>
+  .page-head { padding-block: var(--s-2xl) var(--s-xl); display: grid; gap: var(--s-md); }
+  .page-head .lead { max-width: 72ch; }
+  .parts { display: grid; gap: var(--s-xl); padding-bottom: var(--s-2xl); }
+  .parts__stats { display: grid; gap: var(--s-md); grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @media (min-width: 900px) { .parts__stats { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  .stat { display: grid; gap: 2px; padding: var(--s-md); }
+  .stat__n { font-size: 2rem; font-weight: 600; line-height: 1.1; }
+  .stat--help { border-color: color-mix(in oklab, var(--warm) 40%, var(--hairline)); }
+  .parts__cta { display: flex; flex-wrap: wrap; gap: var(--s-md); align-items: center; justify-content: space-between; }
+  .legend { display: grid; gap: var(--s-xs); grid-template-columns: minmax(0, 1fr); }
+  .legend div { display: flex; gap: var(--s-sm); align-items: baseline; flex-wrap: wrap; }
+  @media (min-width: 900px) { .legend { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .parts__jump { display: flex; flex-wrap: wrap; gap: 8px; }
+  .parts__jump a { text-decoration: none; color: var(--ink); min-height: 32px; }
+  .parts__jump a:hover { border-color: var(--border-strong); }
+  .module { display: grid; gap: var(--s-md); }
+  .module > h2 { padding-top: var(--s-lg); border-top: 1px solid var(--hairline); }
+  .role { display: grid; gap: var(--s-sm); }
+  .role__head { display: flex; gap: var(--s-sm); align-items: center; flex-wrap: wrap; }
+  .role__id { font-size: 1.0625rem; font-weight: 600; font-family: var(--font-mono); }
+  .role__req { max-width: 90ch; }
+  .examples { list-style: none; padding: 0; display: grid; gap: var(--s-sm); margin-top: var(--s-xs); }
+  .examples li { border-top: 1px solid var(--hairline); padding-top: var(--s-sm); display: grid; gap: 4px; }
+  .examples__top { display: flex; gap: 6px 10px; flex-wrap: wrap; align-items: center; }
+  .examples__top a, .examples__top > span:first-child { font-weight: 600; overflow-wrap: anywhere; }
+  .examples p { max-width: 90ch; overflow-wrap: anywhere; }
+</style>

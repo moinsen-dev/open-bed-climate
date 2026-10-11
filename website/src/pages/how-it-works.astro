@@ -1,0 +1,156 @@
+---
+import Base from "../layouts/Base.astro";
+import WaterLoopDiagram from "../components/WaterLoopDiagram.astro";
+import ModuleMap from "../components/ModuleMap.astro";
+import SafetyLayers from "../components/SafetyLayers.astro";
+import SafetyNote from "../components/SafetyNote.astro";
+import { MODEL } from "../lib/kits.ts";
+import { repoTree } from "../site.ts";
+
+const L = MODEL.limits;
+const docs = [
+  ["design/00-architecture", "System architecture", "Goals, non-goals, the block diagram and who is responsible for what."],
+  ["design/01-thermal-fluidics", "Thermal and fluidics", "Peltier sizing, heatsinks, pumps, the mat and the thermal model."],
+  ["design/02-electrical-safety", "Electrical safety", "Power chain, cutoffs, interlocks and why builders never wire mains."],
+  ["design/03-sensing-biometrics", "Sensing and biometrics", "Load cells, pneumatic and piezo options; BCG on the hub."],
+  ["design/04-firmware-protocol", "Firmware and protocol", "The control loop, the TEC driver state machine and OPL frames."],
+  ["design/05-bed-software", "Bed software", "Schedules, Home Assistant entities, presets and data ownership."],
+];
+---
+<Base title="How it works" description="The water loop, the Peltier thermal module, the split between the safety control MCU and the networked hub, and the local-first software.">
+  <section class="container page-head">
+    <p class="eyebrow">How it works</p>
+    <h1 class="h-lg">A water loop, a heat pump, and a strict division of labour.</h1>
+    <p class="lead muted">Water runs through a thin mat on your mattress. A thermal module next to the bed cools or warms it with Peltier modules. A small control board keeps it within fixed limits, and a hub runs your schedule and talks to Home Assistant. Everything is designed and tested in software; nothing has been built yet.</p>
+  </section>
+
+  <section class="section section--flush" aria-labelledby="loop">
+    <div class="container">
+      <header class="section-head"><p class="eyebrow">Overview</p><h2 id="loop" class="h-md">The water loop</h2></header>
+      <WaterLoopDiagram />
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="thermal">
+    <div class="container two-col">
+      <div class="stack">
+        <p class="eyebrow">Thermal module</p>
+        <h2 id="thermal" class="h-md">Peltier modules move heat, both ways.</h2>
+        <p class="muted">A Peltier (thermo-electric) module pumps heat from one face to the other when current flows. Clamped between a cold plate that the water runs through and a heatsink with a fan, it cools the water. Reverse the current and it warms the water instead. There is no compressor and no refrigerant: just solid-state modules, a pump and PC-watercooling parts.</p>
+        <p class="muted">Each zone has its own module, so each side of the bed has its own temperature. The kits use three or four standard modules per zone; the thermal model in <a href={repoTree("software/opod")}>software/opod</a> sizes them and checks every kit's claims.</p>
+      </div>
+      <div class="facts card">
+        <dl>
+          <div><dt class="eyebrow">Setpoint range</dt><dd><span class="num t-cold">{L.setpoint_min_c}</span>–<span class="num t-warm">{L.setpoint_max_c} °C</span></dd></div>
+          <div><dt class="eyebrow">Reachable cooling</dt><dd>depends on the kit and the room: <a href="/kits/">see kits</a></dd></div>
+          <div><dt class="eyebrow">Heating to</dt><dd><span class="num t-warm">{L.setpoint_max_c} °C</span>, the safety cap, for every kit</dd></div>
+          <div><dt class="eyebrow">Polarity change</dt><dd>only at zero current, with a dead time</dd></div>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="split">
+    <div class="container two-col">
+      <div class="stack">
+        <p class="eyebrow">Control vs. hub</p>
+        <h2 id="split" class="h-md">The networked part is never the safety part.</h2>
+        <p class="muted">Temperature control and limits run on a separate small control MCU, a Raspberry Pi Pico 2 running the project's own Rust firmware. It clamps every setpoint to {L.setpoint_min_c}–{L.setpoint_max_c} °C, refuses Peltier current without water flow, shuts down on a leak and goes to a safe state when the hub stops sending heartbeats.</p>
+        <p class="muted">The hub (an ESP32 with ESPHome, or a Raspberry Pi) has Wi-Fi, Home Assistant and your schedules. It can only <em>request</em> a temperature. Independent hardware cutoffs back up the firmware even if all software fails.</p>
+        <p><a class="text-link" href="/docs/safety/">The full safety concept<span class="arrow"></span></a></p>
+      </div>
+      <div class="center"><SafetyLayers /></div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="opl">
+    <div class="container two-col">
+      <div class="stack">
+        <p class="eyebrow">Protocol</p>
+        <h2 id="opl" class="h-md">OPL: Open Peltier Link</h2>
+        <p class="muted">Hub and control board talk over a small framed serial protocol. The same golden frames test the Python reference, the Rust firmware and the C++ hub component, so all three agree byte for byte. The protocol is ours and open; it is not derived from any vendor's.</p>
+        <p><a class="text-link" href="/docs/design/04-firmware-protocol/">Firmware and protocol design<span class="arrow"></span></a></p>
+      </div>
+      <div class="stack">
+        <p class="eyebrow">Sensing options</p>
+        <h2 class="h-md">Three ways to sense the sleeper</h2>
+        <ul class="opts">
+          <li><strong>Load cells</strong> under the bed legs: presence and movement, cheapest.</li>
+          <li><strong>Pneumatic</strong>: an air tube with a pressure sensor under the cover.</li>
+          <li><strong>Piezo grid</strong>: a 3×3 grid of piezo strips, the best signal for the planned heart-rate and breathing estimates.</li>
+        </ul>
+        <p class="small muted">All biometrics are planned, not built.</p>
+      </div>
+    </div>
+    <div class="container"><SafetyNote variant="bio" /></div>
+  </section>
+
+  <section class="section" id="software" aria-labelledby="software-h">
+    <div class="container">
+      <header class="section-head">
+        <p class="eyebrow">Software</p>
+        <h2 id="software-h" class="h-lg">Local-first. No account, no cloud, no subscription.</h2>
+        <p class="lead muted">Your schedule runs on the hub in your home. Biometric data, once it exists, never leaves the house unless you export it.</p>
+      </header>
+      <div class="grid grid--2">
+        <div class="card stack" id="home-assistant">
+          <h3 class="h-sm">Home Assistant, natively</h3>
+          <p class="small muted">The hub is an ESPHome external component. Home Assistant sees a climate entity per zone, water temperature and other sensors, problem and link status, and buttons to prime the loop and clear faults. The hub can also act as a Bluetooth proxy for adjustable bed bases with community integrations.</p>
+          <p class="small muted">Status: compiles for ESP32-S3; protocol and schedule host-tested; not yet run on hardware.</p>
+        </div>
+        <div class="card stack">
+          <h3 class="h-sm">Night schedules on the hub</h3>
+          <p class="small muted">A schedule is a curve: temperatures at minutes after bedtime, with a warm ramp before the wake time. Each side has its own program, the curve lives in your YAML, and a manual change ends the program for the night.</p>
+          <p><a class="text-link small" href="/schedule/">Draw your night<span class="arrow"></span></a></p>
+        </div>
+        <div class="card stack">
+          <h3 class="h-sm">Reference model (Python)</h3>
+          <p class="small muted">The thermal model, control and safety logic, protocol and schedules, all tested. Every number on this site comes from it or from the repository files.</p>
+          <p><a class="text-link small" href={repoTree("software/opod")}>software/opod<span class="arrow"></span></a></p>
+        </div>
+        <div class="card stack">
+          <h3 class="h-sm">Firmware (Rust, embassy)</h3>
+          <p class="small muted">The control firmware core replays the reference model's golden vectors; the Pico 2 build compiles to about 50 KB. Not yet run on hardware: that's a first bring-up waiting for you.</p>
+          <p><a class="text-link small" href={repoTree("firmware")}>firmware/<span class="arrow"></span></a></p>
+        </div>
+      </div>
+      <div class="quickstart">
+        <h3 class="h-sm">Run it in two minutes, no hardware needed</h3>
+        <pre><code>cd software/opod && uv run pytest -q    # reference model, safety logic, kit checks
+cd firmware && cargo test               # firmware core vs. golden vectors</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="modules">
+    <div class="container">
+      <header class="section-head"><p class="eyebrow">Modules</p><h2 id="modules" class="h-md">How the parts fit together</h2></header>
+      <ModuleMap />
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="reading">
+    <div class="container">
+      <header class="section-head"><p class="eyebrow">Further reading</p><h2 id="reading" class="h-md">The design documents</h2></header>
+      <div class="grid grid--3">
+        {docs.map(([id, t, s]) => <a class="card" href={`/docs/${id}/`}><h3 class="h-sm">{t}</h3><p class="small muted">{s}</p></a>)}
+      </div>
+    </div>
+  </section>
+</Base>
+<style>
+  .page-head { padding-block: var(--s-2xl) var(--s-xl); display: grid; gap: var(--s-md); }
+  .page-head .lead { max-width: 72ch; }
+  .two-col { display: grid; gap: var(--s-xl); align-items: center; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 900px) { .two-col { grid-template-columns: 1fr 1fr; gap: var(--s-2xl); } }
+  .stack { display: grid; gap: var(--s-md); align-content: start; }
+  .stack > * + * { margin-top: 0; }
+  .center { display: grid; place-items: center; }
+  .facts dl { display: grid; gap: var(--s-md); }
+  .facts dd { font-size: 1.0625rem; margin-top: 2px; }
+  .opts { padding-left: 1.1em; display: grid; gap: 8px; color: var(--ink-muted); }
+  .opts strong { color: var(--ink); }
+  .section .container + .container { margin-top: var(--s-xl); }
+  .quickstart { margin-top: var(--s-xl); display: grid; gap: var(--s-sm); }
+  a.card h3 { color: var(--ink); }
+</style>

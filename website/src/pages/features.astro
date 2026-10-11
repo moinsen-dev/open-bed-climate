@@ -1,0 +1,71 @@
+---
+import { getCollection, render } from "astro:content";
+import Base from "../layouts/Base.astro";
+import Status from "../components/Status.astro";
+import SafetyNote from "../components/SafetyNote.astro";
+import { SITE_NAME, repoBlob } from "../site.ts";
+
+const features = (await getCollection("features")).sort((a, b) => a.data.row - b.data.row);
+const names = new Map((await getCollection("featureNames")).map((n) => [n.data.row, n.data]));
+const rows = await Promise.all(features.map(async (f) => {
+  const n = names.get(f.data.row);
+  if (!n) throw new Error(`feature-names.yaml has no row ${f.data.row}`);
+  return { ...f.data, name: n.name, override: n.approach, Content: n.approach ? null : (await render(f)).Content };
+}));
+// Module column: words only (the repo uses a plug emoji for "third-party products").
+const moduleText = (m: string) => m.replace(/🔌/gu, "Third-party").replace(/^—$/, "None").trim();
+---
+<Base title="Features" description="What a bed climate system does, how this project covers each capability, and which ones are designed, planned or left to other products.">
+  <section class="container page-head">
+    <p class="eyebrow">Features</p>
+    <h1 class="h-lg">What a bed climate system does.</h1>
+    <p class="lead muted">Commercial bed-cooling systems showed what a smart mattress cover can do. {SITE_NAME} covers the same kinds of capabilities with open hardware and local software, and says plainly which ones are designed, which are planned and which we leave to other products.</p>
+  </section>
+  <div class="container feat">
+    <dl class="legend small">
+      <div><dt><Status state="now" /></dt><dd class="muted">in the design now</dd></div>
+      <div><dt><Status state="planned" /></dt><dd class="muted">planned, contributions welcome</dd></div>
+      <div><dt><Status state="third_party" /></dt><dd class="muted">via existing products</dd></div>
+      <div><dt><Status state="out_of_scope" /></dt><dd class="muted">out of scope, on purpose</dd></div>
+    </dl>
+    <div class="table-wrap" tabindex="0" role="region" aria-label="Capability table">
+      <table class="data-table feat__table">
+        <thead><tr><th scope="col">Capability</th><th scope="col">Our approach</th><th scope="col">Module</th><th scope="col">Status</th></tr></thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr>
+              <th scope="row">{r.name}</th>
+              <td class="feat__approach">{r.override ? <Fragment set:html={r.override.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")} /> : r.Content && <r.Content />}</td>
+              <td class="small muted">{moduleText(r.module)}</td>
+              <td><div class="feat__status">{r.status.map((s) => <Status state={s.state} note={s.note.replace(/^\((.*)\)$/, "$1") || undefined} />)}</div></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+    <SafetyNote variant="bio" />
+    <section class="further" aria-labelledby="further">
+      <h2 id="further" class="h-md">Where {SITE_NAME} deliberately goes further</h2>
+      <div class="grid grid--3">
+        <div class="card"><h3 class="h-sm">Local-first and private</h3><p class="small muted">No cloud, and biometric data never leaves your home unless you export it.</p></div>
+        <div class="card"><h3 class="h-sm">Repairable and adaptable</h3><p class="small muted">Standard parts, documented roles and kit files you can change.</p></div>
+        <div class="card"><h3 class="h-sm">Measurable claims</h3><p class="small muted">Each kit's performance claims are checked against the thermal model in CI.</p></div>
+      </div>
+    </section>
+    <p class="small muted">Capabilities are collected from public sources only (product pages, launch coverage, open-source client projects). Table rendered from <a href={repoBlob("docs/FEATURES.md")}>docs/FEATURES.md</a> with generic capability names.</p>
+  </div>
+</Base>
+<style>
+  .page-head { padding-block: var(--s-2xl) var(--s-xl); display: grid; gap: var(--s-md); }
+  .page-head .lead { max-width: 72ch; }
+  .feat { display: grid; gap: var(--s-xl); padding-bottom: var(--s-2xl); }
+  .legend { display: flex; flex-wrap: wrap; gap: var(--s-sm) var(--s-lg); }
+  .legend div { display: flex; gap: 8px; align-items: center; }
+  .feat__table { min-width: 760px; }
+  .feat__table tbody th { width: 24%; }
+  .feat__approach :global(p) { margin: 0; }
+  .feat__approach { color: var(--ink-muted); }
+  .feat__approach :global(strong) { color: var(--ink); }
+  .feat__status { display: flex; flex-wrap: wrap; gap: 6px; }
+  .further { display: grid; gap: var(--s-lg); }
+</style>

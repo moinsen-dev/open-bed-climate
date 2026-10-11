@@ -1,0 +1,123 @@
+---
+// I2: the water loop as a hairline schematic. Water paths carry the temperature color (cooling mode: the supply
+// leg is cold, the return leg is warmed by the sleeper). Text equivalent below the drawing.
+import { tempColor } from "../lib/temp.ts";
+const serp = (() => {
+  const x0 = 44, x1 = 184, y0 = 108, y1 = 254, step = 16;
+  let d = `M${x0} ${y0}`;
+  let k = 0;
+  for (let y = y0; y + step <= y1; y += step, k++) d += k % 2 === 0 ? ` H${x1} a8 8 0 0 1 0 ${step}` : ` H${x0} a8 8 0 0 0 0 ${step}`;
+  return d;
+})();
+const fins = Array.from({ length: 12 }, (_, i) => 546 + i * 10);
+---
+<figure class="diagram">
+  <div class="diagram__scroll" tabindex="0" role="group" aria-label="Water loop diagram (scrolls sideways on small screens)">
+    <svg viewBox="0 0 800 340" role="img" aria-labelledby="wl-title wl-desc">
+      <title id="wl-title">Water loop</title>
+      <desc id="wl-desc">Cooled water flows from the thermal module to the water mat on the bed, picks up heat from the sleeper, returns to the reservoir, and is pumped through the flow sensor back to the cold plate, where Peltier modules pump the heat into a heatsink with a fan. The control board drives the Peltier current; the hub requests temperatures over OPL.</desc>
+      <defs>
+        <linearGradient id="wl-mat" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color={tempColor(20)}></stop><stop offset="1" stop-color={tempColor(27)}></stop>
+        </linearGradient>
+        <marker id="wl-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerUnits="userSpaceOnUse" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0 0 8 4 0 8z" class="d-arrowhead"></path></marker>
+      </defs>
+      <!-- 1 mat -->
+      <rect class="d-box" x="24" y="90" width="180" height="180" rx="4"></rect>
+      <path class="d-water d-water--mat" d={serp}></path>
+      <text class="d-label" x="24" y="290">WATER MAT</text>
+      <text class="d-label d-label--muted" x="24" y="306">ON THE MATTRESS</text>
+      <!-- thermal module frame -->
+      <rect class="d-frame" x="244" y="96" width="516" height="230"></rect>
+      <text class="d-label d-label--muted" x="256" y="116">THERMAL MODULE · PER ZONE</text>
+      <!-- control + hub -->
+      <rect class="d-box d-box--fill" x="270" y="132" width="186" height="42" rx="3"></rect>
+      <text class="d-label" x="282" y="150">CONTROL · PICO 2</text>
+      <text class="d-label d-label--muted" x="282" y="165">SAFETY LIMITS 13–43 °C</text>
+      <rect class="d-box d-box--fill" x="270" y="188" width="186" height="42" rx="3"></rect>
+      <text class="d-label" x="282" y="206">HUB · ESP32</text>
+      <text class="d-label d-label--muted" x="282" y="221">ESPHOME · HOME ASSISTANT</text>
+      <path class="d-signal" d="M363 174 V188"></path>
+      <text class="d-label d-label--muted" x="370" y="185">OPL</text>
+      <path class="d-signal" d="M456 153 H512 V203 H538" marker-end="url(#wl-arrow)"></path>
+      <!-- reservoir, pump, flow -->
+      <rect class="d-box" x="264" y="250" width="76" height="56" rx="4"></rect>
+      <path class="d-construct" d="M268 266 H336"></path>
+      <text class="d-label d-label--muted" x="302" y="320" text-anchor="middle">RESERVOIR</text>
+      <circle class="d-box" cx="420" cy="280" r="20"></circle>
+      <path class="d-construct" d="M408 280 L420 270 L432 280 L420 290 Z"></path>
+      <text class="d-label d-label--muted" x="420" y="320" text-anchor="middle">PUMP</text>
+      <rect class="d-box" x="470" y="272" width="24" height="16" rx="2"></rect>
+      <text class="d-label d-label--muted" x="482" y="320" text-anchor="middle">FLOW</text>
+      <!-- TEC stack -->
+      <circle class="d-box" cx="600" cy="124" r="18"></circle>
+      <path class="d-construct" d="M600 106 V142 M582 124 H618"></path>
+      {fins.map((x) => <line class="d-line" x1={x} y1="150" x2={x} y2="190"></line>)}
+      <line class="d-line" x1="540" y1="192" x2="660" y2="192"></line>
+      <rect class="d-tec" x="540" y="196" width="120" height="12"></rect>
+      <rect class="d-box d-box--fill" x="540" y="210" width="120" height="30" rx="2"></rect>
+      <text class="d-label d-label--muted" x="668" y="128">FAN</text>
+      <text class="d-label d-label--muted" x="668" y="174">HEATSINK</text>
+      <text class="d-label" x="668" y="206">PELTIER</text>
+      <text class="d-label d-label--muted" x="668" y="254">COLD PLATE</text>
+      <!-- heat flow arrow -->
+      <path class="d-heat" d="M528 232 V160" marker-end="url(#wl-arrow)"></path>
+      <!-- water legs -->
+      <path class="d-water d-water--cold" d="M660 232 H776 V60 H114 V90" stroke={tempColor(20)} marker-end="url(#wl-arrow)"></path>
+      <path class="d-water d-water--warm" d="M114 270 V290 H264" stroke={tempColor(27)} marker-end="url(#wl-arrow)"></path>
+      <path class="d-water d-water--warm" d="M340 280 H400" stroke={tempColor(27)}></path>
+      <path class="d-water d-water--warm" d="M440 280 H470" stroke={tempColor(27)}></path>
+      <path class="d-water d-water--warm" d="M494 280 H600 V240" stroke={tempColor(27)} marker-end="url(#wl-arrow)"></path>
+      <text class="d-label d-label--cold" x="300" y="52">COOLED WATER · SUPPLY</text>
+      <!-- numbered hotspots -->
+      {[[24, 90, "1"], [760, 96, "2"], [270, 132, "3"], [270, 188, "4"]].map(([x, y, n]) => (
+        <g><circle class="d-num" cx={x} cy={y} r="11"></circle><text class="d-num__t" x={x} y={Number(y) + 4} text-anchor="middle">{n}</text></g>
+      ))}
+    </svg>
+  </div>
+  <figcaption>
+    <ol class="diagram__steps">
+      <li><span><strong>Mat.</strong> A thin water mat lies on your mattress, one zone per side.</span></li>
+      <li><span><strong>Thermal module.</strong> Peltier modules move heat into or out of the water. A pump circulates it.</span></li>
+      <li><span><strong>Control board.</strong> A Raspberry Pi Pico 2 runs the temperature loop and the safety limits, with a 43 °C ceiling, flow and leak interlocks, and a watchdog.</span></li>
+      <li><span><strong>Hub.</strong> An ESP32 running ESPHome runs your night schedule and connects to Home Assistant. It can only request temperatures.</span></li>
+    </ol>
+  </figcaption>
+</figure>
+<style>
+  .diagram { display: grid; gap: var(--s-lg); }
+  .diagram__scroll { overflow-x: auto; border: 1px solid var(--hairline); border-radius: var(--r-lg); background: var(--surface); padding: var(--s-md); }
+  .diagram__scroll svg { min-width: 640px; width: 100%; max-width: 980px; height: auto; margin-inline: auto; }
+  .d-box { fill: none; stroke: var(--ink-muted); stroke-width: 1.5; }
+  .d-box--fill { fill: var(--surface-raised); }
+  .d-frame { fill: none; stroke: var(--hairline); stroke-width: 1.5; stroke-dasharray: 6 5; }
+  .d-construct { fill: none; stroke: var(--hairline); stroke-width: 1; stroke-dasharray: 2 4; }
+  .d-line { stroke: var(--ink-muted); stroke-width: 1.5; }
+  .d-tec { fill: var(--hairline); stroke: var(--ink-muted); stroke-width: 1.5; }
+  .d-water { fill: none; stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+  .d-water--mat { stroke: url(#wl-mat); stroke-width: 2.2; }
+  .d-heat { stroke: var(--warm); stroke-width: 1.5; stroke-dasharray: 3 3; fill: none; }
+  .d-signal { fill: none; stroke: var(--cold); stroke-width: 1.25; stroke-dasharray: 4 3; }
+  .d-arrowhead { fill: var(--ink-muted); }
+  .d-label { font-family: var(--font-mono); font-size: 11px; font-weight: 600; letter-spacing: 0.08em; fill: var(--ink); }
+  .d-label--muted { fill: var(--ink-muted); font-weight: 400; font-size: 10px; }
+  .d-label--cold { fill: var(--cold); font-size: 10px; }
+  .d-num { fill: var(--primary); }
+  .d-num__t { font-family: var(--font-mono); font-size: 12px; font-weight: 700; fill: #070b16; }
+  :global(:root[data-theme="light"]) .d-water--cold, :global(:root[data-theme="light"]) .d-water--mat { stroke: var(--stroke-cold); }
+  :global(:root[data-theme="light"]) .d-water--warm { stroke: var(--stroke-warm); }
+  @media (prefers-color-scheme: light) {
+    :global(:root:not([data-theme="dark"])) .d-water--cold, :global(:root:not([data-theme="dark"])) .d-water--mat { stroke: var(--stroke-cold); }
+    :global(:root:not([data-theme="dark"])) .d-water--warm { stroke: var(--stroke-warm); }
+  }
+  .diagram__steps { display: grid; gap: var(--s-md); padding: 0; list-style: none; counter-reset: step; }
+  .diagram__steps li { counter-increment: step; display: grid; grid-template-columns: 28px 1fr; gap: var(--s-sm); color: var(--ink-muted); }
+  .diagram__steps li::before {
+    content: counter(step); width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center;
+    background: var(--primary); color: #070b16; font-family: var(--font-mono); font-size: 12px; font-weight: 700; margin-top: 1px;
+  }
+  .diagram__steps strong { color: var(--ink); }
+  @media (min-width: 900px) {
+    .diagram__steps { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  }
+</style>

@@ -1,0 +1,27 @@
+---
+import Base from "../layouts/Base.astro";
+import ScheduleEditor from "../components/ScheduleEditor.astro";
+import { MODEL } from "../lib/kits.ts";
+const S = MODEL.schedule_default;
+---
+<Base title="Schedule" description="Your night, as a curve. Draw a temperature schedule and copy it into your hub. Schedules run on the hub, no subscription.">
+  <section class="container page-head">
+    <p class="eyebrow">Night schedule</p>
+    <h1 class="h-lg">Your night, as a curve.</h1>
+    <p class="lead muted">Schedules run on the hub, no subscription. A schedule is a few points: a temperature at a number of minutes after bedtime, joined by straight lines and held flat at the ends. Before your wake time, a ramp warms the bed to wake you gently; at the wake time the side turns off.</p>
+  </section>
+  <div class="container editor-wrap">
+    <ScheduleEditor />
+    <div class="grid grid--3 explain">
+      <div class="card"><h2 class="h-sm">The default program</h2><p class="small muted">{S.points[0][1]} °C at bedtime, cooling to {Math.min(...S.points.map((p) => p[1]))} °C for early deep sleep, then easing warmer toward morning, with a {S.wake_ramp_min}-minute ramp to {S.wake_target_c} °C. It comes straight from the reference code.</p></div>
+      <div class="card"><h2 class="h-sm">Same math, three times</h2><p class="small muted">This chart uses a TypeScript port of the reference schedule. The Python reference, the C++ hub component and this page are all tested against the same golden vectors.</p></div>
+      <div class="card"><h2 class="h-sm">Limits stay fixed</h2><p class="small muted">Every point is clamped to the {MODEL.limits.setpoint_min_c}–{MODEL.limits.setpoint_max_c} °C setpoint range. What your kit can actually reach depends on the kit and the room: <a href="/kits/">see kits</a>.</p></div>
+    </div>
+  </div>
+</Base>
+<style>
+  .page-head { padding-block: var(--s-2xl) var(--s-xl); display: grid; gap: var(--s-md); }
+  .page-head .lead { max-width: 72ch; }
+  .editor-wrap { display: grid; gap: var(--s-2xl); padding-bottom: var(--s-2xl); }
+  .explain .card { display: grid; gap: var(--s-xs); align-content: start; }
+</style>

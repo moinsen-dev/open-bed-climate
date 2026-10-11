@@ -1,0 +1,134 @@
+{
+  "generated_by": "python -m opod.site_data (do not edit)",
+  "kits": {
+    "duo-reference": {
+      "check": {
+        "aux_w": 65,
+        "max_water_c": 43.0,
+        "min_water_c": 18.3,
+        "problems": [],
+        "tec_input_w_per_zone": 230,
+        "zone_current_limit_a": 20.0
+      },
+      "coldest_by_room": [
+        {
+          "room_c": 20.0,
+          "tec_input_w": 227,
+          "water_c": 16.4
+        },
+        {
+          "room_c": 25.0,
+          "tec_input_w": 230,
+          "water_c": 18.3
+        },
+        {
+          "room_c": 28.0,
+          "tec_input_w": 232,
+          "water_c": 19.4
+        },
+        {
+          "room_c": 30.0,
+          "tec_input_w": 233,
+          "water_c": 20.2
+        }
+      ],
+      "name": "Duo Reference"
+    },
+    "duo-standard": {
+      "check": {
+        "aux_w": 65,
+        "max_water_c": 43.0,
+        "min_water_c": 18.6,
+        "problems": [],
+        "tec_input_w_per_zone": 186,
+        "zone_current_limit_a": 18.0
+      },
+      "coldest_by_room": [
+        {
+          "room_c": 20.0,
+          "tec_input_w": 183,
+          "water_c": 16.7
+        },
+        {
+          "room_c": 25.0,
+          "tec_input_w": 186,
+          "water_c": 18.6
+        },
+        {
+          "room_c": 28.0,
+          "tec_input_w": 188,
+          "water_c": 19.8
+        },
+        {
+          "room_c": 30.0,
+          "tec_input_w": 189,
+          "water_c": 20.5
+        }
+      ],
+      "name": "Duo Standard"
+    },
+    "solo-starter": {
+      "check": {
+        "aux_w": 40,
+        "max_water_c": 43.0,
+        "min_water_c": 21.5,
+        "problems": [],
+        "tec_input_w_per_zone": 173,
+        "zone_current_limit_a": 15.0
+      },
+      "coldest_by_room": [
+        {
+          "room_c": 20.0,
+          "tec_input_w": 171,
+          "water_c": 19.7
+        },
+        {
+          "room_c": 25.0,
+          "tec_input_w": 173,
+          "water_c": 21.5
+        },
+        {
+          "room_c": 28.0,
+          "tec_input_w": 174,
+          "water_c": 22.6
+        },
+        {
+          "room_c": 30.0,
+          "tec_input_w": 175,
+          "water_c": 23.4
+        }
+      ],
+      "name": "Solo Starter"
+    }
+  },
+  "limits": {
+    "setpoint_max_c": 43.0,
+    "setpoint_min_c": 13.0
+  },
+  "schedule_default": {
+    "points": [
+      [
+        0,
+        24.0
+      ],
+      [
+        30,
+        21.0
+      ],
+      [
+        120,
+        20.0
+      ],
+      [
+        300,
+        23.0
+      ],
+      [
+        420,
+        25.0
+      ]
+    ],
+    "wake_ramp_min": 30.0,
+    "wake_target_c": 32.0
+  }
+}

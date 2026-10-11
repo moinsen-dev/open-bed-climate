@@ -1,0 +1,32 @@
+---
+// Safety callout (DESIGN.md safety-callout). Variants: "strip" (home), "build" (kit/build pages, 02-community §4.3),
+// "bio" (sensing/biometrics pages). Always links the safety concept.
+import { SITE_NAME } from "../site.ts";
+interface Props { variant?: "strip" | "build" | "bio" }
+const { variant = "build" } = Astro.props;
+---
+<aside class={`safety safety--${variant}`} aria-label={variant === "bio" ? "Not a medical device" : "Safety notice"}>
+  <svg class="safety__icon" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M12 3 2.5 20h19L12 3Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"></path><path d="M12 10v4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path><circle cx="12" cy="17.2" r="1.1" fill="currentColor"></circle></svg>
+  <div class="safety__body">
+    {variant === "strip" && (
+      <p><strong>Water, several hundred watts and a sleeping person.</strong> We take that seriously: fixed limits in firmware, independent hardware cutoffs, certified plug-in supplies only, and a commissioning checklist before the first night. Nothing here is certified, so you build at your own risk. <a href="/docs/safety/">Read the safety concept<span class="arrow"></span></a></p>
+    )}
+    {variant === "build" && (
+      <p><strong>Experimental hardware. Build at your own risk.</strong> This design combines water, several hundred watts and a sleeping person. It is not certified (no CE marking, no safety approval) and is published for education and experimentation. Have the electrical part checked by a qualified person before you sleep on a build, and complete the commissioning checklist first. Mains-side work on Tier 1 power modules must be done by a qualified electrician. The information is provided "as is", without warranty, under the project licences. <a href="/docs/safety/">Safety concept and checklist<span class="arrow"></span></a></p>
+    )}
+    {variant === "bio" && (
+      <p><strong>Not a medical device.</strong> Heart rate, breathing and sleep data from {SITE_NAME} are planned features and will be estimates for personal interest. They are not intended to diagnose, treat, monitor or prevent any disease or condition. Talk to a doctor about health concerns.</p>
+    )}
+  </div>
+</aside>
+<style>
+  .safety {
+    display: grid; grid-template-columns: auto 1fr; gap: var(--s-md); align-items: start;
+    background: var(--surface); border: 1px solid var(--hairline); border-left: 4px solid var(--warning);
+    border-radius: var(--r-md); padding: var(--s-md) var(--s-lg) var(--s-md) var(--s-md);
+  }
+  .safety__icon { color: var(--warning); margin-top: 2px; }
+  .safety p { color: var(--ink-muted); max-width: 90ch; }
+  .safety strong { color: var(--warning); font-weight: 600; }
+  .safety a { font-weight: 600; white-space: nowrap; }
+</style>

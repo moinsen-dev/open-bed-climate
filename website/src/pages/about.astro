@@ -1,0 +1,36 @@
+---
+import Base from "../layouts/Base.astro";
+import { SITE_NAME, LICENSES, repoBlob, CONTACT_EMAIL } from "../site.ts";
+---
+<Base title="About" description={`Why ${SITE_NAME} exists, the clean-room policy, prior art, licenses and press information.`}>
+  <section class="container page-head">
+    <p class="eyebrow">About</p>
+    <h1 class="h-lg">Nobody should need a vendor's servers to sleep well.</h1>
+  </section>
+  <div class="container about prose">
+    <p class="lead">Bed-cooling systems work well, but the ones on the market depend on the vendor's cloud and a subscription. A community has already built local control for some older commercial hardware. {SITE_NAME} takes a different route: our own open hardware, designed clean-room from public information, so nobody depends on a vendor's servers to sleep well.</p>
+
+    <h2 id="clean-room">Clean-room policy</h2>
+    <p>We don't use vendor firmware, decompiled code, leaked documents or rooting instructions, and we don't accept them as contributions. Capabilities are collected from public sources only: product pages, launch coverage and open-source client projects. No vendor logos, product photos, UI screenshots or trade dress appear on this site; the drawings are our own.</p>
+
+    <h2 id="prior-art">Prior art</h2>
+    <p>Commercial systems in this space are cloud-bound and subscription-based. Community projects have documented local control for older units. We list them, with links, in <a href={repoBlob("docs/research/prior-art.md")}>docs/research/prior-art.md</a>. {SITE_NAME} is not affiliated with or endorsed by Eight Sleep or any other bed-cooling manufacturer. All product names belong to their owners.</p>
+
+    <h2 id="licenses">Licenses</h2>
+    <ul>
+      <li><strong>Software and documentation:</strong> {LICENSES.software} (<a href={repoBlob("LICENSE")}>LICENSE</a>)</li>
+      <li><strong>Hardware designs:</strong> {LICENSES.hardware} (<a href={repoBlob("LICENSE-HARDWARE")}>LICENSE-HARDWARE</a>)</li>
+      <li><strong>This website's content:</strong> {LICENSES.siteContent}</li>
+    </ul>
+    <p>The fonts are Bricolage Grotesque, Inter and JetBrains Mono, all under the SIL Open Font License, served from this site.</p>
+
+    <h2 id="press">Press</h2>
+    <p><strong>In one paragraph:</strong> {SITE_NAME} is an open-source, local-first bed climate system that cools and warms each side of the bed with water, built from standard parts you can buy, repair and change. It is in the design phase: the thermal model, safety logic, firmware core and Home Assistant hub component exist and are tested in software, and the project is looking for the people who will build and measure the first one.</p>
+    <p>You may use the diagrams on this site with attribution. Contact: <a class="mono" href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.</p>
+    <p class="muted">Please don't describe it as a replacement for, or equal to, any commercial product. Nothing has been measured yet, and nothing here is certified or a medical device.</p>
+  </div>
+</Base>
+<style>
+  .page-head { padding-block: var(--s-2xl) var(--s-lg); }
+  .about { padding-bottom: var(--s-2xl); }
+</style>

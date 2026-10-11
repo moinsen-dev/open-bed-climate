@@ -1,0 +1,49 @@
+---
+// Kit comparison: kits as columns, built from the kit TOMLs joined with model.json (opod.site_data).
+import ModelEstimate from "./ModelEstimate.astro";
+import { psuSummary, PSU_MARGIN, type KitView } from "../lib/kits.ts";
+import { SENSING_LABEL } from "../site.ts";
+interface Props { kits: KitView[] }
+const { kits } = Astro.props;
+const pct = (k: KitView) => Math.round((k.model.check.tec_input_w_per_zone / k.data.power.tec_psu_w_per_zone) * 100);
+---
+<div class="table-wrap kit-table" tabindex="0" role="region" aria-label="Kit comparison (scrolls sideways on small screens)">
+  <table class="data-table">
+    <caption class="visually-hidden">Kit comparison. Temperatures are model estimates.</caption>
+    <thead>
+      <tr>
+        <th scope="col">Spec</th>
+        {kits.map((k) => <th scope="col" data-kit-col={k.id}><a href={`/kits/${k.id}/`}>{k.data.kit.name}</a></th>)}
+      </tr>
+    </thead>
+    <tbody>
+      <tr><th scope="row">Tier</th>{kits.map((k) => <td data-kit-col={k.id}>{k.data.kit.tier === 0 ? "Tier 0 · modules only" : "Tier 1 · reference PCBs"}</td>)}</tr>
+      <tr><th scope="row">Zones</th>{kits.map((k) => <td class="mono" data-kit-col={k.id}>{k.data.kit.zones}</td>)}</tr>
+      <tr><th scope="row">Peltiers per zone</th>{kits.map((k) => <td class="mono" data-kit-col={k.id}>{k.data.thermal.tec_per_zone}</td>)}</tr>
+      <tr><th scope="row">Current cap per Peltier</th>{kits.map((k) => <td class="mono" data-kit-col={k.id}>{k.data.thermal.max_tec_current_a} A</td>)}</tr>
+      <tr><th scope="row">Zone current limit</th>{kits.map((k) => <td class="mono" data-kit-col={k.id}>{k.model.check.zone_current_limit_a} A</td>)}</tr>
+      <tr><th scope="row">Sensing</th>{kits.map((k) => <td data-kit-col={k.id}>{SENSING_LABEL[k.data.sensing.option]}</td>)}</tr>
+      <tr><th scope="row">Power supplies</th>{kits.map((k) => <td data-kit-col={k.id}>{psuSummary(k.data)}</td>)}</tr>
+      <tr class="kit-table__hl"><th scope="row">Coldest water (claim)</th>{kits.map((k) => <td data-kit-col={k.id}><ModelEstimate c={k.data.claims.min_water_c} approx /><span class="small muted kit-table__detail">model <span class="num">{k.model.check.min_water_c.toFixed(1)} °C</span></span></td>)}</tr>
+      <tr><th scope="row">Warmest water</th>{kits.map((k) => <td data-kit-col={k.id}><ModelEstimate c={k.data.claims.max_water_c} digits={0} mark={false} /> <span class="small muted">safety cap</span></td>)}</tr>
+      <tr><th scope="row">Peltier input per zone</th>{kits.map((k) => <td data-kit-col={k.id}><span class="mono">{k.model.check.tec_input_w_per_zone} W</span> <span class={`small ${k.psuMarginOk ? "ok" : "bad"}`}>{pct(k)} % of supply{k.psuMarginOk ? `, within ${PSU_MARGIN * 100} %` : ", over the limit"}</span></td>)}</tr>
+      <tr><th scope="row">Aux load</th>{kits.map((k) => <td data-kit-col={k.id}><span class="mono">{k.model.check.aux_w} W</span> <span class="small muted">of {k.data.power.aux_psu_w} W</span></td>)}</tr>
+      <tr><th scope="row">Kit check</th>{kits.map((k) => <td data-kit-col={k.id}>{k.model.check.problems.length === 0 ? <span class="status chip chip--done">Claims hold</span> : <span class="status chip chip--danger">{k.model.check.problems.length} problems</span>}</td>)}</tr>
+    </tbody>
+  </table>
+</div>
+<p class="small muted table-note">* Model estimate for a sleeper in bed in a 25 °C room. The headline is the kit's claim, which the tests prove the model meets; "model" is the thermal model's own value. No prototype has been measured yet.</p>
+<style>
+  .kit-table table { min-width: 680px; }
+  .kit-table tbody th { white-space: nowrap; color: var(--ink-muted); font-weight: 500; position: sticky; left: 0; background: var(--surface); z-index: 1; }
+  .kit-table thead th:first-child { position: sticky; left: 0; z-index: 2; }
+  .kit-table thead a { color: var(--ink); text-decoration: none; font-family: var(--font-display); font-size: 1.0625rem; text-transform: none; letter-spacing: 0; }
+  .kit-table thead a:hover { color: var(--link); }
+  .kit-table__hl td { font-size: 1.25rem; }
+  .kit-table__detail { display: block; font-size: 0.8125rem; }
+  .ok { color: var(--success); }
+  .bad { color: var(--danger); }
+  .kit-table td[data-kit-col].is-picked, .kit-table th[data-kit-col].is-picked { background: color-mix(in oklab, var(--primary) 10%, var(--surface)); }
+  .kit-table th[data-kit-col].is-picked { box-shadow: inset 0 3px 0 var(--primary); }
+  .table-note { margin-top: var(--s-sm); max-width: 90ch; }
+</style>

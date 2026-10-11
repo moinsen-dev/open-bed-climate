@@ -1,0 +1,25 @@
+---
+// Site-specific supplement. The full privacy policy lives on the owner's main site (PRIVACY_URL).
+import Base from "../layouts/Base.astro";
+import { PRIVACY_URL, IMPRESSUM_URL, CONTACT_EMAIL } from "../site.ts";
+---
+<Base title="Privacy on this site" description="This site: no cookies, no analytics, no third-party requests. The full privacy policy is on moinsen.dev.">
+  <div class="container legal">
+    <p class="eyebrow">Privacy</p>
+    <h1 class="h-lg">No cookies. No analytics. No third-party requests.</h1>
+    <div class="prose">
+      <p class="lead">This page adds what is specific to this site. The full privacy policy, including the controller and your rights, is at <a href={PRIVACY_URL}>moinsen.dev/en/privacy</a>. Legal notice: <a href={IMPRESSUM_URL}>Impressum</a>.</p>
+      <ul>
+        <li><strong>No cookies, no analytics, no tracking.</strong> The site is a set of static files.</li>
+        <li><strong>No third-party requests.</strong> Fonts, scripts and images are served from this site. Links to GitHub and other sites are plain links: nothing loads from them until you click.</li>
+        <li><strong>Theme choice.</strong> Only if you click the light/dark switch, your choice is saved in your browser's local storage (key <code>obc-theme</code>). It never leaves your device. Without a click, nothing is stored.</li>
+        <li><strong>Schedule editor.</strong> Keeps its state in memory only; nothing is stored or sent.</li>
+        <li><strong>Hosting.</strong> The site is served by Cloudflare Pages, which processes technical request data (such as IP address and user agent) to deliver the pages. See the full policy for details.</li>
+        <li><strong>E-mail.</strong> If you write to <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>, we use your message only to answer it.</li>
+      </ul>
+    </div>
+  </div>
+</Base>
+<style>
+  .legal { display: grid; gap: var(--s-lg); padding-block: var(--s-2xl); }
+</style>

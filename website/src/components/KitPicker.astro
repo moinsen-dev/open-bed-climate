@@ -1,0 +1,79 @@
+---
+// Island 1: three questions highlight a kit column in the comparison table. The rules read data-* attributes
+// rendered from the kit TOMLs, so a new kit file is picked up with no JS change. Hidden without JS.
+import type { KitView } from "../lib/kits.ts";
+interface Props { kits: KitView[] }
+const { kits } = Astro.props;
+---
+<form class="picker card js-only" data-picker aria-labelledby="picker-title">
+  <div class="picker__head">
+    <p class="eyebrow">Kit picker</p>
+    <h2 id="picker-title" class="h-md">Three questions, one suggestion.</h2>
+  </div>
+  <fieldset>
+    <legend>How many people sleep in the bed?</legend>
+    <label><input type="radio" name="sleepers" value="1" checked /> One</label>
+    <label><input type="radio" name="sleepers" value="2" /> Two, each with their own side</label>
+  </fieldset>
+  <fieldset>
+    <legend>Can a qualified person assemble a mains power module, and can you assemble custom PCBs?</legend>
+    <label><input type="radio" name="tier1" value="no" checked /> No, plug-in supplies and modules only</label>
+    <label><input type="radio" name="tier1" value="yes" /> Yes</label>
+  </fieldset>
+  <fieldset>
+    <legend>How much do the planned biometrics matter to you?</legend>
+    <label><input type="radio" name="bio" value="low" checked /> Nice to have</label>
+    <label><input type="radio" name="bio" value="high" /> A lot</label>
+  </fieldset>
+  <p class="picker__result" aria-live="polite" data-picker-result></p>
+  <ul hidden>
+    {kits.map((k) => <li data-kit={k.id} data-name={k.data.kit.name} data-zones={k.data.kit.zones} data-tier={k.data.kit.tier} data-sensing={k.data.sensing.option}></li>)}
+  </ul>
+</form>
+<script>
+  const form = document.querySelector<HTMLFormElement>("[data-picker]");
+  if (form) {
+    const RANK: Record<string, number> = { none: 0, load_cells: 1, pneumatic: 2, piezo_grid: 3 };
+    const kits = [...form.querySelectorAll<HTMLElement>("[data-kit]")].map((el) => ({
+      id: el.dataset.kit!, name: el.dataset.name!, zones: Number(el.dataset.zones), tier: Number(el.dataset.tier), sensing: RANK[el.dataset.sensing!] ?? 0,
+    }));
+    const out = form.querySelector<HTMLElement>("[data-picker-result]")!;
+    const pick = () => {
+      const f = new FormData(form);
+      const sleepers = Number(f.get("sleepers")), tier1 = f.get("tier1") === "yes", bio = f.get("bio") === "high";
+      const ok = kits.filter((k) => k.zones >= sleepers && (tier1 || k.tier === 0));
+      ok.sort((a, b) =>
+        Math.abs(a.zones - sleepers) - Math.abs(b.zones - sleepers) ||
+        (bio ? b.sensing - a.sensing : a.sensing - b.sensing) ||
+        (bio ? b.tier - a.tier : a.tier - b.tier));
+      const best = ok[0];
+      document.querySelectorAll(".is-picked").forEach((el) => el.classList.remove("is-picked"));
+      if (!best) { out.textContent = "No kit matches yet. Copy a kit TOML and make your own."; return; }
+      document.querySelectorAll(`[data-kit-col="${best.id}"]`).forEach((el) => el.classList.add("is-picked"));
+      out.innerHTML = "";
+      out.append("Suggested: ");
+      const a = document.createElement("a");
+      a.href = `/kits/${best.id}/`;
+      a.textContent = best.name;
+      out.append(a, ". It is highlighted in the comparison below.");
+    };
+    form.addEventListener("change", pick);
+    pick();
+  }
+</script>
+<style>
+  .picker { display: grid; gap: var(--s-lg); }
+  .picker fieldset { border: 0; padding: 0; display: grid; gap: var(--s-xs); }
+  .picker legend { font-weight: 600; margin-bottom: var(--s-xs); }
+  .picker label {
+    display: flex; gap: 10px; align-items: center; min-height: 44px; padding: 8px 14px;
+    border: 1px solid var(--border-strong); border-radius: var(--r-md); cursor: pointer; color: var(--ink-muted);
+  }
+  .picker label:has(input:checked) { border-color: var(--primary); color: var(--ink); background: color-mix(in oklab, var(--primary) 8%, transparent); }
+  .picker input { accent-color: var(--primary); width: 18px; height: 18px; flex: none; }
+  .picker__result { font-weight: 600; font-size: 1.0625rem; }
+  @media (min-width: 900px) {
+    .picker { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .picker__head, .picker__result { grid-column: 1 / -1; }
+  }
+</style>

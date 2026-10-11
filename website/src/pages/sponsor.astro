@@ -1,0 +1,171 @@
+---
+import { getCollection } from "astro:content";
+import Base from "../layouts/Base.astro";
+import { inFileOrder } from "../lib/file-order.ts";
+import { SITE_NAME, SPONSOR_MAILTO, CONTACT_EMAIL, LICENSES, issueTemplate } from "../site.ts";
+
+const asks = inFileOrder(await getCollection("sponsorAsks"), "src/data/sponsor-asks.yaml");
+const sponsors = await getCollection("sponsors");
+const cantBuy = [
+  ["No data.", `${SITE_NAME} has no cloud and collects nothing. There is no user data to share, now or later.`],
+  ["No say over safety limits.", "The limits in the safety concept change only through the public safety process."],
+  ["No exclusivity in the parts catalog.", "Parts are listed by role. A sponsor's part is one option, never the only one."],
+  ["No ads, tracking or telemetry", "in firmware, hub, app or docs."],
+  ["No licence changes.", `Everything stays ${LICENSES.software} / ${LICENSES.hardware}.`],
+  ["No roadmap control.", "Sponsors can tell us what they need; maintainers and contributors decide in public."],
+];
+const individual = [
+  ["Supporter", "€5 / month", "Name on the sponsors page (opt-in), sponsor badge."],
+  ["Builder", "€20 / month", "The above, plus your name in the release notes of each hardware revision."],
+  ["Test bench", "€50 / month or €500 once", "The above, plus a vote in the quarterly \"what do we measure next\" poll (advisory)."],
+];
+const orgs = [
+  ["Parts partner", "in kind", "PCBs, components or samples. Your logo in a \"built with parts from\" row, a credit in the build log where the part was used, and an honest test write-up, good or bad."],
+  ["Community sponsor", "€250 / month", "A small logo on this page and in the README."],
+  ["Lab sponsor", "€1,000 / month or a funded line item", "A larger logo and a \"funded by\" note on the result you funded, such as a measurement report or a board revision."],
+  ["Grant or foundation", "per agreement", "Acknowledgement as the funder requires."],
+];
+const faq = [
+  ["Is this tax-deductible?", "Not from an individual maintainer. Maybe later via a fiscal host such as Open Collective; ask us."],
+  ["Can I buy a kit?", "Not yet. Selling hardware that combines water, mains-powered supplies and a sleeping person needs a legal entity, CE conformity and product-safety work that a design-phase project can't honestly offer. Build one yourself, with the safety concept."],
+  ["Can my company sponsor a specific feature?", "Yes as funding, no as control. See what sponsorship can't buy."],
+  ["Where does the money go?", "Into the line items above. Every purchase over €100 gets a receipt or photo in the build log."],
+];
+---
+<Base title="Sponsor" description="Help turn a tested design into a measured one: parts for prototype 0, a test cooling pad, measuring instruments, a first board run and an electrical safety review.">
+  <section class="container page-head">
+    <p class="eyebrow">Sponsor</p>
+    <h1 class="h-lg">Help us turn a tested design into a measured one.</h1>
+    <p class="lead muted">The design, the control software and the firmware exist and are tested in simulation. What's missing is hardware on a real bed. {SITE_NAME} is built in public by volunteers: your money buys parts, test gear and a safety review, not marketing. All results are published under open licenses.</p>
+    <div class="btn-row">
+      <a class="btn btn--primary" href={SPONSOR_MAILTO}>Write to us about sponsoring</a>
+      <span class="small muted">{CONTACT_EMAIL} · channels such as GitHub Sponsors may come later</span>
+    </div>
+  </section>
+
+  <section class="section section--flush" aria-labelledby="unlocks">
+    <div class="container">
+      <header class="section-head">
+        <p class="eyebrow">What support unlocks</p>
+        <h2 id="unlocks" class="h-md">Five concrete things, in this order.</h2>
+        <p class="muted">Rough planning numbers, not quotes. Progress is updated by hand as money arrives and is spent.</p>
+      </header>
+      <ol class="asks">
+        {asks.map((a, i) => (
+          <li class="ask card">
+            <span class="ask__n num">{String(i + 1).padStart(2, "0")}</span>
+            <div class="ask__body">
+              <h3 class="h-sm">{a.data.ask}</h3>
+              <p class="small muted">{a.data.unlocks}</p>
+            </div>
+            <div class="ask__money">
+              <span class="num">{a.data.range}</span>
+              <meter min="0" max="100" value="0" aria-label={`Funding progress for ${a.data.ask}: none yet`}>0 %</meter>
+              <span class="small muted">funded: 0 %</span>
+            </div>
+          </li>
+        ))}
+      </ol>
+      <p class="small muted note">Order of magnitude: a full Duo Reference build is roughly €1,000 in parts (BOM v0.1, rough, not a quote).</p>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="cant">
+    <div class="container">
+      <header class="section-head"><p class="eyebrow">Independence</p><h2 id="cant" class="h-md">What sponsorship can't buy</h2></header>
+      <ul class="cant">{cantBuy.map(([t, d]) => <li><strong>{t}</strong> <span class="muted">{d}</span></li>)}</ul>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="ways">
+    <div class="container">
+      <header class="section-head"><p class="eyebrow">Ways to give</p><h2 id="ways" class="h-md">Money, parts, or a build.</h2></header>
+      <div class="grid grid--3">
+        <div class="card stack">
+          <h3 class="h-sm">Money</h3>
+          <p class="small muted">For now by e-mail: <a href={SPONSOR_MAILTO}>{CONTACT_EMAIL}</a>. Channels such as GitHub Sponsors, or Open Collective with a public ledger, may come later.</p>
+        </div>
+        <div class="card stack">
+          <h3 class="h-sm">Parts and services</h3>
+          <p class="small muted">Peltier modules, cold plates, pumps, dry-break couplings, TPU mat fabrication, PCB fabrication and assembly, lab time, or space at a maker space. Write to <a href={SPONSOR_MAILTO}>{CONTACT_EMAIL}</a>.</p>
+        </div>
+        <div class="card stack card--warm">
+          <h3 class="h-sm">Build one</h3>
+          <p class="small muted">Free, and the most valuable thing of all: build a kit and send a report with measurements.</p>
+          <a class="text-link small" href={issueTemplate("build-report.yml")}>Start a build report<span class="arrow"></span></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="tiers">
+    <div class="container">
+      <header class="section-head">
+        <p class="eyebrow">Tiers · proposed</p>
+        <h2 id="tiers" class="h-md">Few and boring, on purpose.</h2>
+        <p class="muted">Proposed tiers. Until a sponsorship channel exists, we arrange them by e-mail. No perks that need maintainer time beyond writing credits.</p>
+      </header>
+      <h3 class="eyebrow sub">Individuals</h3>
+      <div class="grid grid--3">
+        {individual.map(([n, a, g], i) => <div class={`card tier ${i === 1 ? "tier--mid" : ""}`}><h4 class="h-sm">{n}</h4><p class="num tier__amt">{a}</p><p class="small muted">{g}</p></div>)}
+      </div>
+      <h3 class="eyebrow sub">Organisations</h3>
+      <div class="grid grid--2">
+        {orgs.map(([n, a, g]) => <div class="card tier"><h4 class="h-sm">{n}</h4><p class="num tier__amt">{a}</p><p class="small muted">{g}</p></div>)}
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="current">
+    <div class="container two">
+      <div class="stack">
+        <p class="eyebrow">Sponsors and funders</p>
+        <h2 id="current" class="h-md">Credits</h2>
+        {sponsors.length === 0
+          ? <p class="muted">No sponsors yet. Yours could be the first name here. Sponsors are listed by name (opt-in), here and in the repository.</p>
+          : <ul class="wall">{sponsors.map((s) => <li class="mono">{s.data.url ? <a href={s.data.url}>{s.data.name}</a> : s.data.name}</li>)}</ul>}
+        <p class="small muted">Transparency: once money comes in, a quarterly "money in / money out" post goes into the <a href="/log/">build log</a>.</p>
+      </div>
+      <div class="stack">
+        <p class="eyebrow">FAQ</p>
+        <h2 class="h-md">Questions</h2>
+        <div class="faq">{faq.map(([q, a]) => <details><summary>{q}</summary><p class="muted">{a}</p></details>)}</div>
+      </div>
+    </div>
+  </section>
+</Base>
+<style>
+  .page-head { padding-block: var(--s-2xl) var(--s-xl); display: grid; gap: var(--s-md); }
+  .page-head .lead { max-width: 72ch; }
+  .btn--disabled { opacity: 0.7; cursor: not-allowed; white-space: normal; text-align: center; padding-block: 10px; max-width: 100%; }
+  .page-head > * { min-width: 0; }
+  .asks { list-style: none; padding: 0; display: grid; gap: var(--s-md); }
+  .ask { display: grid; gap: var(--s-md); grid-template-columns: auto minmax(0, 1fr); align-items: start; }
+  .ask__n { font-size: 1.5rem; font-weight: 600; color: var(--warm); line-height: 1.2; }
+  .ask__body { display: grid; gap: 4px; }
+  .ask__money { grid-column: 1 / -1; display: grid; gap: 6px; }
+  .ask__money .num { font-weight: 600; }
+  meter { width: 100%; height: 8px; }
+  @media (min-width: 900px) {
+    .ask { grid-template-columns: auto minmax(0, 1fr) 260px; }
+    .ask__money { grid-column: auto; }
+  }
+  .note { margin-top: var(--s-md); }
+  .cant { list-style: none; padding: 0; display: grid; gap: 0; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 900px) { .cant { grid-template-columns: 1fr 1fr; column-gap: var(--s-xl); } }
+  .cant li { padding-block: var(--s-sm); border-top: 1px solid var(--hairline); }
+  .cant strong { color: var(--ink); }
+  .stack { display: grid; gap: var(--s-sm); align-content: start; }
+  .stack > * + * { margin-top: 0; }
+  .card--warm { border-color: color-mix(in oklab, var(--warm) 45%, var(--hairline)); }
+  .sub { margin: var(--s-xl) 0 var(--s-md); }
+  .tier { display: grid; gap: 4px; align-content: start; }
+  .tier--mid { border-color: var(--primary); }
+  .tier__amt { color: var(--warm); font-weight: 600; }
+  .two { display: grid; gap: var(--s-2xl); grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 900px) { .two { grid-template-columns: 1fr 1fr; } }
+  .faq details { border-top: 1px solid var(--hairline); padding-block: var(--s-sm); }
+  .faq summary { cursor: pointer; font-weight: 600; min-height: 32px; display: flex; align-items: center; }
+  .faq details p { margin-top: var(--s-xs); }
+  .wall { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: var(--s-sm); }
+</style>

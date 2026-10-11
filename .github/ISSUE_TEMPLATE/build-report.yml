@@ -1,0 +1,37 @@
+name: Build report
+description: You built (part of) an Open Bed Climate system. Share what worked, what didn't, and your measurements.
+title: "[Build] <kit name> – <your short summary>"
+labels: ["build-report"]
+body:
+  - type: input
+    id: kit
+    attributes:
+      label: Kit file used (or "custom")
+      placeholder: hardware/kits/duo-standard.toml
+    validations: {required: true}
+  - type: textarea
+    id: parts
+    attributes:
+      label: Parts you actually used
+      description: Especially anything that differs from hardware/parts.toml. Links help.
+    validations: {required: true}
+  - type: textarea
+    id: measurements
+    attributes:
+      label: Measurements
+      description: e.g. coldest/warmest water temperature, room temperature, occupied?, TEC current, power draw, noise at 1 m, time to 43 °C. Include method and instruments.
+  - type: textarea
+    id: problems
+    attributes:
+      label: Problems and lessons learned
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety checks
+      options:
+        - label: I completed the commissioning checklist in SAFETY.md
+        - label: Hardware cutoffs tested (relay drops at ~50 °C on the cold plate)
+  - type: textarea
+    id: photos
+    attributes:
+      label: Photos

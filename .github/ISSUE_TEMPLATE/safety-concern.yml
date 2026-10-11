@@ -1,0 +1,22 @@
+name: Safety concern
+description: Something in the design, docs or code could hurt someone or damage property.
+title: "[SAFETY] "
+labels: ["safety", "priority"]
+body:
+  - type: markdown
+    attributes:
+      value: Thank you. Safety reports get top priority. If existing builds are at risk, say so in the title.
+  - type: textarea
+    id: what
+    attributes:
+      label: What is the hazard?
+    validations: {required: true}
+  - type: textarea
+    id: where
+    attributes:
+      label: Where (file, part, kit, component)?
+    validations: {required: true}
+  - type: textarea
+    id: fix
+    attributes:
+      label: Suggested mitigation (optional)

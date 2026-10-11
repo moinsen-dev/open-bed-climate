@@ -1,0 +1,436 @@
+# Open Bed Climate parts catalog: roles first, example parts second.
+#
+# Each [[role]] says WHAT is needed (requirement). Each [[role.example]] is ONE way to fill it.
+# status:  "datasheet"  = key specs confirmed in the manufacturer datasheet
+#          "listing"    = only seen in a distributor/retailer listing
+#          "unverified" = plausible, not yet confirmed; please verify and open a PR
+#          "rejected"   = checked and found unsuitable (kept so nobody re-checks it)
+# PARTS.md is generated from this file:  cd software/opod && uv run python -m opod.render_parts
+# Found a better part? See CONTRIBUTING.md ("parts hunter").
+
+[[role]]
+id = "tec_psu"
+module = "Power"
+safety = true
+requirement = "Certified (IEC/EN/UL 62368-1), active PFC, 24 V, ≥ 280 W per zone. The builder must never wire mains: IEC C14 inlet or molded mains cord only."
+notes = "24 V because the TEC driver is a buck converter: TECs need ~11.5 V at 5 A, so a 12 V input is too low. Big 600–750 W units (Mean Well RSP-750, UHP-750) have mains screw terminals and are only allowed inside a pre-assembled, closed power module (Tier 1)."
+
+  [[role.example]]
+  name = "Mean Well GST280A24-C6P (desktop, IEC C14)"
+  status = "datasheet"
+  source = "https://www.meanwellusa.com/upload/pdf/GST280A/GST280A-spec.pdf"
+  verified_on = "2026-10-11"
+  notes = "Confirmed: 24 V / 11.67 A / 280.08 W, 85-264 VAC, PF > 0.95 at 230 VAC (the datasheet gives a PF figure, not the words 'active PFC'), 93 % efficiency, IEC320-C14 inlet, output plug C6P = Molex 39-01-2060 equivalent (6-pin). Safety: UL/CSA/EN/IEC 62368-1. One unit per zone (280 W covers ~18 A at ~11.5 V through the buck with margin)."
+
+  [[role.example]]
+  name = "Mean Well RSP-750-24 inside a closed power module (C14 + fuse + switch)"
+  status = "datasheet"
+  source = "https://www.meanwell.com/Upload/PDF/RSP-750/RSP-750-SPEC.PDF"
+  verified_on = "2026-10-10"
+  notes = "Tier 1 only. AC input on terminal block TB1, so the mains side must be assembled and tested by a qualified person. Has a fan."
+
+  [[role.example]]
+  name = "HP common-slot server PSU + breakout board"
+  status = "rejected"
+  source = "https://tindie.com/products/gumslone/smart-wifi-server-psu-breakout-board"
+  verified_on = "2026-10-10"
+  notes = "Loud high-RPM fans (bedroom), the certification does not cover the DIY breakout, and pinouts vary by model."
+
+[[role]]
+id = "aux_psu"
+module = "Power"
+safety = true
+requirement = "Certified, 12 V, IEC inlet, sized so the continuous load stays ≤ 80 % of the rating (kit check: 25 W per zone + 15 W shared, i.e. ≥ 50 W for one zone, ≥ 82 W for two). Feeds pumps, fans, control MCU and hub."
+
+  [[role.example]]
+  name = "Mean Well GST90A12-P1M (desktop)"
+  status = "datasheet"
+  source = "https://www.meanwellusa.com/upload/pdf/GST90A/GST90A-spec.pdf"
+  verified_on = "2026-10-11"
+  notes = "Confirmed: 12 V / 6.67 A / 80 W (not 90 W: the 90 W versions are the 15 V and up models), IEC320-C14 inlet, DC plug P1M (5.5 x 2.5 x 11 mm, center positive), UL/CSA/EN/IEC 62368-1, PF > 0.91 at 230 VAC. Enough for one zone (Solo Starter, 40 W load); too small for two zones (65 W > 80 % of 80 W)."
+
+  [[role.example]]
+  name = "Mean Well GST120A12-R7B (desktop, two-zone kits)"
+  status = "unverified"
+  source = "https://www.meanwell.com/productSeries.aspx"
+  verified_on = ""
+  notes = "Same GST family, 12 V / 120 W class. Confirm current rating, IEC C14 inlet and DC plug in the datasheet."
+
+[[role]]
+id = "tec_drive"
+module = "Power"
+safety = true
+requirement = "Smooth DC, current-controlled (ripple < 10 % of max current), ≥ 18 A per zone (4 TECs in parallel at 4.5 A), controllable from a 3.3 V MCU. Its current limit is set by software, so the per-zone DC fuse and zone relay are required as backstops."
+notes = "Polarity for heat/cool comes from a DPDT relay (role polarity_relay), switched only at zero current; the firmware enforces a 2 s dead time. Raw PWM is not allowed: it cuts TEC efficiency, and DIY builds that used it ran their capacitors hot."
+
+  [[role.example]]
+  name = "DPS5020 programmable buck module (50 V / 20 A, Modbus RTU over UART)"
+  status = "listing"
+  source = "https://tech.scargill.net/dps5020-diy-power-supply/"
+  verified_on = "2026-10-10"
+  notes = "One per zone. Output ≤ ~90 % of input, so it needs the 24 V supply. Output ripple not yet measured: please measure it. Early units had a failed output capacitor. Register map cross-checked against community sources (Scargill thread script, haarer/pyDPS5015): 0x0000 U-set, 0x0001 I-set, 0x0002 U-out, 0x0003 I-out, 0x0009 on/off, 16-bit holding registers; 2 decimals (x100) for voltage and, on the DPS5020, current. The vendor protocol PDF (Ruideng, V1.2) could not be fetched here (bot wall), so function codes 0x03/0x06/0x10 and the exact DPS5020 current scaling are from secondary sources: verify on your unit. Note the second register block at 0x0050+ is stored memory group M0 (U-set/I-set/OVP/OCP/OPP...), not the live setpoint."
+
+  [[role.example]]
+  name = "Riden RD6012 (60 V / 12 A, Modbus RTU)"
+  status = "listing"
+  source = "https://www.cnx-software.com/2021/12/15/riden-rd6012p-usb-wifi-dc-power-supply-connects-to-your-pc-or-smartphone/"
+  verified_on = "2026-10-10"
+  notes = "12 A, so it covers 2 TECs in parallel at 5 A (Solo Starter). An ESPHome community config exists."
+
+  [[role.example]]
+  name = "TI DRV8262 H-bridge + LC filter (TEC mode)"
+  status = "datasheet"
+  source = "https://www.ti.com/product/DRV8262"
+  verified_on = "2026-10-10"
+  notes = "Tier 1 power board candidate. The datasheet has TEC guidance (PWM + 2nd-order LC filter, ripple < 10 %). Needs a custom PCB."
+
+  [[role.example]]
+  name = "Meerstetter TEC-1091 / TEC-1122"
+  status = "rejected"
+  source = "https://www.meerstetter.ch/"
+  verified_on = "2026-10-10"
+  notes = "Excellent but far over budget (≈ USD 370–1,600 each, reseller prices); the 1091 is only ±4 A."
+
+[[role]]
+id = "polarity_relay"
+module = "Power"
+safety = true
+requirement = "DPDT, ≥ 20 A contacts at 24 V DC, 12 V coil; plus a per-zone enable relay between TEC driver and TECs whose coil goes through the thermal cutoffs, and a per-zone DC fuse."
+
+  [[role.example]]
+  name = "CIT Relay A102CS12VDC (12 V coil, 2 Form C = DPDT, automotive) + per-zone 20 A DC blade fuse"
+  status = "datasheet"
+  source = "https://atta.szlcsc.com/upload/public/pdf/source/231023/A10-ebfe5758433fce54477dea240fbb29a9.pdf"
+  verified_on = "2026-10-11"
+  notes = "A10 series datasheet: 2C contacts rated 25 A / 30 A at 14 VDC on NO and 20 A / 25 A at 14 VDC on NC, max switching voltage 28 VDC, limiting continuous current 30/25 A (NO/NC) at 23 C, derated to 25/20 A at 85 C. The relay sits after the buck driver so it never sees 24 V; the voltage ceiling is 14 V (TEC_VOLTAGE_CEILING_V). With 18 A per zone the NC side is marginal at temperature, so wire the load through the NO contacts in both polarities (H-bridge-style: two SPDT relays, or the 2C with the NO pair cross-wired) and switch only at zero current. Datasheet copy is a distributor mirror: confirm against citrelay.com."
+
+  [[role.example]]
+  name = "American Zettler AZ9891J-2C-12DE (12 V coil, DPDT, 30 A)"
+  status = "listing"
+  source = "https://www.digikey.com/en/products/detail/american-zettler/AZ9891J-2C-12DE/12171586"
+  verified_on = "2026-10-11"
+  notes = "Distributor listing: 30 A contacts, ~67 mA coil, 16 VDC max switching voltage, sealed. DC contact curve not checked; get the manufacturer datasheet before use."
+
+[[role]]
+id = "control_mcu"
+module = "Control"
+safety = true
+requirement = "Runs the Open Bed Climate control firmware (port of opod.control): PID, supervisor, watchdog. Separate from any Wi-Fi/network chip."
+
+  [[role.example]]
+  name = "Raspberry Pi Pico 2 (RP2350)"
+  status = "datasheet"
+  source = "https://datasheets.raspberrypi.com/pico/pico-2-datasheet.pdf"
+  verified_on = "2026-10-10"
+  notes = "≈ USD 5. Talks Modbus to the TEC drivers and OPL to the hub."
+
+[[role]]
+id = "hub_controller"
+module = "Hub"
+safety = false
+requirement = "Wi-Fi, Home Assistant integration, schedules, UI. Can only request setpoints."
+
+  [[role.example]]
+  name = "Espressif ESP32-S3-DevKitC-1 with ESPHome"
+  status = "datasheet"
+  source = "https://docs.espressif.com/projects/esp-dev-kits/en/latest/esp32s3/esp32-s3-devkitc-1/index.html"
+  verified_on = "2026-10-10"
+  notes = "Tier 0 default. The OPL client is an ESPHome external component (local C++ component)."
+
+  [[role.example]]
+  name = "Raspberry Pi (Zero 2 W or larger)"
+  status = "datasheet"
+  source = "https://www.raspberrypi.com/products/raspberry-pi-zero-2-w/"
+  verified_on = "2026-10-11"
+  notes = "For heavier on-device biometrics (piezo grid). Confirmed: quad Cortex-A53 at 1 GHz, 512 MB RAM, 2.4 GHz Wi-Fi + BT 4.2, 40-pin header (unpopulated on the base model), in production until at least January 2030."
+
+[[role]]
+id = "temp_sensors"
+module = "Control"
+safety = true
+requirement = "Water temperature in and out per zone (G1/4 inline), cold plate and heatsink temperatures, room temperature/RH. Two independent sensors on each cold plate for a plausibility check."
+
+  [[role.example]]
+  name = "Alphacool Eiszapfen inline temperature sensor G1/4 (10k NTC)"
+  status = "datasheet"
+  source = "https://download.alphacool.com/datasheet/ENG_17597_Alphacool_Eiszapfen_temperature_sensor_flat_G1-4_-_chrome_datasheet.pdf"
+  verified_on = "2026-10-10"
+  notes = "B-value and tolerance not published, so calibrate each sensor (ice bath + 40 °C bath). Rated to 60 °C max."
+
+  [[role.example]]
+  name = "XSPC G1/4 inline 10k sensor"
+  status = "listing"
+  source = "https://www.watercoolinguk.co.uk/product/xspc-g1-4-inline-10k-sensor-chrome/"
+  verified_on = "2026-10-10"
+
+  [[role.example]]
+  name = "Sensirion SHT45 (room temperature/RH, dew point)"
+  status = "datasheet"
+  source = "https://sensirion.com/products/catalog/SHT45"
+  verified_on = "2026-10-10"
+
+[[role]]
+id = "thermal_cutoff"
+module = "Control"
+safety = true
+requirement = "Bimetal, normally closed, auto-reset: opens at 50 °C (cold plates) and 80 °C (heatsinks). Switches relay coils, not load current. Certified (UL/VDE/ENEC) preferred."
+
+  [[role.example]]
+  name = "KSD301 / KSD9700 class, NC, 50 °C and 80 °C"
+  status = "listing"
+  source = "https://www.ebay.de/itm/394903220088"
+  verified_on = "2026-10-11"
+  notes = "Cheap, but the listings show no certification, and retail listings often mix up NO and NC at 50 C. Datasheets found (KSD9700 spec sheets) show 250 V / 5 A (CQC) or 10 A resistive, +-5 C tolerance, reset >= 35 C for the 50 C NC part; UL is often only 125 V. Test every unit (hot-air gun + thermometer) before use."
+
+  [[role.example]]
+  name = "Sensata-Airpax 67L050 (NC, opens on rise at 50 C) and 67L080 (NC, 80 C)"
+  status = "listing"
+  source = "https://www.digikey.cn/en/products/detail/sensata-airpax/67L050/1631970"
+  verified_on = "2026-10-11"
+  notes = "SPST NC bimetal, auto-reset, +-5 C. 67L050 resets at 30 C; 67L080 (https://nl.farnell.com/sensata-airpax/67l080/switch-thermal-n-c-80-c/dp/1524704) resets at 55 C. Rated only 0.5-1 A at 48 VDC / 120 VAC, which is plenty for a relay coil (the intended use) but not for load current. Per the Sensata 6700 datasheet VDE approval applies to the P (bracket) suffix; I found no UL listing, so the certification wish is only partly met. Manufacturer PDF not opened: only distributor excerpts, so treat as a listing."
+
+  [[role.example]]
+  name = "RS PRO bimetallic thermostats (UL/cUL/ENEC listed)"
+  status = "listing"
+  source = "https://uk.rs-online.com/web/p/thermostatic-switches/2228228"
+  verified_on = "2026-10-10"
+  notes = "The certified part found has the wrong temperature (70 °C). Help wanted: a certified NC part at 50 °C."
+
+[[role]]
+id = "leak_sensor"
+module = "Control"
+safety = true
+requirement = "Detects water in the hub drip tray and at the hub-side couplings; digital or analog input to the control MCU."
+
+  [[role.example]]
+  name = "HW group WLD Relay + WLD sensing cable"
+  status = "listing"
+  source = "https://hw-group.com/support/top-selling-wld-component-wld-relay"
+  verified_on = "2026-10-11"
+  notes = "12 V module with a cable (rope) input that also alarms when the sensing cable is disconnected, so it is open-wire detectable. Output contact rating not stated on the page: check before wiring to a 3.3 V GPIO (use the contact with a pull-up, or an optocoupler)."
+
+  [[role.example]]
+  name = "Andel Floodline Leak 1 Mk II (rope/cable leak panel)"
+  status = "listing"
+  source = "https://a.storyblok.com/f/121333/x/ed8fe6cc90/42-floodline-leak-1-mkii.pdf"
+  verified_on = "2026-10-11"
+  notes = "12 or 24 V AC/DC supply; SPCO relay output 1 A at 24 VDC for 'leak' and a system-fault output for sensor or lead cable damage or disconnection. Bulky, so mounting space in the hub matters. A bare conductive-polymer rope on a raw GPIO is NOT recommended: it reads only ~20-150 on a 10-bit ADC, and DC excitation corrodes it."
+
+[[role]]
+id = "tec_module"
+module = "Thermal"
+safety = false
+requirement = "40×40 mm, 127 couples, Imax ≈ 6 A, Vmax ≈ 15 V. Datasheet with Qmax/ΔTmax curves preferred."
+
+  [[role.example]]
+  name = "TEC1-12706 (HB / Thermonamic datasheet)"
+  status = "datasheet"
+  source = "https://akizukidenshi.com/goodsaffix/TETC1-12706.pdf"
+  verified_on = "2026-10-10"
+  notes = "Qmax 50 W, ΔTmax 66 K, Imax 6.4 A, Vmax 14.4 V, R 1.98 Ω. Quality varies a lot between sellers, so buy from a source with a datasheet."
+
+  [[role.example]]
+  name = "Same Sky CP85438"
+  status = "listing"
+  source = "https://www.digikey.com/en/products/detail/same-sky-formerly-cui-devices/CP85438/1747374"
+  verified_on = "2026-10-10"
+  notes = "Branded, datasheet-backed, but an 8.5 A part: adjust max_tec_current_a and re-run the kit check."
+
+[[role]]
+id = "cold_plate"
+module = "Thermal"
+safety = false
+requirement = "Aluminium or copper water block for 40×40 mm TECs, G1/4 or barbed ports. Do not mix copper and aluminium in one loop."
+
+  [[role.example]]
+  name = "Generic 40×40 / 40×80 mm aluminium water block"
+  status = "listing"
+  source = "https://hackaday.io/project/205182-opencooler"
+  verified_on = "2026-10-10"
+  notes = "Thermal resistance is never published, so it goes on the prototype measurement list."
+
+[[role]]
+id = "heatsink"
+module = "Thermal"
+safety = false
+requirement = "Heat rejection ≤ 0.07 K/W per zone (Duo) or ≤ 0.11 K/W (Solo) at quiet fan speed (bedroom target ≤ 30 dB(A) at 1 m)."
+
+  [[role.example]]
+  name = "CPU tower cooler per TEC (TEC sandwiched between water block and cooler)"
+  status = "unverified"
+  source = "https://hackaday.io/project/205182-opencooler"
+  verified_on = "2026-10-10"
+  notes = "Measure the real K/W. A failed DIY build (opencooler V1) suggests undersized heat rejection is the most common failure."
+
+  [[role.example]]
+  name = "Single-TEC 'peltier water cooling kit' (block + 40 mm fan)"
+  status = "rejected"
+  source = "https://www.makerlab-electronics.com/products/thermoelectric-tec12706-tec-12706-peltier-cooling-system-heatsink-kit-air-cooled-liquid-cooled"
+  verified_on = "2026-10-10"
+  notes = "40 mm fans are far too small and loud for this heat load."
+
+[[role]]
+id = "pump"
+module = "Thermal"
+safety = true
+requirement = "12 V, tach output, ≥ 0.5 L/min at ≥ 1 m head, continuous duty, quiet at low speed (PWM)."
+
+  [[role.example]]
+  name = "Laing/Xylem D5 PWM 12 V"
+  status = "listing"
+  source = "https://www.watercoolinguk.co.uk/product/laing-flojetd5-pwm-pump-motor-12v-1200-lph/"
+  verified_on = "2026-10-10"
+  notes = "Massively oversized (max ~3.7 m head), but reliable, with tach and PWM. Run it slow for silence."
+
+  [[role.example]]
+  name = "Laing DDC 12 V PWM"
+  status = "listing"
+  source = "https://www.aquatuning.com/en/watercooling/custom/pumps"
+  verified_on = "2026-10-10"
+
+  [[role.example]]
+  name = "DC40-class brushless 12 V pump"
+  status = "unverified"
+  source = ""
+  verified_on = "2026-10-10"
+  notes = "Cheaper; sold under many names on marketplaces (search \"DC40 12V brushless pump tach\"). Check that it has a tach wire."
+
+[[role]]
+id = "flow_sensor"
+module = "Thermal"
+safety = true
+requirement = "Reliable reading at 0.15–1 L/min (the flow interlock trips below 0.15 L/min)."
+
+  [[role.example]]
+  name = "Aqua Computer MPS Flow 100 (20–100 l/h)"
+  status = "listing"
+  source = "https://www.watercoolinguk.co.uk/p/Aquacomputer-flow-sensor-MPS-Flow-100_69575.html"
+  verified_on = "2026-10-10"
+  notes = "Range matches our flow best."
+
+  [[role.example]]
+  name = "Gems FT-110 turbine"
+  status = "datasheet"
+  source = "https://www.farnell.com/datasheets/1877507.pdf"
+  verified_on = "2026-10-10"
+  notes = "±3 % of reading, 0.5 L/min minimum, so it is borderline at our lowest flow."
+
+  [[role.example]]
+  name = "YF-S401 hall turbine"
+  status = "listing"
+  source = "https://wiki.dfrobot.com/sen0216/"
+  verified_on = "2026-10-10"
+  notes = "Cheap. ±5 % at 0.3–3 L/min per DFRobot; calibrate it."
+
+[[role]]
+id = "reservoir"
+module = "Thermal"
+safety = true
+requirement = "≈ 0.5 L, top fill port, air purge, non-contact level sensor for the LOW_WATER fault."
+
+  [[role.example]]
+  name = "PC-watercooling tube reservoir + capacitive non-contact level sensor"
+  status = "unverified"
+  source = ""
+  verified_on = ""
+  notes = "Help wanted."
+
+[[role]]
+id = "quick_disconnect"
+module = "Water mat"
+safety = true
+requirement = "Dry-break (non-spill) couplings at the hub for each line. Spill per disconnect ≤ 0.5 mL."
+
+  [[role.example]]
+  name = "CPC NS4 non-spill coupling"
+  status = "listing"
+  source = "https://avantorsciences.com/mx/en/product/39537527/cpc-non-spill-quick-disconnect-fittings-bodies-and-inserts"
+  verified_on = "2026-10-10"
+  notes = "< 0.1 mL spill per disconnect (CPC data via a distributor). Commercial bed-cooling systems also use CPC-type couplings."
+
+  [[role.example]]
+  name = "Alphacool Eiszapfen quick-release coupling G1/4"
+  status = "listing"
+  source = "https://shop.alphacool.com/en/shop/fittings/quick-release-fasteners/ank-alphacool-eiszapfen-quick-release-coupling-set-g1/4-ag-chrome"
+  verified_on = "2026-10-10"
+  notes = "No spill figure published. One DIY builder reported quick disconnects that did not self-seal, so test before use."
+
+[[role]]
+id = "water_mat"
+module = "Water mat"
+safety = true
+requirement = "Even water distribution under one sleeper's torso and legs, comfortable, does not kink under body weight, works at ≤ 0.5 bar, washable or covered."
+notes = "The hardest part to source, and the most needed contribution. Parallel channels (not one long serpentine) keep flow resistance low and prevent pinch-off."
+
+  [[role.example]]
+  name = "DIY: 4 mm ID reinforced tubing in channels cut into a 1.5\" foam topper (~30 m per mat)"
+  status = "listing"
+  source = "https://techteamgb.co.uk/2024/11/18/i-made-a-custom-bed-watercooler-open-source-diy-bed-cooler-heater-eight-sleep-type-thing/"
+  verified_on = "2026-10-10"
+  notes = "Documented DIY build. 8 mm tubing was too stiff."
+
+  [[role.example]]
+  name = "Replacement pads of commercial bed-cooling systems (optional, never a dependency)"
+  status = "unverified"
+  source = "https://sleepme.helpjuice.com/ooler-repair-kit-a"
+  verified_on = "2026-10-10"
+  notes = "Check the coupling type and pressure rating before connecting one."
+
+  [[role.example]]
+  name = "Custom welded TPU channel mat"
+  status = "unverified"
+  source = ""
+  verified_on = ""
+  notes = "Target for Tier 1. Help wanted: textile/RF-welding experience."
+
+[[role]]
+id = "bcg_sensing"
+module = "Sensing"
+safety = false
+requirement = "Presence, plus heart rate and breathing via ballistocardiography (BCG). Three options; see docs/design/03-sensing-biometrics.md."
+
+  [[role.example]]
+  name = "Load cells under the bed legs + HX711 (ESPHome)"
+  status = "listing"
+  source = "https://community.home-assistant.io/t/bed-scale-occupancy-sensor/114205"
+  verified_on = "2026-10-10"
+  notes = "Presence is proven in many ESPHome builds. 80 SPS is enough for heart rate in principle (published BCG work uses 50–200 Hz), but this is unproven in Open Bed Climate."
+
+  [[role.example]]
+  name = "Pneumatic: air tube/bladder under the mattress + pressure sensor"
+  status = "unverified"
+  source = "https://doaj.org/article/aa0acc60ad3748178aa63cd2062f426e"
+  verified_on = "2026-10-10"
+  notes = "Commercial sleep analyzers use this principle. Untested with a water mat above it (one vendor warns about waterbeds)."
+
+  [[role.example]]
+  name = "Piezo film grid (TE LDT0-028K) + TI ADS131M08 simultaneous-sampling ADC"
+  status = "datasheet"
+  source = "https://www.ti.com/product/ADS131M08"
+  verified_on = "2026-10-10"
+  notes = "Tier 1: there is no off-the-shelf ADS131M08 breakout (only TI's EVM), so it goes on the cover sensor board."
+
+[[role]]
+id = "vibration_motor"
+module = "Add-ons"
+safety = false
+requirement = "Silent vibration alarm under the pillow or cover."
+
+  [[role.example]]
+  name = "Adafruit DRV2605L haptic driver (product 2305) + ERM/LRA puck"
+  status = "listing"
+  source = "https://www.adafruit.com/products/2305"
+  verified_on = "2026-10-10"
+
+[[role]]
+id = "adjustable_base"
+module = "Add-ons"
+safety = false
+requirement = "Use an existing adjustable base with a community Home Assistant integration (elevation, anti-snore)."
+
+  [[role.example]]
+  name = "ha-adjustable-bed (HACS) — Linak, Keeson/Ergomotion, Richmat, Okin, Octo, Jiecang, Leggett & Platt, …"
+  status = "listing"
+  source = "https://github.com/kristofferR/ha_smartbed"
+  verified_on = "2026-10-10"
+  notes = "Bluetooth; works through an ESPHome Bluetooth proxy, which the ESP32-S3 hub can be."

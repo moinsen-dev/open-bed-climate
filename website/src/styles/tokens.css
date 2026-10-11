@@ -1,0 +1,139 @@
+/* Thermal Night tokens, mirrored from /DESIGN.md (authoritative). Night is the default theme; Dawn applies with
+   prefers-color-scheme: light (unless the visitor picked Night) or an explicit data-theme="light". */
+
+@font-face {
+  font-family: "Bricolage Grotesque";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 800;
+  src: url("../../node_modules/@fontsource-variable/bricolage-grotesque/files/bricolage-grotesque-latin-wght-normal.woff2") format("woff2-variations");
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url("../../node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2") format("woff2-variations");
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 800;
+  src: url("../../node_modules/@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2") format("woff2-variations");
+}
+
+:root {
+  color-scheme: dark;
+  --canvas: #070b16;
+  --surface: #0e1528;
+  --surface-raised: #16203b;
+  --hairline: #2a3a63;
+  --border-strong: #56688f;
+  --ink: #e9eef7;
+  --ink-muted: #a3b0c8;
+  --cold: #5cd3f0;
+  --warm: #ffb547;
+  --link: #5cd3f0;
+  --primary: #ffb547;
+  --primary-hover: #ffc56e;
+  --on-primary: #070b16;
+  --success: #5bd89a;
+  --warning: #ffd166;
+  --danger: #ff7a7a;
+  --temp-13: #4c9bff;
+  --temp-20: #5cd3f0;
+  --temp-28: #d8e4ec;
+  --temp-36: #ffb547;
+  --temp-43: #ff8f4a;
+  /* Curve strokes: full temperature colors on Night, the darker dawn pair on Dawn. */
+  --stroke-cold: var(--temp-20);
+  --stroke-warm: var(--temp-43);
+  --glow-opacity: 0.24;
+  --header-bg: rgb(7 11 22 / 0.92);
+
+  --font-display: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  /* Fluid type, 360px → 1200px viewport. */
+  --fs-display: clamp(2.75rem, 1.786rem + 4.286vw, 4.5rem);
+  --fs-headline-lg: clamp(2rem, 1.679rem + 1.429vw, 2.75rem);
+  --fs-headline-md: clamp(1.5rem, 1.393rem + 0.476vw, 1.75rem);
+  --fs-headline-sm: clamp(1.125rem, 1.071rem + 0.238vw, 1.25rem);
+  --fs-body-lg: clamp(1.0625rem, 1.009rem + 0.238vw, 1.1875rem);
+  --fs-body-md: 1rem;
+  --fs-body-sm: 0.875rem;
+  --fs-label-caps: 0.75rem;
+  --fs-readout-lg: clamp(2.25rem, 1.929rem + 1.429vw, 3rem);
+
+  --s-2xs: 4px;
+  --s-xs: 8px;
+  --s-sm: 12px;
+  --s-md: 16px;
+  --s-lg: 24px;
+  --s-xl: 40px;
+  --s-2xl: 64px;
+  --s-3xl: 104px;
+  --gutter: 16px;
+  --max-width: 1200px;
+
+  --r-sm: 4px;
+  --r-md: 8px;
+  --r-lg: 14px;
+  --r-full: 9999px;
+
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+@media (min-width: 640px) {
+  :root { --gutter: 24px; }
+}
+@media (min-width: 1024px) {
+  :root { --gutter: 40px; }
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    color-scheme: light;
+    --canvas: #f5f3ed;
+    --surface: #ffffff;
+    --surface-raised: #eceff5;
+    --hairline: #d3d8e2;
+    --border-strong: #6b778e;
+    --ink: #0b1222;
+    --ink-muted: #4a5670;
+    --cold: #0a6e8c;
+    --warm: #9c5200;
+    --link: #0b5fa5;
+    --on-primary: #0b1222;
+    --success: #1c7a4a;
+    --warning: #8a5b00;
+    --danger: #b42318;
+    --stroke-cold: #0a6e8c;
+    --stroke-warm: #9c5200;
+    --glow-opacity: 0.32;
+    --header-bg: rgb(245 243 237 / 0.92);
+  }
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+  --canvas: #f5f3ed;
+  --surface: #ffffff;
+  --surface-raised: #eceff5;
+  --hairline: #d3d8e2;
+  --border-strong: #6b778e;
+  --ink: #0b1222;
+  --ink-muted: #4a5670;
+  --cold: #0a6e8c;
+  --warm: #9c5200;
+  --link: #0b5fa5;
+  --on-primary: #0b1222;
+  --success: #1c7a4a;
+  --warning: #8a5b00;
+  --danger: #b42318;
+  --stroke-cold: #0a6e8c;
+  --stroke-warm: #9c5200;
+  --glow-opacity: 0.32;
+  --header-bg: rgb(245 243 237 / 0.92);
+}

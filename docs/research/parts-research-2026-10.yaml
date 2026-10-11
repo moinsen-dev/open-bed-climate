@@ -1,0 +1,533 @@
+# Open Bed Climate - off-the-shelf parts verification
+# verified_on: 2026-10-10. Method: web search + page/PDF fetch + `gh api`.
+# Convention: values marked "(unverified)" or "(inference)" were NOT confirmed against a primary source.
+# Prices are only given where a source was seen; otherwise "price: not verified".
+# Many retailer/manufacturer pages could not be fetched (HTTP 403/406/captcha); those are called out.
+
+- role: psu_12v
+  requirement: "Certified 12 V >=600 W, active PFC, enclosed or IEC-inlet so DIY users never wire mains screw terminals."
+  examples:
+    - name: "Mean Well RSP-750-12 (enclosed, fan-cooled)"
+      specs:
+        output: "12 V, 62.5 A, 750 W (distributor listings; datasheet series table)"
+        pfc: "Active PFC, PF typ. 0.97 @230 VAC / 0.98 @115 VAC full load (datasheet, read)"
+        efficiency_typ: "87 % (12 V model, datasheet)"
+        safety: "UL62368-1, CSA C22.2 62368-1, TUV EN/IEC 62368-1 (datasheet)"
+        size_mm: "250 x 127 x 41"
+        ac_input: "Terminal block TB1 (datasheet 'AC Input Terminal' pin assignment) - mains is wired by the user"
+        extras: "Remote ON/OFF, DC-OK, 12V/0.1A aux on CN50; has a fan"
+      source: "https://www.meanwell.com/Upload/PDF/RSP-750/RSP-750-SPEC.PDF"
+      retailer: "https://uk.rs-online.com/web/p/switching-power-supplies/7704059"
+      verified_on: 2026-10-10
+      notes: "DISQUALIFIED for the no-mains-terminals goal: AC enters on TB1 terminal block. Fan = noise in bedroom."
+    - name: "Mean Well UHP-750-12 (slim, convection, 41 mm)"
+      specs:
+        output: "12 V, 60 A, 720 W (listing + datasheet series)"
+        pfc: "Active PFC, PF >= 0.95 @230 VAC, >= 0.98 @115 VAC (datasheet, read)"
+        efficiency_typ: "93.5 % (12 V)"
+        safety: "UL62368-1, TUV EN/IEC 62368-1 (datasheet)"
+        size_mm: "237 x 100 x 41"
+        ac_input: "Terminal block TB1; DC out TB2/TB3 (datasheet)"
+        cooling: "Convection, needs derating / aluminium plate or forced air at high load (datasheet cooling notes)"
+      source: "https://www.meanwell.com/Upload/PDF/UHP-750/UHP-750-SPEC.PDF"
+      retailer: "https://www.trcelectronics.com/products/mean-well-uhp-750-12"
+      verified_on: 2026-10-10
+      notes: "Fanless (good for noise) but AC screw terminals -> disqualified for plug-and-play. Needs an enclosure the builder must assemble."
+    - name: "Delta PMR-12V600W1BT"
+      specs:
+        output: "12 V, 50 A, 600 W enclosed (distributor listing)"
+        pfc: "built-in PFC; UL/IEC 62368-1 (listing, datasheet not opened)"
+        ac_input: "Terminal block per listing"
+      source: "https://www.trcelectronics.com/products/delta-pmr-12v600w1bt"
+      verified_on: 2026-10-10
+      notes: "Only listing seen; terminal-block input -> same problem. Datasheet not verified."
+    - name: "XP Power CCH600PS12"
+      specs:
+        output: "12 V, 50 A, 600 W, PFC (listing)"
+        cooling: "baseplate cooled (listing)"
+        price: "approx USD 745 per unit (single listing)"
+      source: "https://www.trcelectronics.com/products/xp-power-cch600ps12"
+      verified_on: 2026-10-10
+      notes: "Baseplate-cooled, no IEC inlet mentioned, expensive. Not suitable."
+    - name: "Mean Well GST280A12-C6P (desktop adapter, IEC C14 inlet)"
+      specs:
+        output: "280 W 12 V class (listing says 21 A; 12 V x 21 A = 252 W, inconsistent -> unverified)"
+        pfc: "PFC (listing)"
+        ac_input: "3-pole IEC320-C14 inlet (listing)"
+      source: "https://advantageelectricsupply.com/part/mean-well/gst280a12-c6p/2115600"
+      verified_on: 2026-10-10
+      notes: "Highest-power Mean Well desktop/IEC-inlet unit found. 3 TEC per side is about 18 A, so ONE adapter per side (two total) is a candidate that avoids mains wiring. Datasheet not opened - confirm current/connector before committing."
+    - name: "Mean Well AS-120P (IEC C14, fully enclosed, active PFC)"
+      specs:
+        output: "120 W class (too small)"
+        ac_input: "IEC320-C14"
+        approvals: "UL, cUL, TUV, CB, CE (spec PDF listing)"
+      source: "https://support.elmark.com.pl/meanwell/products/ac-dc/desktop/serii_gs_160-280w/as-120/specification/as-120p-spec.pdf"
+      verified_on: 2026-10-10
+      notes: "Too small; useful only for logic/pumps rail."
+    - name: "HP/HPE common-slot server PSU (e.g. HSTNS-PL18 / DPS-800GB class, 750 W) + breakout board"
+      specs:
+        topology: "Server PSU with C14 inlet on the PSU; 12 V + GND edge connector (64-pin) with standby/enable/PMBus signals"
+        breakout: "Seller boards: Tindie gumslone 'smart wifi server PSU breakout' (designed for HSTNS-PL18, others similar); multiple eBay/ubbcentral boards (seller claims)"
+        efficiency_class: "listings call some units Platinum (seller claim, unverified)"
+      source: "https://tindie.com/products/gumslone/smart-wifi-server-psu-breakout-board"
+      retailer: "https://knightli.com/en/2026/04/16/csps-common-slot-server-power-supply-pinout/"
+      verified_on: 2026-10-10
+      notes: "No mains wiring (IEC cord), active PFC and high efficiency are normal for these PSUs, cheap/ubiquitous. BUT: server-PSU safety approval applies to the PSU, not to the DIY breakout; fan noise (small high-RPM fans) is a bedroom problem; pinouts differ per model so measure before powering; datasheet for PL18/PL30 NOT verified. Needs 12 V rail only; standby/enable pins must be set by breakout."
+  findings: |
+    No 12 V >=600 W Mean Well (or other) unit with an IEC inlet exists in the lines I could verify. Both RSP-750-12 and UHP-750-12
+    use TB1 AC screw terminals (read in the datasheets). Options that avoid exposed mains terminals:
+    (1) one IEC-C14 desktop adapter per bed side (Mean Well GST280A12-C6P class, about 18-21 A each) - cleanest for DIY, certified;
+    (2) HP common-slot 750 W server PSU + breakout - cheap, IEC cord, high PFC, but fans and DIY breakout caveats;
+    (3) any terminal-block PSU inside a pre-built, closed mains module (C14 inlet+fuse+switch) is a mains-wiring step for the maker - not DIY-safe.
+    Sizing note: 6 TEC x ~6 A = ~36 A (~430 W) worst case plus pumps, so 600 W is a safe ceiling; two 280 W units fit if TEC current is capped at ~18 A per side.
+
+- role: tec_module
+  requirement: "40x40 127-couple, ~6 A, 12 V."
+  examples:
+    - name: "TEC1-12706 (Hebei I.T. Shanghai / HB Corporation datasheet)"
+      specs:
+        th_25C: {Qmax_W: 50, dTmax_K: 66, Imax_A: 6.4, Vmax_V: 14.4, resistance_ohm: 1.98}
+        th_50C: {Qmax_W: 57, dTmax_K: 75, Imax_A: 6.4, Vmax_V: 16.4, resistance_ohm: 2.30}
+        size: "40 x 40 mm, thickness 3.2-3.8 mm depending on seller"
+        couples: 127
+        seebeck_K: "NOT published in the datasheet"
+      source: "https://www.radiolocman.com/datasheet/pdf.html?di=173597"
+      retailer: "https://soselectronic.com/en/products/various/peltier-6300-127-060-tec1-12706-1829"
+      verified_on: 2026-10-10
+      notes: "Datasheet copy (Rev 2.03 per search) gives no Seebeck or thermal conductance. Vendor listings contradict each other (Qmax 50-92 W, dTmax 66-70 K, Imax 6-6.4 A), so budget parts are not spec-reliable. Naive Vmax/Imax = 2.25 ohm vs sheet 1.98 ohm: do not back-compute alpha/K from it. No independent bench data found."
+    - name: "TRU Components TEC1-12706 (Conrad)"
+      specs: {Vmax_V: 15, Imax_A: 6.4, Qmax_W: 65, size_mm: "40 x 40 x 3.8"}
+      source: "https://asset.conrad.com/media10/add/160267/c1/-/en/000189115DS02/datablad-189115-tru-components-tec1-12706-peltier-element-15-v-64-a-65-w-l-x-b-x-h-40-x-40-x-38-mm.pdf"
+      verified_on: 2026-10-10
+      notes: "EU-retail relabel; datasheet text not opened beyond search summary; dTmax about 70 K claimed."
+    - name: "Thermonamic TEC1-12706 (Akizuki sheet)"
+      specs: {couples: 127, degradation_claim: "about 2.5 % after 300,000 thermal cycles (manufacturer claim)"}
+      source: "https://akizukidenshi.com/goodsaffix/TETC1-12706.pdf"
+      verified_on: 2026-10-10
+      notes: "Only source with a lifetime claim. Not independently verified."
+    - name: "Same Sky (ex CUI Devices) CP85438"
+      specs: {size_mm: "40 x 40 x 3.8", Imax_A: 8.5, Vmax_V: 15.4, Qmax_W: "75.0 @ Th=27C / 83.9 @ 50C", dTmax_K: "68 / 75", resistance_ohm: 1.50, couples: "not stated in sources"}
+      source: "https://www.digikey.com/en/products/detail/same-sky-formerly-cui-devices/CP85438/1747374"
+      retailer: "https://cdn.eicom.ru/media/PDF/1594082.pdf"
+      verified_on: 2026-10-10
+      notes: "Branded, datasheet-backed alternative but Imax 8.5 A is not a 6 A part (needs different driver sizing). Couple count not confirmed."
+    - name: "Laird / Tark (Laird Thermal Systems, now Ezurio) CP2-127-06-L2-W12"
+      specs: {note: "Part exists on Laird site (301 redirect to tark-solutions.com); datasheet fetch returned HTTP 406 - specs NOT verified"}
+      source: "https://lairdthermal.com/products/thermoelectric-cooler-modules/peltier-cp-series/CP2-127-06-L2-W12/pdf"
+      verified_on: 2026-10-10
+      notes: "Laird CP10,127,05 is a 30 mm module (3.9 A, 14.4 V) - not 40x40."
+    - name: "European Thermodynamics TEC1-12712L-S"
+      specs: {note: "listing exists at DigiKey; specs not verified"}
+      source: "https://azcus.digikey.com/en/products/detail/european-thermodynamics-ltd/TEC1-12712L-S/13566815"
+      verified_on: 2026-10-10
+      notes: "Not verified."
+  findings: |
+    TE Technology, Marlow and Kryotherm datasheets were NOT found/verified in this pass. Verified: TEC1-12706 datasheet gives Qmax/dTmax/Imax/Vmax/R but no Seebeck or K;
+    branded parts (Same Sky CP-series, Laird) publish Imax/Vmax/Qmax/dTmax/R, with alpha/K only via vendor tools (not confirmed).
+    Practical: treat any Chinese 12706 as +-20 % in Qmax, characterise a sample on the bench, derate to ~70 % of Imax, hold hot side < 50-55 C.
+
+- role: tec_drive
+  requirement: "Smooth DC (current-controlled), not raw PWM, ~6 A per TEC, reversible polarity, 3 TEC per side (~18 A/side), controllable from ESP32/Pico."
+  examples:
+    - name: "(a) Riden/DPS-class programmable CC/CV buck supply: DPS5020 (50 V, 20 A)"
+      specs:
+        range: "up to 50 V / 20 A (scargill review)"
+        interface: "UART Modbus RTU, 3.3 V logic, 9600 baud 8 data bits (commenter code), slave ID settable"
+        input: "buck only: output cannot exceed input; ~10 % headroom advised"
+        ripple: "not stated (author had not measured)"
+        reported_issue: "an early version had a failed output capacitor; noisy fan"
+      source: "https://tech.scargill.net/dps5020-diy-power-supply/"
+      verified_on: 2026-10-10
+      notes: "Fits 3 TEC in parallel (18 A < 20 A) from ONE unit per side, or 3 TEC in series at ~6 A (inference). Needs DPDT/2xSPDT polarity relay switched only with output disabled. Price not verified."
+    - name: "(a) Riden RD6012 (60 V, 12 A, 720 W)"
+      specs:
+        range: "0-60 V, 0-12 A (RD6012P spec sheet at cnx-software)"
+        ripple: "20 mVpp voltage ripple (RD6012P)"
+        interface: "Modbus RTU 115200 8N1 (RD6006 protocol PDF); register map differs from DPS series; ESPHome config referencing wildekek/rdtech-esphome exists"
+      source: "https://www.cnx-software.com/2021/12/15/riden-rd6012p-usb-wifi-dc-power-supply-connects-to-your-pc-or-smartphone/?amp=1"
+      retailer: "https://git.commander1024.de/Commander1024/homeassistant-config/src/branch/energymonitor/esphome/riden-labornetzteil-6a.yaml"
+      verified_on: 2026-10-10
+      notes: "12 A max -> 2 TEC parallel per unit (or 3 in series at 6 A, 36 V, inference). Protocol docs: https://redmine.laas.fr/attachments/download/4768/RD6006_prtotocol_en.pdf"
+    - name: "(b) Meerstetter TEC-1091 / TEC-1122 / TEC-1123"
+      specs:
+        TEC-1091: "0..+-21 V, 0..+-4 A, about USD 371-393 (reseller listings conflict)"
+        TEC-1122: "2 channels, +-10 A / 21 V each, USD 980-1615 (listings conflict)"
+        TEC-1123: "2 channels, +-16 A / 30 V each, USD 1016-1223"
+      source: "https://shop.laserdiodesource.com/laser-diodes-by-each-manufacturer/meerstetter-engineering/filtered-by-categories-tec-controllers"
+      verified_on: 2026-10-10
+      notes: "Only reseller pages; Meerstetter datasheets not opened. 1091 too small (4 A); 1122/1123 are 10-25x the cost target. Rejected on price. A 'TEC-8A-24V-PID-HC-RS232' controller appeared in a search snippet (Botland) but page was unusable - unverified."
+    - name: "(b/c) TI DRV8262 dual H-bridge (TEC mode) + external LC filter"
+      specs:
+        supply: "4.5-65 V"
+        current: "10 A full-scale per H-bridge, 20 A paralleled; DRV8262EVM listed at 5 A (10 A paralleled), DRV8262VEVM at 10 A"
+        tec_guidance: "datasheet TEC section: PWM + 2nd-order LC filter, ripple < 10 % of max current, can drive two TECs bidirectionally"
+      source: "https://ti.com/document-viewer/DRV8262/datasheet/GUID-43C3983F-1D1B-46F2-9CA0-E192E8B4076E"
+      retailer: "https://www.ti.com/tool/DRV8262VEVM"
+      verified_on: 2026-10-10
+      notes: "Silicon-vendor evidence that filtered PWM is acceptable and ripple should be <10 %. Needs a custom PCB (not off-the-shelf module); paralleled outputs for 18 A per side."
+    - name: "(c) BTS7960 / IBT-2 43 A H-bridge module + LC filter"
+      specs: {note: "No datasheet or TEC application note was found/opened in this pass; use TI 10 % ripple rule as design target"}
+      source: "https://www.ti.com/document-viewer/DRV8962/datasheet/GUID-237211BD-2D0F-43ED-8430-2275F5A03369"
+      verified_on: 2026-10-10
+      notes: "Unverified for TEC use. DIY precedents: Cytron MD13S raw PWM (opencooler, capacitors ran hot); low-side IRLZ44N MOSFET PWM (jojaritz); inductor+capacitor per TEC + relays (TechTeamGB)."
+  findings: |
+    Realistic OTS path for 3 TEC/side (~18 A) from an ESP32/Pico: one programmable CC/CV buck supply per side (DPS5020-class, 20 A, Modbus RTU over UART at 3.3 V)
+    + one DPDT polarity relay (break-before-make, output disabled while switching) = zero custom power electronics, smooth DC, current limit in the supply.
+    RD6012 (12 A) needs 2 units per side or a series string. Dedicated Meerstetter controllers are technically ideal but USD 370-1600 each and the 4 A model is too small.
+    The DIY option (H-bridge + LC filter, TI-style <10 % ripple) is cheaper but needs a custom inductor/PCB and was only seen as raw PWM in the DIY repos.
+    Caveats: buck supplies cannot exceed input; the supply's setpoint is software (Modbus), so keep a hardware current limit and independent thermal cutoff; large output capacitors make relay switching under load a wear item;
+    DPS5020 ripple unverified. Prices for DPS/RD units NOT verified in this research.
+
+- role: water_block_heatsink_kit
+  requirement: "TEC + water block + air heatsink + fan assemblies, or TEC on aluminium water block + separate CPU tower."
+  examples:
+    - name: "Generic 'TEC1-12706 water cooling / peltier water chiller DIY kit' (single TEC)"
+      specs:
+        contents: "conduction module + water block 40x40x12 mm + TEC1-12706 + 40x40x10 fan + base board + grease + screws"
+        conduction_module_mm: "60 x 45 x 21"
+        thermal_resistance: "NOT published"
+      source: "https://www.makerlab-electronics.com/products/thermoelectric-tec12706-tec-12706-peltier-cooling-system-heatsink-kit-air-cooled-liquid-cooled"
+      retailer: "https://www.ubbcentral.com/store/item/DIY-Kits-Thermoelectric-Peltier-Refrigeration-Cooling-System-Fan-TEC1-12706_266606524070.html"
+      verified_on: 2026-10-10
+      notes: "Single-TEC, fan too small for ~100 W hot-side load. Seller warnings: never run without hot-side sink. 120 W liquid chiller core kit: https://probots.co.in/120w-thermoelectric-liquid-chiller-core-12v-peltier-water-cooling-diy-kit.html (specs not opened)."
+    - name: "TEC sandwiched between 40x80 mm aluminium water block and a CPU tower cooler (opencooler prototype)"
+      specs: {blocks: "40x80 mm aluminium water blocks", hot_side: "~USD 20 CPU air cooler", tec: "TEC12703 -> 12715 -> 12706 tried"}
+      source: "https://hackaday.io/project/205182-opencooler"
+      verified_on: 2026-10-10
+      notes: "V1 final test (June 2026) FAILED: one TEC side warm, the other barely chilled the water; do not mix aluminium and copper in the loop; heatsink mounts must isolate the copper heat block."
+  findings: |
+    No published thermal resistance (K/W) for any kit or block found (as expected). Kit listings only give size/contents. Design must measure the hot-side and cold-side
+    resistance on the bench. Evidence from the DIY repos: parallel TEC arrays with a separate hot-side loop + 360 mm radiator (jojaritz), or TEC between water block and tower cooler (opencooler, underperformed).
+
+- role: pump
+  requirement: "12 V, tach output, >=0.5 L/min at >=1 m head, quiet, continuous duty."
+  examples:
+    - name: "Laing/Xylem D5 PWM (12 V) - FloJet/Lowara/EK motor"
+      specs:
+        flow_head: "max 1200 l/h at up to 3.65 m (FloJet listing); 1500 l/h / 3.70 m (Lowara listing)"
+        speed: "PWM 800-4800 rpm; operating 8-24 V"
+        power: "23 W at 12 V (Digitec listing)"
+        tach: "tach/feedback wire (green) used in the openbed ESP32 wiring table; D5 PWM spec not verified from Xylem datasheet"
+        noise: "no dB(A) figure found"
+      source: "https://www.watercoolinguk.co.uk/product/laing-flojetd5-pwm-pump-motor-12v-1200-lph/"
+      retailer: "https://digitec.ch/en/s1/product/xylem-lowara-d5-pwm-pump-water-cooling-pumps-13209069"
+      verified_on: 2026-10-10
+      notes: "Older (pre-G2) PWM D5 defaults to a fixed duty without PWM feedback (forum); EK D5 PWM G2 listing: duty ~20-100 %, 100 % if no signal. Dissipates up to ~20 W into the loop at full speed. Opencooler author: D5 about USD 80, 5 years life vs ~2 for cheap pumps."
+    - name: "Aqua Computer D5 NEXT"
+      specs: {flow_head: "1500 l/h, 3.7 m", power: "65 W max incl. fan/RGB output", supply: "5 or 12 V"}
+      source: "https://shop.aquacomputer.de/Wasserkuehlung/Pumpen-Zub/Pumpen/D5-NEXT-Pumpe::3785.html"
+      verified_on: 2026-10-10
+      notes: "Has its own controller/display (USB, tach/flow data); overkill and expensive. dB not found."
+    - name: "Laing DDC (12 V) PWM"
+      specs: {note: "listings only, 4.2 PWM variant; specs not fetched"}
+      source: "https://www.aquatuning.com/en/watercooling/custom/pumps"
+      verified_on: 2026-10-10
+      notes: "jojaritz repo drives two DDC PWM pumps at 25 kHz; DDC specs/noise not verified."
+    - name: "DC40-class brushless 12 V pumps (Decdeal/Bayite/generic)"
+      specs: {example_listing: "DC40: 12/24 V, 7 m lift, '<40 dB' (seller), flow figures conflict (600 L/h vs 11 L/min)"}
+      source: "https://china.org.ru/product/60653090725"
+      retailer: "https://www.manomano.co.uk/p/dc-12v-brushless-submersible-water-pump-800lh-5m-for-solar-circulation-system-water-pump-pool-fountain-88314605"
+      verified_on: 2026-10-10
+      notes: "Exact Bayite DC40A-1230 / Decdeal DC40-1250 listings not found; noise numbers are seller claims and tach availability not verified. Barrow pumps not verified."
+  findings: |
+    0.5 L/min at 1 m head is trivially inside a D5/DDC envelope (D5 max about 3.7 m, >1000 l/h); the real issue is running a D5 at 800-1500 rpm for noise while the loop (4 mm tubing) adds resistance;
+    TechTeamGB ran a D5 on ~30 m of 4 mm ID tubing. D5/DDC PC pumps are the only candidates with usable documented PWM speed control and a tach wire. Noise (dB) is NOT documented by the makers; measure.
+
+- role: flow_sensor
+  requirement: "0.3-1 L/min range, accurate at low flow."
+  examples:
+    - name: "YF-S401 (Hall turbine, DFRobot SEN0216 spec)"
+      specs: {range: "0.3-6 L/min", accuracy: "+-5 % (0.3-3 L/min)", pulses: "5880 per litre (other listings: 1-5 L/min, 4380 pulses/L)", mounting: "vertical, tilt <= 5 deg"}
+      source: "https://wiki.dfrobot.com/sen0216/"
+      verified_on: 2026-10-10
+      notes: "Cheapest; low-end limits conflict between sellers. At 0.3 L/min the output is only ~29 Hz."
+    - name: "Aqua Computer MPS Flow 100 (G1/4)"
+      specs: {range: "20-100 l/h (0.33-1.67 L/min)", note: "inlets with < 8 mm ID need an extension for reliable reading"}
+      source: "https://www.watercoolinguk.co.uk/p/Aquacomputer-flow-sensor-MPS-Flow-100_69575.html"
+      verified_on: 2026-10-10
+      notes: "Only PC-watercooling sensor found whose span matches 0.3-1 L/min. Output signal / accuracy not verified; Aqua Computer sensors target their own controllers."
+    - name: "Aqua Computer high flow LT / high flow 2 / NEXT (G1/4)"
+      specs: {range: "40-1000 l/h (0.67-16.7 L/min); LT listing at one reseller 35 l/h"}
+      source: "https://shop.aquacomputer.de/Monitoring-and-Controlling/Sensors/Flow-sensor-high-flow-LT-G1-4::3951.html"
+      verified_on: 2026-10-10
+      notes: "Lower limit 0.67 L/min -> does NOT cover 0.3-0.67 L/min. No accuracy figure published."
+    - name: "Gems Sensors FT-110 turbine"
+      specs: {range: "variants 0.5-5 L/min and 0.5-35 L/min (RS listings)", accuracy: "+-3 % of reading, repeatability 0.5 % (Gems page)"}
+      source: "https://www.farnell.com/datasheets/1877507.pdf"
+      retailer: "https://se.rs-online.com/web/p/flow-sensors/9074031"
+      verified_on: 2026-10-10
+      notes: "Most credible accuracy claim, but 0.5 L/min minimum and industrial price; 4 mm-tube loop fittings differ."
+  findings: |
+    Accuracy "at low flow" is only documented for Gems FT-110 (+-3 % of reading, min 0.5 L/min) and YF-S401 (+-5 % for 0.3-3 L/min per DFRobot). For 0.3-1 L/min the
+    Aqua Computer MPS Flow 100 is the only span match found; the 'high flow' family starts at 40 l/h. Treat flow as a coarse safety interlock (flow present/absent, +-10 %), not a metrologic reading; calibrate in situ.
+
+- role: quick_disconnect
+  requirement: "Dry-break couplings for 6-10 mm tubing; low spill per disconnect."
+  examples:
+    - name: "CPC NS4 non-spill coupling (polypropylene)"
+      specs: {spill: "< 0.1 mL per disconnect (distributor copy of CPC data)", material: "polypropylene body, EPDM O-ring", max_pressure: "120 psi", max_temp: "71 C (160 F)"}
+      source: "https://avantorsciences.com/mx/en/product/39537527/cpc-non-spill-quick-disconnect-fittings-bodies-and-inserts"
+      retailer: "https://b2b-se.vwr.com/store/item/EU7109376/cpc-non-spill-quick-disconnect-fittings-bodies-and-inserts"
+      verified_on: 2026-10-10
+      notes: "Single-source marketing figure, not independent. Barb size for 6-10 mm tubing: pick the matching insert part number (not verified here)."
+    - name: "CPC NS6"
+      specs: {spill: "< 0.3 mL per disconnect (distributor copy)"}
+      source: "https://www.avantorsciences.com/fi/en/catalog-number/MFLX31603-22"
+      verified_on: 2026-10-10
+      notes: "Larger bore, more flow; spill 3x NS4."
+    - name: "Alphacool Eiszapfen quick-release coupling set (G1/4 AG or IG, brass)"
+      specs: {spill: "'tiny drop' only, no measured volume", seal: "double O-ring, 'N.D.S.L.'", flow: "no Cv published", size: "62.5 x 24 mm, 95 g"}
+      source: "https://shop.alphacool.com/en/shop/fittings/quick-release-fasteners/ank-alphacool-eiszapfen-quick-release-coupling-set-g1/4-ag-chrome"
+      verified_on: 2026-10-10
+      notes: "Do not run dry long-term (O-rings). Needs G1/4-to-barb adapters for 6-10 mm tubing."
+    - name: "Koolance QD3 / QD4"
+      specs: {note: "NO data retrieved - spill and flow unverified"}
+      source: "https://koolance.com"
+      verified_on: 2026-10-10
+      notes: "Unverified."
+  findings: |
+    Only CPC publishes a number: NS4 < 0.1 mL, NS6 < 0.3 mL per disconnect (via Avantor). Commercial Sleepme OOLER hoses use a 'CPC quick-connect' (Sleepme repair guide);
+    Chilipad Cube uses a valved quick connector. TechTeamGB's DIY build found his QDs did NOT self-seal (so do not assume it). Alphacool/Koolance spill not quantified.
+
+- role: temp_sensors
+  requirement: "10k NTC inline G1/4 water sensors; DS18B20 waterproof; SHT40/SHT45 breakout."
+  examples:
+    - name: "Alphacool Eiszapfen temperature sensor flat G1/4 (art. 17597 chrome / 17596 black)"
+      specs: {sensor: "10 kOhm NTC, readable -40..125 C", max_working_temp: "60 C", cable: "40 cm", body: "17 x 18 mm"}
+      source: "https://download.alphacool.com/datasheet/ENG_17597_Alphacool_Eiszapfen_temperature_sensor_flat_G1-4_-_chrome_datasheet.pdf"
+      verified_on: 2026-10-10
+      notes: "No B-value or tolerance published -> calibrate (Steinhart-Hart) per unit."
+    - name: "XSPC G1/4 inline 10k sensor"
+      specs: {sensor: "NTC 10k, -40..125 C", cable: "50 cm"}
+      source: "https://www.watercoolinguk.co.uk/product/xspc-g1-4-inline-10k-sensor-chrome/"
+      verified_on: 2026-10-10
+      notes: "No B-value/tolerance."
+    - name: "Aqua Computer inline temperature sensor G1/4 (2x G1/4 inner thread, nickel-plated brass)"
+      specs: {note: "thermistor specs not published on page"}
+      source: "https://shop.aquacomputer.de/Ueberwachung-und-Steuerung/Sensoren/Temperatursensor-inline-G1-4::2291.html"
+      verified_on: 2026-10-10
+      notes: "Meant for aquaero/quadro/octo; usable as plain NTC (not verified)."
+    - name: "DS18B20 waterproof probe"
+      specs: {accuracy: "+-0.5 C from -10 to +85 C (secondary sources; ADI datasheet not opened)", used_by: "jojaritz + opencooler heatsink probes"}
+      source: "https://forum.mysensors.org/post/85058"
+      verified_on: 2026-10-10
+      notes: "Treat 85.0 / -127.0 readings as a sensor fault (jojaritz does)."
+    - name: "Sensirion SHT45"
+      specs: {accuracy: "+-0.1 C, +-1.0 % RH (Sensirion catalog), -40..125 C"}
+      source: "https://sensirion.com/products/catalog/SHT45"
+      retailer: "https://be.farnell.com/sensirion/sht45-ad1b-r2/humidity-temp-sensor-40-to-125deg/dp/3958228"
+      verified_on: 2026-10-10
+      notes: "SHT40 not looked up; breakout boards (Adafruit etc.) not verified."
+  findings: "Use 10k NTC inline for the loop (needs per-unit calibration; no B tolerance published), DS18B20 for hot-side/heatsink; SHT45 for room/bed microclimate."
+
+- role: thermal_cutoff
+  requirement: "Bimetal NC thermostats ~45-50 C and 80 C, ratings, certified versions."
+  examples:
+    - name: "KSD301 / KSD9700 generic (Chinese sellers)"
+      specs: {rating: "250 V / 10 A, NC, metal body; variants incl. 45 C, 85 C, up to 230 C (seller listings)"}
+      source: "https://www.ebay.de/itm/394903220088"
+      retailer: "https://aws.robu.in/?p=1308070"
+      verified_on: 2026-10-10
+      notes: "No UL/VDE/TUV file numbers found for generic KSD parts; rating is AC - DC rating not stated (low-voltage DC is easy but arc-limit at 12 V x 6 A not documented). Datasheet source not identified."
+    - name: "Honeywell 2455R-series bimetal thermostat (RS: opens +45 C, closes +60 C, NO example; NC variants 100 C, 150 C)"
+      specs: {approvals: "UL recognised, CSA (RS listing)", rating: "10-15 A at 240 VAC (listing)"}
+      source: "https://uk.rs-online.com/web/p/thermostatic-switches/0331540?gb=s"
+      verified_on: 2026-10-10
+      notes: "The 45 C listing seen is NO type; NC at 45 C not confirmed. VDE not shown."
+    - name: "RS PRO bimetallic thermostats (e.g. 70 C opens / 55 C closes, NC, auto reset)"
+      specs: {approvals: "RoHS, REACH, UL/cUL, ENEC17 (listing); 16 A / 250 VAC"}
+      source: "https://uk.rs-online.com/web/p/thermostatic-switches/2228228"
+      retailer: "https://ie.rs-online.com/web/p/thermostatic-switches/2228224"
+      verified_on: 2026-10-10
+      notes: "RS PRO 40 C opens / 25 C closes NC exists (2228224). Closest certified (ENEC = European) option found."
+  findings: |
+    Certified versions exist (Honeywell 2455R: UL/CSA; RS PRO: UL/cUL/ENEC17) but I could not confirm an NC 45-50 C certified part or VDE; generic KSD301/9700 listings carry no certification evidence.
+    Open item: pick a certified NC part (UL/ENEC) near 50 C for the water/mat and ~80 C for the hot side, confirm DC rating for 12 V TEC currents; hysteresis (open vs reset) differs by series.
+
+- role: controller
+  requirement: "ESP32-S3 (ESPHome), Pico 2 (RP2350) as separate safety MCU; compiled-in constants not changeable via YAML."
+  examples:
+    - name: "Espressif ESP32-S3-DevKitC-1 (ESP32-S3-WROOM-1/1U/2)"
+      specs: {esphome: "board: esp32-s3-devkitc-1, framework esp-idf (working YAML seen on KinCony forum)"}
+      source: "https://docs.espressif.com/projects/esp-dev-kits/en/latest/esp32s3/esp32-s3-devkitc-1/user_guide.html"
+      retailer: "https://core-electronics.com.au/esp32-s3-devkitc-1-n8r8-esp32-s3-wroom-1-8mb-flash-8mb-psram.html"
+      verified_on: 2026-10-10
+      notes: "ESPHome board support confirmed only by a community YAML, not by ESPHome docs page."
+    - name: "Raspberry Pi Pico 2 (RP2350)"
+      specs: {cpu: "dual Cortex-M33 or Hazard3 RISC-V, 150 MHz", sram: "520 KB", flash: "4 MB", adc: "12-bit, 500 kS/s", price: "USD 5.00 (DigiKey SC1631)", watchdog: "not verified"}
+      source: "https://pip-assets.raspberrypi.com/categories/1005-raspberry-pi-pico-2/documents/RP-008299-DS-3-pico-2-datasheet.pdf"
+      retailer: "https://www.digikey.com/en/products/detail/raspberry-pi/SC1631/24627142"
+      verified_on: 2026-10-10
+      notes: "Opencooler author uses a Pico 2 with a flow sensor."
+  findings: |
+    ESPHome external_components supports a LOCAL source (source: my_components / type: local, path: relative to the YAML), with a C++ __init__.py + .cpp/.h per component (ESPHome docs).
+    The docs page says nothing on compile-time constants; keeping safety limits (max current, over-temp, max duty) as C++ constexpr inside a custom component that does not expose them in its config schema is a design inference (feasible, not documented as a feature).
+    Use the Pico 2 as an independent watchdog/safety MCU (hardware cutoff via relay), reading its own NTC + flow tach and holding the TEC enable line.
+
+- role: bcg_sensing
+  requirement: "Heart rate / respiration from bed: piezo film + ADC, load cells, pneumatic, and existing ESPHome presence projects."
+  examples:
+    - name: "(a) TE Connectivity LDT0-028K piezo film (+ SDT1 shock-type)"
+      specs: {film: "28 um PVDF, 0.125 mm polyester, silver-ink electrodes", temp: "0-85 C", note: "capacitance/sensitivity not extracted (datasheet content not retrieved)"}
+      source: "https://www.farnell.com/datasheets/3965669.pdf"
+      retailer: "https://jp.farnell.com/en-JP/sensor-solutions-te-connectivity/ldt0-028k/piezoelectric-sensor-voltage/dp/2771930"
+      verified_on: 2026-10-10
+      notes: "Very high source impedance: needs a buffer/charge amp in front of an ADC (inference)."
+    - name: "(a) TI ADS131M08 (+ ADS131M08EVM)"
+      specs: {channels: "8 simultaneous, 24-bit, up to 32 kSPS", interface: "SPI", supply: "2.7-3.6 V analog", package: "TQFP-32 / WQFN-32"}
+      source: "https://www.ti.com/product/ADS131M08"
+      verified_on: 2026-10-10
+      notes: "No off-the-shelf hobby breakout found in this pass; TI EVM exists (price not on page)."
+    - name: "(a) ADS1299 / OpenBCI Cyton"
+      specs: {adc: "8 ch, 24-bit, 250 SPS to 16 kSPS", cyton: "8 differential channels, gain 1-24", daisy: "US shop listed USD 1,249, sold out; chip about EUR 63 (Farnell)"}
+      source: "https://shop.openbci.com/products/cyton-daisy-biosensing-boards-16-channel"
+      verified_on: 2026-10-10
+      notes: "Biopotential AFE (EEG), awkward for piezo; expensive. ADS1298 not checked."
+    - name: "(b) HX711 / NAU7802 / ADS1232 under bed legs"
+      specs: {HX711: "10 or 80 SPS, fixed by RATE pin wiring (Klipper docs)", NAU7802: "10/20/40/80/320 SPS; one SparkFun user measured ~1/9 of nominal rate", ADS1232: "not verified"}
+      source: "https://community.sparkfun.com/t/nau7802-sampling-rate/41059"
+      verified_on: 2026-10-10
+      notes: "HX711 flaky at 3.3 V (one HA thread)."
+    - name: "(c) Pneumatic tube / air bladder + pressure sensor (XGZP6847, MPRLS, Honeywell ABP)"
+      specs: {note: "No datasheet/DIY evidence retrieved for these three sensors"}
+      source: "https://doaj.org/article/aa0acc60ad3748178aa63cd2062f426e"
+      verified_on: 2026-10-10
+      notes: "Heliyon 2023 (Lin et al.): air-mattress system for BCG heart-rate and breathing-rate estimation."
+    - name: "(d) ESPHome / MQTT bed presence projects"
+      specs: {projects: "HA forum 'Bed Scale / Occupancy sensor' (ESPHome + HX711 on WeMos D1 mini); geelenbert/LoadCellOccupany (ATmega328 + ethernet); belangp/mqtt-bed-sensor; jpralves.net 2019 build"}
+      source: "https://community.home-assistant.io/t/bed-scale-occupancy-sensor/114205"
+      retailer: "https://github.com/belangp/mqtt-bed-sensor"
+      verified_on: 2026-10-10
+      notes: "Presence only, ~1 Hz updates. Eight Sleep Pod 3 uses 6 capacitance sensors at ~2 Hz for presence (opensleep BACKGROUND.md)."
+  findings: |
+    (a) Strongest real-world evidence: the Eight Sleep Pod 3 samples 2 piezo sensors at ~500 Hz via an ADC read by an STM32 (opensleep BACKGROUND.md, reverse-engineering notes, GPL repo).
+    9 ch x 500 Hz = 4.5 kS/s, ~15 kB/s on a 30-byte ADS131M08 frame (inference): trivial for an ESP32-S3 or Pico over SPI with DRDY interrupts; internal ESP32 ADCs are not suitable (inference).
+    (b) HX711 at 80 SPS: Nyquist-adequate for heart rate (fundamental ~1-2 Hz); literature downsampled BCG to 50 Hz for HR algorithms (arXiv 2101.09144) and used 200 Hz on a chair (PMC9337676). Load-cell bed BCG with off-the-shelf load cells: PMC6470700 (Sensors 2019) and infant bed PMC4813984 (HR error 2.55 %); the full-text sample rate/ADC could not be fetched (captcha). An HX711 cushion project reports MAE 3.07 BPM (19 samples, 2 subjects, not peer reviewed). Risks: HX711 anti-alias filter undocumented, 24-bit noise, mattress compliance.
+    (c) Withings Sleep Analyzer: under-mattress 'pneumatic sensor' + sound sensor, BCG-based, CE-marked (Withings support PDF/reviews); Withings told reviewers it may not work on waterbeds - relevant to a water mat. Papers: Heliyon 2023 air mattress; Willemen et al. air-pressure BCG; Watanabe (cited in arXiv 1807.00951); a patent samples ~100 Hz. XGZP6847/MPRLS/ABP suitability unverified.
+    (d) See above; opensleep (GPL-3.0) shows capacitive presence + piezo HR is the commercial architecture.
+
+- role: water_mat
+  requirement: "Real buyable or documented DIY water mat with tubing connectors; note pressure ratings and connector types."
+  examples:
+    - name: "Sleepme Chilipad / OOLER / Dock Pro pads and hoses (optional, not a dependency)"
+      specs:
+        connectors: "OOLER hoses: CPC quick-connect (Sleepme repair guide); Cube: valved quick connector; Dock Pro: hose with one 90-degree end (connect to dock) and one straight end"
+        parts: "OOLER Repair Kit A (hoses); pads sold as accessories (separate pad sales not confirmed)"
+        pressure: "not published"
+      source: "https://sleepme.helpjuice.com/ooler-repair-kit-a"
+      retailer: "https://help.sleep.me/repair-guides-chilipad-cube/chilipad-cube-connector"
+      verified_on: 2026-10-10
+      notes: "Forum claim 'most use standard CPC connectors' is unverified. Chilipad Cube US retail about USD 1,349 (Walmart listing)."
+    - name: "Hospital / vet thermal pads: CSZ Blanketrol III, Gaymar T/Pump pads, Maxitherm (Covetrus), Duomed Plastipad"
+      specs: {Blanketrol: "heater+compressor+pump, 3 hose connectors for blankets/pads", Maxitherm: "colour-coded self-sealing connectors, shut-off clamps", pressure: "no connector pressure rating found"}
+      source: "https://somatechnology.com/app/uploads/2015/11/CSZ-Blanketrol-III.pdf"
+      retailer: "https://www.northamerica.covetrus.com/Content/pdfs/P038275.pdf"
+      verified_on: 2026-10-10
+      notes: "Medical pads are device-specific/regulated; skin contact limits apply; connectors proprietary. Not verified as buyable standalone."
+    - name: "Eight Sleep Pod 3 cover (reference design)"
+      specs: {construction: "network of water tubes ('Active Grid') in polyester/cotton cover (Sleep Foundation); older Pod: vinyl sheet with channel grid", range: "55-110 F (Pod 3 per opensleep README)", pressure: "not published"}
+      source: "https://sleepfoundation.org/mattress-reviews/eight-sleep-pod-mattress-review"
+      verified_on: 2026-10-10
+      notes: "No teardown with pressure data found."
+    - name: "DIY: ~30 m of 4 mm ID reinforced tubing in vertical channels cut in a 1.5-inch foam topper (TechTeamGB)"
+      specs: {tubing: "4 mm ID reinforced; 8 mm rejected as too stiff/thick/low coverage", connectors: "quick-disconnect with 8->4 mm adapters, zip ties (QDs did not self-seal)"}
+      source: "https://techteamgb.co.uk/2024/11/18/i-made-a-custom-bed-watercooler-open-source-diy-bed-cooler-heater-eight-sleep-type-thing/"
+      verified_on: 2026-10-10
+      notes: "Glued with contact adhesive that ran out. No measured cooling data."
+    - name: "DIY: PVC-tubing mattress pad + aquarium pump + water tank (forum anecdote)"
+      specs: {note: "reported quiet and working, tank acts as heat sink; no Peltier"}
+      source: "https://www.early-retirement.org/goto/post?id=2964989"
+      verified_on: 2026-10-10
+      notes: "Anecdote only."
+    - name: "Mat patent: parallel conduit array prevents pinching under load"
+      specs: {patent: "US4979375"}
+      source: "https://patents.justia.com/patent/4979375"
+      verified_on: 2026-10-10
+      notes: "Design hint: parallel channels, not one long serpentine, to avoid pinch/flow loss."
+  findings: |
+    The mat is the unsolved part: no buyable, spec'd (pressure/connector) standalone water mat was verified. Best-documented routes are (1) reuse a Chilipad/OOLER-type pad via CPC-style connectors as an optional compatibility target,
+    (2) DIY 4 mm ID reinforced tubing in a foam topper (TechTeamGB), preferably parallel channels. No pressure rating found anywhere; design to a low-pressure (<~1 bar, inference) loop with a pressure relief and test every mat on the bench. Silicone tubing is sold in 1/8" ID x 1/4" OD and 5/16" ID x 7/16" OD (eBay), i.e. about 3.2 mm and 8 mm.
+
+- role: adjustable_base_integration
+  requirement: "Adjustable bases with open/community integration (ESPHome/Home Assistant)."
+  examples:
+    - name: "ha-adjustable-bed (kristofferR/ha_smartbed, HACS 'Adjustable Bed')"
+      specs:
+        license: "MIT; last push 2026-10-09; 64 stars; v4 needs Home Assistant 2026.9+"
+        transport: "Bluetooth; ESPHome Bluetooth proxy supported (CONNECTION_GUIDE)"
+        brands: "Linak, Keeson (Ergomotion), Richmat, MotoSleep, Octo (bett1, Dunlopillo, Swiss Sense...), Solace, Leggett & Platt, Reverie, Okimat/Okin (64-bit, CB35, CST, DOT), Jiecang, Kaidi, Jensen, DewertOkin (79 brands), Serta, Nectar, Malouf/Lucid, BedTech, Sleep Number, Sleepy's, Logicdata, Limoss, Vibradorm, TiMOTION and others"
+      source: "https://github.com/kristofferR/ha_smartbed"
+      retailer: "https://github.com/kristofferR/ha_smartbed/blob/main/docs/SUPPORTED_ACTUATORS.md"
+      verified_on: 2026-10-10
+      notes: "Repo is renamed ha-adjustable-bed. Features: motors, presets, massage, lights, presence sensors on some beds, climate controls on supported beds."
+    - name: "smartbed-mqtt (Telepath1)"
+      specs: {brands: "Richmat (Gen2), Okin/Okimat, Okin-LP variants", requires: "MQTT broker"}
+      source: "https://github.com/Telepath1/smartbed-mqtt"
+      verified_on: 2026-10-10
+      notes: "Older add-on, superseded by the HACS integration per search summary."
+    - name: "AlexxIT/ergomotion"
+      specs: {scope: "Ergomotion beds over Bluetooth: head/foot position, massage, lights"}
+      source: "https://github.com/alexxit/ergomotion"
+      verified_on: 2026-10-10
+      notes: "Single-brand."
+  findings: "No Home Assistant core 'adjustable_bed' integration exists (search); the community HACS integration above is the de facto standard, BLE-based, brand list above (Linak, Okin, Richmat, Keeson/Ergomotion all supported)."
+
+- role: vibration_motor
+  requirement: "ERM/LRA pucks + DRV2605L breakout for silent alarm."
+  examples:
+    - name: "Adafruit DRV2605L Haptic Motor Controller (product 2305)"
+      specs: {interface: "I2C", supply: "3-5 V with onboard 3.3 V regulator and level shifting", motors: "ERM and LRA (Adafruit tested only with ERM pancake)", size_mm: "18 x 17 x 2", connector: "STEMMA QT / Qwiic", chip: "TI DRV2605L, closed-loop ERM/LRA, LRA auto-resonance"}
+      source: "https://www.adafruit.com/products/2305"
+      retailer: "https://ti.com/product/es-mx/DRV2605L"
+      verified_on: 2026-10-10
+      notes: "10 mm LRA coin motor specs not retrieved. Eight Sleep Pod 3 has vibration alarm motors on its sensor board (opensleep BACKGROUND.md)."
+  findings: "DRV2605L breakout is off-the-shelf and verified; specific LRA/ERM pucks not verified - choose any LRA/ERM rated for the DRV2605L's drive level and test under a pillow for audible buzz."
+
+- role: existing_projects
+  requirement: "Open-source DIY water-based bed cooling with peltiers: links, parts used, lessons."
+  examples:
+    - name: "opensleep/opencooler ('openbed') - Hackaday.io project 205182"
+      specs:
+        license: "MIT; GitHub last push 2026-06-18; 3 stars; PlatformIO ESP32"
+        parts: "4x TEC (12703/12706/12715 tried; '127106FX' water-sealed variant in BOM), 4x Cytron MD13S PWM/DIR drivers, D5 pump (PWM 25 kHz + tach), XKC-Y26 non-contact water-level sensor, DS18B20 heatsink probes, 10k NTC coolant probe, ST7789 TFT, Pi Pico 2 also mentioned; Mean Well PSU (~300 W est.)"
+        design: "single cooler for one mattress, no valves, no separate hot/cold reservoirs; pump dry-run interlock; web UI + JSON API"
+      source: "https://github.com/opensleep/opencooler"
+      retailer: "https://hackaday.io/project/205182-opencooler"
+      verified_on: 2026-10-10
+      notes: "Lessons (hackaday log, June 2026 V1 test): FAILED test (one TEC side warm, other barely chilled); MD13S capacitors ran hot; splitters melted at high draw; pump at 100 % too loud; reservoir leaks; do not mix Al/Cu; tower layout with gravity-fed pump simpler; project paused. Teardown thread: r/EightSleep (linked from the Hackaday page). Uses PWM drive - contradicts the smooth-DC requirement."
+    - name: "jojaritz/smart-water-cooled-bed-controller"
+      specs:
+        license: "MIT; updated 2026-08-28; 1 star"
+        parts: "ESP32-WROOM, Mean Well LRS-340-12 (12 V 29 A), 4x TEC1-12706 parallel, 4x IRLZ44N low-side MOSFETs, 2x DS18B20, 2x DDC PWM pumps (25 kHz), 360 mm radiator on separate hot loop, KiCad PCB with 7.5 A fuses"
+        safety: "55 C hot-loop trip, 1-Wire disconnect -> stop, +-0.5 C hysteresis"
+      source: "https://github.com/jojaritz/smart-water-cooled-bed-controller"
+      verified_on: 2026-10-10
+      notes: "Hysteresis on/off PWM of TECs (short-cycling risk acknowledged by author). No measured performance in README."
+    - name: "TechTeamGB 'I made a Custom Bed Watercooler' (video + article, Nov 2024)"
+      specs: {parts: "4 TEC, 4x 30 A automotive relays (MOSFETs overheated), L+C per TEC, 6 ohm 50 W headlight-bulb load resistors for current limiting, PC PSU, Phanteks Glacier R260C + D5, FeatherS3 ESP32-S3 on ESPHome with custom JLCPCB board, 30 m 4 mm ID tubing in foam topper"}
+      source: "https://techteamgb.co.uk/2024/11/18/i-made-a-custom-bed-watercooler-open-source-diy-bed-cooler-heater-eight-sleep-type-thing/"
+      verified_on: 2026-10-10
+      notes: "Lessons: 8 mm tube too stiff, QDs not self-sealing, heating more efficient than cooling, 'Peltier modules kinda suck at cooling'. Repo link only in the video description (not retrieved)."
+    - name: "LiamSnow/opensleep (Rust firmware for Eight Sleep Pod 3) - reference only"
+      specs: {license: "GPL-3.0; 157 stars; updated 2026-03-28", architecture: "SOM (i.MX8M Mini) + STM32 'Frozen' (2 TEC PID, 2 pumps, solenoid, level sensor) + STM32 sensor board (6 capacitance sensors, 8 bed NTCs, 2 piezo at ~500 Hz, vibration motors)"}
+      source: "https://github.com/LiamSnow/opensleep"
+      retailer: "https://github.com/LiamSnow/opensleep/blob/main/BACKGROUND.md"
+      verified_on: 2026-10-10
+      notes: "GPL-3.0 and reverse-engineered protocol - a clean-room Open Bed Climate should not copy code from it; its BACKGROUND.md is only a hardware-architecture reference."
+    - name: "bobobo1618/ninesleep and throwaway31265/free-sleep (Pod 3/4/5 local control)"
+      specs: {free-sleep: "MIT; local REST server on the Pod; Pod 1/2 incompatible", ninesleep: "replaces dac process; immature; still uploads data unless blocked"}
+      source: "https://github.com/throwaway31265/free-sleep"
+      retailer: "https://github.com/bobobo1618/ninesleep"
+      verified_on: 2026-10-10
+      notes: "Pod-control hacks, not DIY cooler builds."
+    - name: "Other references"
+      specs: {makezine: "thermoelectrically cooled pillow (water bladder, 6 temp sensors, Arduino)", thai_paper: "water temperature control for temperature-controlled mattress (Peltier)", element14: "BenHeck viewer challenge 'water-cooled blanket'", ifixit: "user ~USD 50 TEC1-12706 chiller clone, 'cools slowly'"}
+      source: "https://makezine.com/article/home/my-thermoelectrically-cooled-pillow/"
+      retailer: "https://ph02.tci-thaijo.org/index.php/swujournal/article/view/251605"
+      verified_on: 2026-10-10
+      notes: "Reddit search returned no usable threads."
+  findings: |
+    Three real DIY builds found; none shows measured cooling performance, one (opencooler V1) documented a failed test. Common themes: PWM drive of TECs (all three), D5/DDC pumps with 25 kHz PWM,
+    DS18B20 for heatsink protection, separate hot-side loop/radiator beats a tower on a block, leaks and noise are the practical killers, and 4 mm tubing is a comfort/size trade-off.
+    Commercial opensleep architecture (dedicated MCU for TEC/pump/safety, separate sensor MCU) matches the planned ESP32 + Pico split.

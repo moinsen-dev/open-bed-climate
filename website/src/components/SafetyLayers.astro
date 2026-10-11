@@ -1,0 +1,26 @@
+---
+// I4: safety layers as concentric rings: hardware cutoffs → control MCU clamp → hub requests only.
+---
+<svg class="layers" viewBox="0 0 320 320" role="img" aria-labelledby="sl-title sl-desc">
+  <title id="sl-title">Safety layers</title>
+  <desc id="sl-desc">Three nested layers. Inside: the networked hub can only request temperatures. Around it: the control MCU clamps setpoints to 13–43 °C and enforces flow, leak and heartbeat interlocks. Outside: independent hardware cutoffs and a watchdog act even if all software fails.</desc>
+  <circle class="l-ring l-ring--hw" cx="160" cy="160" r="150"></circle>
+  <circle class="l-ring l-ring--mcu" cx="160" cy="160" r="104"></circle>
+  <circle class="l-ring l-ring--hub" cx="160" cy="160" r="56"></circle>
+  <text class="l-t" x="160" y="34" text-anchor="middle">HARDWARE CUTOFFS</text>
+  <text class="l-s" x="160" y="50" text-anchor="middle">50 °C · 80 °C bimetal · watchdog</text>
+  <text class="l-t" x="160" y="80" text-anchor="middle">CONTROL MCU</text>
+  <text class="l-s" x="160" y="96" text-anchor="middle">clamp 13–43 °C · flow · leak</text>
+  <text class="l-t l-t--hub" x="160" y="157" text-anchor="middle">HUB</text>
+  <text class="l-s" x="160" y="173" text-anchor="middle">requests only</text>
+</svg>
+<style>
+  .layers { width: 100%; max-width: 320px; height: auto; }
+  .l-ring { fill: none; stroke-width: 1.5; }
+  .l-ring--hw { stroke: var(--warning); fill: color-mix(in oklab, var(--warning) 5%, transparent); }
+  .l-ring--mcu { stroke: var(--ink-muted); fill: color-mix(in oklab, var(--surface-raised) 70%, transparent); }
+  .l-ring--hub { stroke: var(--cold); stroke-dasharray: 4 3; fill: var(--surface); }
+  .l-t { font-family: var(--font-mono); font-size: 11px; font-weight: 600; letter-spacing: 0.08em; fill: var(--ink); }
+  .l-t--hub { fill: var(--cold); }
+  .l-s { font-family: var(--font-mono); font-size: 9.5px; fill: var(--ink-muted); }
+</style>

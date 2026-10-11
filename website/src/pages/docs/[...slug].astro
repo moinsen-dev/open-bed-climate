@@ -1,0 +1,32 @@
+---
+import { getCollection, render } from "astro:content";
+import Doc from "../../layouts/Doc.astro";
+import SafetyNote from "../../components/SafetyNote.astro";
+
+export async function getStaticPaths() {
+  const docs = await getCollection("docs");
+  return docs.map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
+}
+const { entry } = Astro.props;
+const { Content, headings } = await render(entry);
+const title = headings.find((h) => h.depth === 1)?.text ?? entry.id;
+const repoPath = entry.filePath?.replace(/^\.\.\//, "") ?? entry.id;
+const eyebrow = entry.id.startsWith("design/") ? "Design" : entry.id.startsWith("hardware/") ? "Hardware" : "Project";
+const isSafety = entry.id === "safety";
+---
+<Doc title={title} repoPath={repoPath} headings={headings} eyebrow={eyebrow}>
+  <Fragment slot="intro">
+    {isSafety && (
+      <div class="safety-intro">
+        <p class="eyebrow">Safety concept</p>
+        <p class="lead">This project is meant to be built and changed by its users. That's why this page draws a hard line between what you can customise and what you can't. The limits below aren't in any config file. They are compiled into the control firmware and backed by hardware that works when software doesn't. Have the electrical part reviewed by a qualified person before you sleep on a build.</p>
+        <SafetyNote variant="build" />
+      </div>
+    )}
+    {entry.id === "design/03-sensing-biometrics" && <SafetyNote variant="bio" />}
+  </Fragment>
+  <Content />
+</Doc>
+<style>
+  .safety-intro { display: grid; gap: var(--s-md); margin-bottom: var(--s-xl); padding-bottom: var(--s-xl); border-bottom: 1px solid var(--hairline); }
+</style>

@@ -1,0 +1,24 @@
+# Duo Reference: two zones, Tier 1 (reference PCBs: power board + cover sensor board).
+# Multi-point piezo sensing grid for the best biometrics. For experienced builders.
+
+[kit]
+name = "Duo Reference"
+tier = 1
+zones = 2
+
+[thermal]
+tec_per_zone = 4
+heatsink_k_per_w = 0.07
+max_tec_current_a = 5.0   # per TEC; Tier 1 power board
+
+[sensing]
+option = "piezo_grid"
+
+[power]
+# One 24 V 750 W supply inside the pre-assembled, closed power module (mains side assembled by a qualified person).
+tec_psu_w_per_zone = 375
+aux_psu_w = 100
+
+[claims]
+min_water_c = 18.5
+max_water_c = 43.0

@@ -1,0 +1,14 @@
+---
+// Status chip: words, never emoji (01-content §6). The guard fails the build on emoji inside .status.
+import { STATUS_LABEL } from "../site.ts";
+type Key = keyof typeof STATUS_LABEL;
+interface Props { state: Key; note?: string }
+const { state, note } = Astro.props;
+const tone: Record<Key, string> = {
+  now: "done", done: "done", planned: "next", next: "next", third_party: "muted", out_of_scope: "muted", measure: "help",
+};
+---
+<span class={`status chip chip--${tone[state]}`}>{STATUS_LABEL[state]}{note && <span class="status__note">{note}</span>}</span>
+<style>
+  .status__note { text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--ink-muted); }
+</style>

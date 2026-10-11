@@ -1,0 +1,70 @@
+# Generic capability names for the docs/FEATURES.md table, keyed by 0-based row order (01-content §4.6, C6).
+# Column 1 of FEATURES.md is never rendered. `approach` overrides the repo cell where it must not render raw.
+# test/data.test.ts fails when the row count here differs from FEATURES.md.
+- id: per-side
+  row: 0
+  name: Per-side heating and cooling
+  approach: "Peltier (TEC) thermal module per zone. Setpoint 13–43 °C; the reachable range depends on the kit."
+- id: zones
+  row: 1
+  name: Two independent zones, or one
+- id: thermal-power
+  row: 2
+  name: Cooling power per side
+  approach: "4 standard TEC modules per zone in Duo kits. Capping each at 4.5 A costs 0.4 K of cooling and saves 44 % power, so each zone runs from one certified 280 W plug-in supply."
+- id: hub-reservoir
+  row: 3
+  name: Compact hub with reservoir and fast priming
+- id: connector
+  row: 4
+  name: One connector for water and data
+- id: schedule
+  row: 5
+  name: Night temperature schedule
+- id: wake
+  row: 6
+  name: Thermal wake-up
+- id: vibration
+  row: 7
+  name: Vibration alarm
+- id: sensing
+  row: 8
+  name: In-bed sensing
+  approach: "Three interchangeable options: **load cells** under the bed legs, **pneumatic** air tube + pressure sensor, or a **piezo grid** (a 3×3 layout)."
+- id: presence
+  row: 9
+  name: Presence and in-bed detection
+- id: vitals
+  row: 10
+  name: Heart rate, HRV, breathing (planned, not medical)
+- id: sleep-stages
+  row: 11
+  name: Sleep stages
+- id: taps
+  row: 12
+  name: Tap gestures
+- id: presets
+  row: 13
+  name: Away, nap and hot-flash presets
+  approach: "Schedule presets and manual overrides"
+- id: control
+  row: 14
+  name: App and Home Assistant control
+- id: cloud
+  row: 15
+  name: Cloud account
+- id: base
+  row: 16
+  name: Adjustable base
+- id: speaker
+  row: 17
+  name: Speaker
+- id: blanket
+  row: 18
+  name: Blanket
+- id: pillow
+  row: 19
+  name: Pillow cover
+- id: updates
+  row: 20
+  name: Updates

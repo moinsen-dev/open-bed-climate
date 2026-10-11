@@ -1,0 +1,33 @@
+name: Part substitution / new part
+description: Suggest a part that fulfils a role in hardware/parts.toml (cheaper, better, available in your region).
+title: "[Part] <role>: <part name>"
+labels: ["parts"]
+body:
+  - type: input
+    id: role
+    attributes:
+      label: Role id (from hardware/parts.toml)
+      placeholder: pump
+    validations: {required: true}
+  - type: input
+    id: part
+    attributes:
+      label: Part name / model
+    validations: {required: true}
+  - type: input
+    id: source
+    attributes:
+      label: Datasheet or manufacturer link
+    validations: {required: true}
+  - type: textarea
+    id: fit
+    attributes:
+      label: How it meets the role requirement
+      description: Quote the relevant specs. Note anything it does NOT meet.
+    validations: {required: true}
+  - type: dropdown
+    id: tested
+    attributes:
+      label: Have you tested it in a build?
+      options: ["No, datasheet only", "Yes, bench test", "Yes, in a full build"]
+    validations: {required: true}

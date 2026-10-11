@@ -1,0 +1,18 @@
+---
+import Base from "../layouts/Base.astro";
+---
+<Base title="Not found" noindex>
+  <div class="container nf">
+    <p class="eyebrow">404</p>
+    <h1 class="h-lg">This page went cold.</h1>
+    <p class="lead muted">Nothing here. Maybe one of these:</p>
+    <div class="btn-row">
+      <a class="btn btn--primary" href="/kits/">Kits</a>
+      <a class="btn btn--secondary" href="/contribute/">Contribute</a>
+      <a class="btn btn--secondary" href="/">Home</a>
+    </div>
+  </div>
+</Base>
+<style>
+  .nf { display: grid; gap: var(--s-lg); padding-block: var(--s-3xl); justify-items: start; }
+</style>

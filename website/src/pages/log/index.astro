@@ -1,0 +1,28 @@
+---
+import { getCollection } from "astro:content";
+import Base from "../../layouts/Base.astro";
+const posts = (await getCollection("log")).sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+const fmt = (d: Date) => d.toISOString().slice(0, 10);
+---
+<Base title="Build log" description="Milestone updates: one post per milestone, not per calendar. Also available as RSS.">
+  <section class="container page-head">
+    <p class="eyebrow">Build log</p>
+    <h1 class="h-lg">One update per milestone.</h1>
+    <p class="lead muted">First bring-up, first cold night, board v1, grant decisions. Follow along with <a href="/rss.xml">RSS</a>.</p>
+  </section>
+  <div class="container posts">
+    {posts.map((p) => (
+      <a class="card post" href={`/log/${p.id}/`}>
+        <time class="num small muted" datetime={fmt(p.data.date)}>{fmt(p.data.date)}</time>
+        <h2 class="h-md">{p.data.title}</h2>
+        <p class="muted">{p.data.summary}</p>
+      </a>
+    ))}
+  </div>
+</Base>
+<style>
+  .page-head { padding-block: var(--s-2xl) var(--s-xl); display: grid; gap: var(--s-md); }
+  .posts { display: grid; gap: var(--s-md); padding-bottom: var(--s-2xl); max-width: 860px; }
+  .post { display: grid; gap: 6px; }
+  .post h2 { color: var(--ink); }
+</style>
