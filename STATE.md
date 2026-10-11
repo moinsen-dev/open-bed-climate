@@ -42,6 +42,10 @@ CERN-OHL-S-2.0 (hardware).
   per-kit Pico 2 UF2 releases (`release.yml`, picotool 2.3.1, `check_uf2.py`), ESPHome factory image + browser installer (/install/).
   Doc fixes: pull-downs 4.7 kΩ (E9), fuse after DPS, one 80 °C cutoff per heatsink. Open: DPS5020 comm pinout/current scaling.
 - **HA dashboard card (2026-10-11):** `hub/ha-card/` (Lit, single JS, 26 tests incl. curve vectors), release asset from v0.1.1.
+- **Carrier PCB Rev A (2026-10-11):** `hardware/pcb/carrier/` generated from `scripts/design.py` (`build.sh`, KiCad 10.0.6 in ~/Applications + Freerouting).
+  100×100 mm, 2 layers, ERC 0 / DRC 0 (15 silk warnings), JLC BOM/CPL + Gerbers in `fab/`, ~€20–27/board at 10 pcs. Pin map tested against board.rs.
+  UNTESTED: LCSC numbers for P-FET/SS54/zener/inductor/electrolytics/0.1 % resistors, rotations, ESP32 row pitch, buck layout, 12 V copper (2 oz for Duo).
+- **Water mat sourcing (2026-10-11):** `docs/research/water-mat-sourcing-2026-10.md` + RFQ template. ~€250–600/mat at 10 pcs, tooling €0.8–9k; tiled 45×100 cm design as mitigation.
 
 ## Next intended step
 

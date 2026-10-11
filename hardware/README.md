@@ -65,6 +65,10 @@ for what you may and may not change.
 
 **Shopping list:** [Solo Starter, prototype 0](shopping/solo-starter.md) — concrete products, shops and prices (bench build, then bed).
 
+**Carrier PCB (optional):** instead of the perfboard, the [Tier 0 carrier PCB](pcb/carrier/README.md) holds the
+Pico 2, the ESP32-S3 hub, the ADS1115, RS-485, the output drivers and all terminals on one 100 × 100 mm board that
+can be ordered assembled. Rev A is untested: review it before ordering.
+
 ## Status
 Design phase. No build has been completed and measured yet, so **be the first** and post a
 [build report](../.github/ISSUE_TEMPLATE/build-report.yml).

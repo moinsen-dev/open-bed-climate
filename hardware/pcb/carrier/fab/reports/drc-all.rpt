@@ -1,0 +1,80 @@
+** Drc report for carrier.kicad_pcb **
+** Created on 2026-10-11T17:04:01 **
+** Report includes: Errors, Warnings, Exclusions **
+
+** Found 15 DRC violations **
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(113.8750 mm, 123.4700 mm): PCB text 'PICO I2C: 3V3 G SDA SCL' on F.Silkscreen
+    @(120.1850 mm, 122.9950 mm): Segment of D15 on F.Silkscreen
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(120.1850 mm, 122.9950 mm): Segment of D15 on F.Silkscreen
+    @(113.8750 mm, 123.4700 mm): PCB text 'PICO I2C: 3V3 G SDA SCL' on F.Silkscreen
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(184.8550 mm, 139.6150 mm): Segment of J1 on F.Silkscreen
+    @(185.8950 mm, 139.0600 mm): PCB text 'Z1 NTC WTR' on F.Silkscreen
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(185.8950 mm, 139.0600 mm): PCB text 'Z1 NTC WTR' on F.Silkscreen
+    @(184.6550 mm, 138.7650 mm): Segment of J1 on F.Silkscreen
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(187.6450 mm, 140.1600 mm): PCB text 'G' on F.Silkscreen
+    @(199.5550 mm, 139.6150 mm): Segment of J1 on F.Silkscreen
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(192.5350 mm, 140.1600 mm): PCB text 'N' on F.Silkscreen
+    @(199.5550 mm, 139.6150 mm): Segment of J1 on F.Silkscreen
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(196.0350 mm, 140.1600 mm): PCB text 'G' on F.Silkscreen
+    @(199.5550 mm, 139.6150 mm): Segment of J1 on F.Silkscreen
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(178.7537 mm, 127.1887 mm): Segment of C5 on F.Silkscreen
+    @(180.1424 mm, 127.7226 mm): PCB text 'TP 5V' on F.Silkscreen
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(179.1475 mm, 127.5825 mm): Segment of C5 on F.Silkscreen
+    @(180.1424 mm, 127.7226 mm): PCB text 'TP 5V' on F.Silkscreen
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(176.3924 mm, 127.7226 mm): PCB text 'TP 12V' on F.Silkscreen
+    @(180.1424 mm, 127.7226 mm): PCB text 'TP 5V' on F.Silkscreen
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(187.2450 mm, 115.8550 mm): Segment of D3 on F.Silkscreen
+    @(186.8000 mm, 110.6300 mm): PCB text '12V IN' on F.Silkscreen
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(113.8750 mm, 123.4700 mm): PCB text 'PICO I2C: 3V3 G SDA SCL' on F.Silkscreen
+    @(121.6950 mm, 124.6450 mm): Pad 1 [Z1_COIL_P] of D15 on F.Cu
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(180.1424 mm, 127.7226 mm): PCB text 'TP 5V' on F.Silkscreen
+    @(180.9950 mm, 125.8450 mm): Pad 1 [+5V] of C5 on F.Cu
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(194.2850 mm, 139.7300 mm): PCB text 'Z1 NTC HOT: N G' on B.Silkscreen
+    @(185.8950 mm, 139.7300 mm): PCB text 'Z1 NTC WTR: N G' on B.Silkscreen
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(133.7000 mm, 93.6500 mm): PCB text 'Inputs: open wire = HIGH = fault. Pins: board.rs' on B.Silkscreen
+    @(145.1600 mm, 95.2600 mm): PTH pad 29 [unconnected-(U2-GPIO41-Pad29)] of U2
+
+** Found 0 unconnected pads **
+
+** Found 0 Footprint errors **
+
+** Ignored checks **
+    - Footprint has no courtyard defined
+    - Track endpoint not centered on via
+    - Tuning profile track geometries
+    - Footprint doesn't match symbol's footprint filters
+    - Footprint component type doesn't match footprint pads
+    - Footprint not found in libraries
+    - Footprint doesn't match copy in library
+
+** End of Report **

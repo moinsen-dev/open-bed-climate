@@ -6,6 +6,10 @@ pump, fans) that are **off whenever the Pico is not actively driving them**.
 
 **Time:** 5–7 h.
 
+**Or use the carrier PCB:** the [Tier 0 carrier PCB](../../hardware/pcb/carrier/README.md) replaces the perfboard
+and breakouts of this step (same pin map, pull-downs, fail-safe inputs and CUTOFF LOOP). Rev A is untested: review
+it before ordering, and still do the checkpoint below.
+
 ![Control board block wiring](img/control-board.svg)
 
 ## Parts
