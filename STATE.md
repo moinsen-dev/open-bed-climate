@@ -1,9 +1,9 @@
 # STATE — Open Bed Climate (sleep_pod)
 
 > **Frozen:** 2026-10-11
-> **Branch:** (git init, no commits yet)
-> **Last commit:** none
-> **Dirty:** all files untracked
+> **Branch:** main → github.com/moinsen-dev/open-bed-climate (public)
+> **Last commit:** see git log
+> **Dirty:** clean after this commit
 
 ## Last work-unit
 
@@ -32,12 +32,14 @@ CERN-OHL-S-2.0 (hardware).
   match `modbus.rs`; function codes / current scaling to confirm on the unit.
 - **Website (2026-10-11):** Astro 7 static site in `website/` (30 pages, "Thermal Night" design per `DESIGN.md`, hero plays the real night curve,
   kit picker, schedule editor → hub YAML). `npm run verify` green (astro check, tests vs repo data, budgets, CSP/no-third-party guard, links).
-  Model numbers come from `python -m opod.site_data` (freshness-tested). Placeholders in `website/src/site.ts`. Not deployed.
+  Model numbers come from `python -m opod.site_data` (freshness-tested). Live: https://openbedclimate.moinsen.dev (CF Pages project `open-bed-climate`; deploy: `cd website && npm run build &&
+  CLOUDFLARE_ACCOUNT_ID=331bab3c877a2ace8753d42d9aa33660 wrangler pages deploy dist --project-name=open-bed-climate --branch=main`).
+  Impressum/privacy → moinsen.dev, contact business@moinsen.dev, sponsors by e-mail. CSP blocks the zone's CF analytics beacon (intended).
   Funding: NLnet call deadline **2026-11-03** (write the proposal yourself, GenAI policy); Prototype Fund (software only) until 2026-11-30.
 
 ## Next intended step
 
-1. Website go-live; owner decisions: domain, GitHub org/repo URL, contact address, Impressum, sponsor channel.
+1. Seed 10–15 good-first-issues + Discussions categories; NLnet proposal (owner writes it, deadline 2026-11-03).
 2. Rename code identifiers `opod` → new name (package, crates, ESPHome platform) in one sweep.
 3. Fan/pump PWM in the firmware; OPL firmware-update path.
 
