@@ -23,15 +23,25 @@ jobs:
 
   firmware-pico2:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: firmware/opod-pico2
+    strategy:
+      matrix:
+        kit: [solo-starter, duo-standard, duo-reference]
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: thumbv8m.main-none-eabihf
-      - run: cargo build --release
+      - working-directory: firmware/opod-pico2
+        run: cargo build --release --locked --no-default-features --features kit-${{ matrix.kit }}
+      # Same UF2 conversion and check as release.yml (picotool pinned by checksum).
+      - run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq libusb-1.0-0
+          curl -fsSL -o picotool.tar.gz https://github.com/raspberrypi/pico-sdk-tools/releases/download/v2.3.1-0/picotool-2.3.1-x86_64-lin.tar.gz
+          echo "878a1a1e7d8336b8be60300c7218f366d9790c0d3a211b181d6d172e80b1248e  picotool.tar.gz" | sha256sum -c -
+          mkdir -p "$RUNNER_TEMP/picotool" && tar xzf picotool.tar.gz -C "$RUNNER_TEMP/picotool" --strip-components=1
+          "$RUNNER_TEMP/picotool/picotool" uf2 convert firmware/opod-pico2/target/thumbv8m.main-none-eabihf/release/opod-pico2 \
+            -t elf opod-pico2.uf2 --family rp2350-arm-s --abs-block
+          python3 -I firmware/tools/check_uf2.py opod-pico2.uf2
 
   hub-protocol:
     runs-on: ubuntu-latest
@@ -54,6 +64,10 @@ jobs:
       - run: |
           printf 'wifi_ssid: "ci"\nwifi_password: "cipassword"\napi_key: "%s"\nota_password: "ci"\n' "$(openssl rand -base64 32)" > secrets.yaml
           uvx --from esphome==2026.9.1 esphome compile opod-hub.yaml
+      # Ready-made image (browser installer): the committed file validates, and builds with this commit's components.
+      - run: |
+          uvx --from esphome==2026.9.1 esphome config opod-hub-factory.yaml > /dev/null
+          python3 factory_local.py && uvx --from esphome==2026.9.1 esphome compile opod-hub-factory.local.yaml
 
   website:
     runs-on: ubuntu-latest

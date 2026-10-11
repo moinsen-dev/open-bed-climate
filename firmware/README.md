@@ -21,22 +21,36 @@ The Rust controller must make the same decisions (mode, faults, pump, polarity r
 (±0.02 A; currently 0.00001 A) in every scenario, and produce byte-identical OPL frames. **If you change behaviour,
 change the Python reference first, regenerate the vectors, then make Rust pass.** CI checks that the vectors are current.
 
+## Install a release (no toolchain)
+Every release has one Pico 2 image per kit: `opod-pico2-solo-starter.uf2`, `opod-pico2-duo-standard.uf2`,
+`opod-pico2-duo-reference.uf2` ([releases](https://github.com/moinsen-dev/open-bed-climate/releases), or
+<https://openbedclimate.moinsen.dev/install/>). Hold BOOTSEL, plug the Pico 2 in, and drop **your kit's** file on the
+`RP2350` drive. The kit sets the zones and the TEC current limit, so another kit's image can overdrive your parts.
+Checksums are in `SHA256SUMS`. CI builds them (`.github/workflows/release.yml`, on a `v*` tag) with the prebuilt
+`picotool` 2.3.1 (`uf2 convert --family rp2350-arm-s --abs-block`, i.e. with the RP2350-E10 workaround block), and
+`tools/check_uf2.py` checks every image before it is published.
+
 ## Build and flash the Pico 2 firmware
 
 ```sh
 rustup target add thumbv8m.main-none-eabihf
 cd firmware/opod-pico2
-cargo build --release
+cargo build --release                                                      # Duo Standard (default)
+cargo build --release --no-default-features --features kit-solo-starter    # or kit-duo-reference
 cargo run --release              # flash + log via a debug probe (probe-rs), see .cargo/config.toml
 # or, without a probe: hold BOOTSEL, plug in, then
 picotool load -u -v -x -t elf target/thumbv8m.main-none-eabihf/release/opod-pico2
 ```
 
 ## Configure for your kit
-Edit [`opod-pico2/src/board.rs`](opod-pico2/src/board.rs): `MAX_TEC_CURRENT_A` and `TECS_PER_ZONE` from your kit file,
-the NTC calibration, the flow-sensor factor, and the TEC driver register map (`DPS_MAP`: **verify it against your
-module's protocol document**). The safety limits are not in this file; they are constants in `opod-core::control`
-and need a safety review to change (see [SAFETY.md](../SAFETY.md)).
+The kit limits come from a Cargo feature (`kit-solo-starter`, `kit-duo-standard` (default), `kit-duo-reference`), one
+block per kit in [`opod-pico2/src/board.rs`](opod-pico2/src/board.rs): zones, `TECS_PER_ZONE` and `MAX_TEC_CURRENT_A`
+from the kit file. `software/opod/tests/test_kits.py` checks each block against `hardware/kits/<kit>.toml`. For your
+own kit, add a TOML, a feature and a block. On a 1-zone kit, zone 1 is inert: its outputs stay low, its driver is never
+addressed, it reports no faults, its telemetry side is off with no temperatures, and any non-off target is rejected.
+Also in `board.rs`: the NTC calibration, the flow-sensor factor, and the TEC driver register map (`DPS_MAP`: **verify
+it against your module's protocol document**). The safety limits are not in this file; they are constants in
+`opod-core::control` and need a safety review to change (see [SAFETY.md](../SAFETY.md)).
 
 ## Design notes
 - Control loop at 10 Hz with the measured `dt`. The supervisor runs every cycle.

@@ -23,7 +23,7 @@ and runs your sleep temperature schedule — like the commercial "smart mattress
 | Reference software (thermal model, control + safety logic, protocol, schedules) | ✅ tested: [software/opod](software/opod) |
 | Control firmware for the Pico 2 (Rust/embassy) | ✅ compiles, matches the reference; 🔜 first hardware bring-up: [firmware/](firmware/) |
 | Hub: ESPHome component + Home Assistant entities, night programs on the hub | ✅ compiles for ESP32-S3, protocol and schedule host-tested; 🔜 first hardware run: [hub/esphome/](hub/esphome/) |
-| First physical build + measurements | 🔜 **help wanted, the most valuable contribution right now** |
+| First physical build + measurements | 🔜 **help wanted, the most valuable contribution right now**: follow the [build guide](docs/build/) |
 
 ## Pick a kit
 
@@ -56,6 +56,9 @@ Details: [architecture](docs/design/00-architecture.md) · [thermal](docs/design
 
 Builders, parts hunters, electronics and textile people, firmware and Home Assistant developers, writers:
 there is a place for you. Start with [CONTRIBUTING.md](CONTRIBUTING.md).
+
+**Build it:** the [build guide for prototype 0](docs/build/) (Solo Starter, bench first, then bed) takes you
+step by step from parts to a commissioned unit and the measurements the model still needs.
 
 ```sh
 cd software/opod && uv run pytest -q    # reference model, safety logic, kit checks

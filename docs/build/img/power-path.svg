@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 470" width="960" height="470" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" fill="none">
+  <title>Power path, one zone (Solo Starter)</title>
+  <defs>
+    <marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#8b95a7"/></marker>
+    <marker id="aa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f59e0b"/></marker>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#ef4444"/></marker>
+  </defs>
+
+  <text x="20" y="30" fill="#8b95a7" font-size="16" font-weight="600">Power path, one zone (Solo Starter) · everything you wire is ≤ 24 V DC</text>
+
+  <!-- Row 1: TEC power path -->
+  <text x="20" y="58" fill="#f59e0b" font-size="12" font-weight="600">TEC POWER PATH (up to 15 A)</text>
+  <g stroke="#8b95a7" stroke-width="1.5">
+    <rect x="20" y="70" width="120" height="64" rx="6" fill="#8b95a7" fill-opacity="0.08"/>
+    <rect x="170" y="70" width="140" height="64" rx="6" fill="#8b95a7" fill-opacity="0.08"/>
+    <rect x="340" y="70" width="90" height="64" rx="6" fill="#ef4444" fill-opacity="0.08" stroke="#ef4444"/>
+    <rect x="460" y="70" width="130" height="64" rx="6" fill="#8b95a7" fill-opacity="0.08"/>
+    <rect x="620" y="70" width="140" height="64" rx="6" fill="#8b95a7" fill-opacity="0.08"/>
+    <rect x="790" y="70" width="150" height="64" rx="6" fill="#38bdf8" fill-opacity="0.10" stroke="#38bdf8"/>
+  </g>
+  <g fill="#8b95a7" text-anchor="middle">
+    <text x="80" y="96" font-weight="600">24 V brick</text>
+    <text x="80" y="114" font-size="12">tec_psu, IEC inlet</text>
+    <text x="240" y="96" font-weight="600">DPS5020</text>
+    <text x="240" y="114" font-size="12">tec_drive, CC, addr 1</text>
+    <text x="385" y="96" font-weight="600" fill="#ef4444">20 A fuse</text>
+    <text x="385" y="114" font-size="12" fill="#ef4444">blade, DC</text>
+    <text x="525" y="96" font-weight="600">Zone relay</text>
+    <text x="525" y="114" font-size="12">COM → NO contact</text>
+    <text x="690" y="96" font-weight="600">Polarity relay</text>
+    <text x="690" y="114" font-size="12">DPDT, coil off = cool</text>
+    <text x="865" y="96" font-weight="600" fill="#38bdf8">3× TEC</text>
+    <text x="865" y="114" font-size="12" fill="#38bdf8">in parallel, 5 A each</text>
+  </g>
+  <g stroke="#f59e0b" stroke-width="3" marker-end="url(#aa)">
+    <line x1="140" y1="102" x2="166" y2="102"/>
+    <line x1="310" y1="102" x2="336" y2="102"/>
+    <line x1="430" y1="102" x2="456" y2="102"/>
+    <line x1="590" y1="102" x2="616" y2="102"/>
+    <line x1="760" y1="102" x2="786" y2="102"/>
+  </g>
+  <text x="385" y="152" fill="#8b95a7" font-size="11" text-anchor="middle">protects the TEC wiring</text>
+  <text x="385" y="166" fill="#8b95a7" font-size="11" text-anchor="middle">(after the DPS)</text>
+  <text x="690" y="152" fill="#8b95a7" font-size="11" text-anchor="middle">switches only at 0 A,</text>
+  <text x="690" y="166" fill="#8b95a7" font-size="11" text-anchor="middle">2 s dead time (GP11)</text>
+
+  <!-- mechanical link coil -> contacts -->
+  <line x1="525" y1="134" x2="525" y2="246" stroke="#8b95a7" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="533" y="200" fill="#8b95a7" font-size="11">coil closes contacts</text>
+
+  <!-- Row 2: coil path -->
+  <text x="20" y="238" fill="#ef4444" font-size="12" font-weight="600">ZONE RELAY COIL PATH (12 V, coil current only)</text>
+  <g stroke-width="1.5">
+    <rect x="20" y="250" width="120" height="64" rx="6" stroke="#8b95a7" fill="#8b95a7" fill-opacity="0.08"/>
+    <rect x="160" y="250" width="130" height="64" rx="6" stroke="#ef4444" fill="#ef4444" fill-opacity="0.08"/>
+    <rect x="310" y="250" width="135" height="64" rx="6" stroke="#ef4444" fill="#ef4444" fill-opacity="0.08"/>
+    <rect x="465" y="250" width="120" height="64" rx="6" stroke="#8b95a7" fill="#8b95a7" fill-opacity="0.08"/>
+    <rect x="620" y="250" width="150" height="64" rx="6" stroke="#8b95a7" fill="#8b95a7" fill-opacity="0.08"/>
+  </g>
+  <g fill="#8b95a7" text-anchor="middle">
+    <text x="80" y="276" font-weight="600">12 V brick</text>
+    <text x="80" y="294" font-size="12">aux_psu, IEC inlet</text>
+    <text x="225" y="276" font-weight="600" fill="#ef4444">3× 50 °C NC</text>
+    <text x="225" y="294" font-size="12" fill="#ef4444">one per cold plate</text>
+    <text x="377" y="276" font-weight="600" fill="#ef4444">80 °C NC</text>
+    <text x="377" y="294" font-size="12" fill="#ef4444">one per heatsink</text>
+    <text x="525" y="276" font-weight="600">Relay coil</text>
+    <text x="525" y="294" font-size="12">+ flyback diode</text>
+    <text x="695" y="276" font-weight="600">N-MOSFET</text>
+    <text x="695" y="294" font-size="12">low side, 4.7 kΩ pull-down</text>
+  </g>
+  <g stroke="#ef4444" stroke-width="2" marker-end="url(#ar)">
+    <line x1="140" y1="282" x2="156" y2="282"/>
+    <line x1="290" y1="282" x2="306" y2="282"/>
+    <line x1="445" y1="282" x2="461" y2="282"/>
+  </g>
+  <line x1="585" y1="282" x2="616" y2="282" stroke="#8b95a7" stroke-width="2" marker-end="url(#ag)"/>
+  <!-- ground -->
+  <g stroke="#8b95a7" stroke-width="2">
+    <line x1="770" y1="282" x2="820" y2="282"/>
+    <line x1="820" y1="282" x2="820" y2="300"/>
+    <line x1="806" y1="300" x2="834" y2="300"/>
+    <line x1="811" y1="306" x2="829" y2="306"/>
+    <line x1="816" y1="312" x2="824" y2="312"/>
+  </g>
+  <text x="842" y="286" fill="#8b95a7" font-size="12">GND (star point</text>
+  <text x="842" y="302" fill="#8b95a7" font-size="12">near the DPS)</text>
+  <text x="160" y="334" fill="#ef4444" font-size="12">Any cutoff opens → coil drops → TECs lose power, whatever the firmware does.</text>
+  <text x="160" y="350" fill="#ef4444" font-size="12">Cutoffs never carry the 15 A load current.</text>
+
+  <!-- Pico -->
+  <rect x="20" y="380" width="180" height="64" rx="6" stroke="#8b95a7" stroke-width="1.5" fill="#8b95a7" fill-opacity="0.08"/>
+  <text x="110" y="406" fill="#8b95a7" text-anchor="middle" font-weight="600">Pico 2</text>
+  <text x="110" y="424" fill="#8b95a7" text-anchor="middle" font-size="12">control_mcu</text>
+  <!-- GP10 to MOSFET gate -->
+  <polyline points="200,412 695,412 695,318" stroke="#8b95a7" stroke-width="1.5" marker-end="url(#ag)"/>
+  <text x="430" y="406" fill="#8b95a7" font-size="12">GP10 (zone relay) → gate, 220 Ω</text>
+  <!-- RS-485 to DPS -->
+  <polyline points="150,380 150,190 240,190 240,138" stroke="#8b95a7" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#ag)"/>
+  <text x="248" y="186" fill="#8b95a7" font-size="12">RS-485 Modbus, 9 600 Bd</text>
+  <text x="248" y="202" fill="#8b95a7" font-size="12">(GP4/GP5, DE on GP6)</text>
+</svg>

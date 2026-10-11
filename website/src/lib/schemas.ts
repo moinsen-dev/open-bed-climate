@@ -62,3 +62,32 @@ export const featureNameSchema = z.object({
   // Optional rewrite of the approach cell when the repo text must not render raw (01-content C6/C9).
   approach: z.string().optional(),
 });
+
+// hardware/shopping/*.toml (mirrors opod.shopping.load; Python stays the authority, CI runs both).
+export const SHOP_STAGES = ["bench", "bed", "tool"] as const;
+export const shoppingSchema = z.strictObject({
+  list: z.object({
+    kit: z.string(),
+    currency: z.string(),
+    checked_on: z.iso.date(),
+    region: z.string(),
+    notes: z.string(),
+  }),
+  item: z.array(
+    z
+      .object({
+        role: z.string(),
+        name: z.string(),
+        qty: z.int().min(0),
+        pack: z.int().min(1).default(1),
+        unit_eur: z.number().min(0),
+        shop: z.string(),
+        url: z.url().startsWith("https://"),
+        status: z.enum(["listing", "estimate"]),
+        stage: z.enum(SHOP_STAGES),
+        notes: z.string().default(""),
+      })
+      .refine((i) => (i.role === "tool") === (i.stage === "tool"), { message: "tools (and only tools) go in stage 'tool'" }),
+  ),
+});
+export type ShoppingData = z.infer<typeof shoppingSchema>;

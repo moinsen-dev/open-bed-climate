@@ -37,9 +37,15 @@ CERN-OHL-S-2.0 (hardware).
   Impressum/privacy → moinsen.dev, contact business@moinsen.dev, sponsors by e-mail. CSP blocks the zone's CF analytics beacon (intended).
   Funding: NLnet call deadline **2026-11-03** (write the proposal yourself, GenAI policy); Prototype Fund (software only) until 2026-11-30.
 
+- **Prototype 0 kit (2026-10-11):** Solo Starter shopping list `hardware/shopping/solo-starter.toml` (→ .md + /kits/solo-starter/shopping/,
+  bench ~€1,084 + bed ~€262, 48 estimate lines), build guide `docs/build/` (bench stage with 10 L bath, 8 steps, SVGs, → /build/),
+  per-kit Pico 2 UF2 releases (`release.yml`, picotool 2.3.1, `check_uf2.py`), ESPHome factory image + browser installer (/install/).
+  Doc fixes: pull-downs 4.7 kΩ (E9), fuse after DPS, one 80 °C cutoff per heatsink. Open: DPS5020 comm pinout/current scaling.
+
 ## Next intended step
 
-1. Seed 10–15 good-first-issues + Discussions categories; NLnet proposal (owner writes it, deadline 2026-11-03).
+1. Home Assistant dashboard card (bed thermostat + night curve).
+2. Seed 10–15 good-first-issues + Discussions categories; NLnet proposal (owner writes it, deadline 2026-11-03).
 2. Rename code identifiers `opod` → new name (package, crates, ESPHome platform) in one sweep.
 3. Fan/pump PWM in the firmware; OPL firmware-update path.
 

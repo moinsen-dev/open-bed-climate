@@ -14,6 +14,7 @@ import { PRIVACY_URL, IMPRESSUM_URL, CONTACT_EMAIL } from "../site.ts";
         <li><strong>No third-party requests.</strong> Fonts, scripts and images are served from this site. Links to GitHub and other sites are plain links: nothing loads from them until you click.</li>
         <li><strong>Theme choice.</strong> Only if you click the light/dark switch, your choice is saved in your browser's local storage (key <code>obc-theme</code>). It never leaves your device. Without a click, nothing is stored.</li>
         <li><strong>Schedule editor.</strong> Keeps its state in memory only; nothing is stored or sent.</li>
+        <li><strong>Firmware installer.</strong> <a href="/install/">/install/</a> loads the firmware files from this site and writes them to your board over USB, in your browser (Web Serial). The Wi-Fi name and password you enter there go only to your board over that cable. Nothing is sent to us or anyone else.</li>
         <li><strong>Hosting.</strong> The site is served by Cloudflare Pages, which processes technical request data (such as IP address and user agent) to deliver the pages. See the full policy for details.</li>
         <li><strong>E-mail.</strong> If you write to <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>, we use your message only to answer it.</li>
       </ul>

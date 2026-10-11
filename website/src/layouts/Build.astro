@@ -1,0 +1,101 @@
+---
+// Build guide layout: step list, progress, prev/next. Safety stays the most prominent link on every build page.
+import Base from "./Base.astro";
+import SafetyNote from "../components/SafetyNote.astro";
+import type { MarkdownHeading } from "astro";
+import type { StepRef } from "../lib/build-steps.ts";
+import { repoBlob } from "../site.ts";
+interface Props { title: string; steps: StepRef[]; current: StepRef | null; repoPath: string; headings: MarkdownHeading[]; description?: string }
+const { title, steps, current, repoPath, headings, description } = Astro.props;
+const idx = current ? steps.findIndex((s) => s.id === current.id) : -1;
+const prev = idx > 0 ? steps[idx - 1] : null;
+const next = idx < 0 ? steps[0] : steps[idx + 1] ?? null;
+const toc = headings.filter((h) => h.depth === 2);
+---
+<Base title={current ? `Step ${current.n}: ${current.title}` : title} description={description}>
+  <div class="container build">
+    <nav class="crumbs small" aria-label="Breadcrumb">
+      <a href="/build/">Build guide</a>{current && <><span aria-hidden="true"> / </span><span>Step {current.n}</span></>}
+    </nav>
+    {current && (
+      <div class="progress">
+        <span class="eyebrow">Step {current.n} of {steps.length}</span>
+        <progress max={steps.length} value={current.n} aria-label={`Step ${current.n} of ${steps.length}`}>{current.n} / {steps.length}</progress>
+      </div>
+    )}
+    <div class="build__grid">
+      <aside class="steps" aria-label="Build steps">
+        <p class="eyebrow">Prototype 0 · Solo Starter</p>
+        <ol>
+          <li><a href="/build/" aria-current={!current ? "page" : undefined}><span class="steps__n num">00</span>Overview</a></li>
+          {steps.map((s) => (
+            <li><a href={`/build/${s.id}/`} aria-current={current?.id === s.id ? "page" : undefined} class={current && s.n < current.n ? "is-done" : ""}><span class="steps__n num">{String(s.n).padStart(2, "0")}</span>{s.title}</a></li>
+          ))}
+        </ol>
+        <div class="steps__extra small">
+          <a href="/kits/solo-starter/shopping/">Shopping list</a>
+          <a href="/docs/safety/">Safety concept</a>
+          <a href="/install/">Install firmware</a>
+        </div>
+      </aside>
+      <article class="build__main">
+        {!current && <SafetyNote variant="build" />}
+        <div class="prose"><slot /></div>
+        <nav class="pager" aria-label="Previous and next step">
+          {prev ? <a class="card pager__prev" href={`/build/${prev.id}/`}><span class="eyebrow">Previous · step {prev.n}</span><span class="h-sm">{prev.title}</span></a>
+                : current ? <a class="card pager__prev" href="/build/"><span class="eyebrow">Previous</span><span class="h-sm">Overview</span></a> : <span></span>}
+          {next && <a class="card pager__next" href={`/build/${next.id}/`}><span class="eyebrow">Next · step {next.n}</span><span class="h-sm">{next.title}</span></a>}
+        </nav>
+        <p class="small muted source">Rendered from <code>{repoPath}</code>. <a href={repoBlob(repoPath)}>View or edit the source</a>. Nobody has built this yet: if something is unclear or wrong, that is exactly what we need to know.</p>
+      </article>
+      {toc.length > 1 && (
+        <aside class="toc" aria-label="On this page">
+          <p class="eyebrow">On this page</p>
+          <ul>{toc.map((h) => <li><a href={`#${h.slug}`}>{h.text}</a></li>)}</ul>
+        </aside>
+      )}
+    </div>
+  </div>
+</Base>
+<style>
+  .build { padding-block: var(--s-xl) var(--s-2xl); display: grid; gap: var(--s-lg); }
+  .crumbs, .crumbs a { color: var(--ink-muted); }
+  .progress { display: grid; gap: 6px; max-width: 72ch; }
+  progress { width: 100%; height: 6px; appearance: none; border: 0; border-radius: var(--r-full); background: var(--surface-raised); overflow: hidden; }
+  progress::-webkit-progress-bar { background: var(--surface-raised); }
+  progress::-webkit-progress-value { background: linear-gradient(90deg, var(--temp-20), var(--temp-36)); border-radius: var(--r-full); }
+  progress::-moz-progress-bar { background: var(--temp-20); }
+  .build__grid { display: grid; gap: var(--s-xl); grid-template-columns: minmax(0, 1fr); }
+  .steps ol { list-style: none; padding: 0; margin-top: var(--s-sm); display: grid; gap: 2px; }
+  .steps a { display: flex; gap: 10px; align-items: baseline; padding: 8px 10px; border-radius: var(--r-md); color: var(--ink-muted); text-decoration: none; font-size: 0.9375rem; }
+  .steps a:hover { background: var(--surface); color: var(--ink); }
+  .steps a[aria-current="page"] { background: var(--surface-raised); color: var(--ink); font-weight: 600; }
+  .steps a.is-done .steps__n { color: var(--success); }
+  .steps__n { color: var(--ink-muted); font-size: 0.8125rem; }
+  .steps a[aria-current="page"] .steps__n { color: var(--warm); }
+  .steps__extra { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: var(--s-md); padding-top: var(--s-md); border-top: 1px solid var(--hairline); }
+  .build__main { display: grid; gap: var(--s-xl); align-content: start; min-width: 0; }
+  .build__main > * { min-width: 0; }
+  .build__main .prose :global(img) { width: 100%; height: auto; background: var(--surface); border: 1px solid var(--hairline); border-radius: var(--r-lg); padding: var(--s-sm); }
+  .pager { display: grid; gap: var(--s-md); grid-template-columns: minmax(0, 1fr); }
+  .pager a { display: grid; gap: 4px; text-decoration: none; color: var(--ink); }
+  .pager__next { text-align: right; border-color: color-mix(in oklab, var(--warm) 40%, var(--hairline)); }
+  .source { border-top: 1px solid var(--hairline); padding-top: var(--s-md); max-width: 72ch; }
+  .toc { display: none; }
+  .toc ul { list-style: none; padding: 0; margin-top: var(--s-sm); display: grid; gap: 6px; font-size: var(--fs-body-sm); }
+  .toc a { color: var(--ink-muted); text-decoration: none; }
+  .toc a:hover { color: var(--link); }
+  @media (max-width: 899px) {
+    .steps ol { grid-auto-flow: column; grid-auto-columns: max-content; overflow-x: auto; padding-bottom: 6px; }
+    .steps a { white-space: nowrap; border: 1px solid var(--hairline); }
+  }
+  @media (min-width: 640px) { .pager { grid-template-columns: 1fr 1fr; } .pager__next { grid-column: 2; } }
+  @media (min-width: 900px) {
+    .build__grid { grid-template-columns: 240px minmax(0, 1fr); }
+    .steps { position: sticky; top: 96px; align-self: start; }
+  }
+  @media (min-width: 1240px) {
+    .build__grid { grid-template-columns: 240px minmax(0, 1fr) 200px; }
+    .toc { display: block; position: sticky; top: 96px; align-self: start; border-left: 1px solid var(--hairline); padding-left: var(--s-md); }
+  }
+</style>

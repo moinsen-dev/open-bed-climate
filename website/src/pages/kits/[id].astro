@@ -5,6 +5,7 @@ import SafetyNote from "../../components/SafetyNote.astro";
 import ModelEstimate from "../../components/ModelEstimate.astro";
 import KitRoomTable from "../../components/KitRoomTable.astro";
 import ZoneGlyph from "../../components/ZoneGlyph.astro";
+import { existsSync } from "node:fs";
 import { joinKit, psuSummary, KIT_BLURB, PSU_MARGIN } from "../../lib/kits.ts";
 import { MODULE_ORDER, SENSING_LABEL, repoBlob, issueTemplate } from "../../site.ts";
 
@@ -22,6 +23,7 @@ const modules = [...new Set(relevant.map((r) => r.module))].sort((a, b) => {
   const ia = MODULE_ORDER.indexOf(a), ib = MODULE_ORDER.indexOf(b);
   return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
 });
+const hasShopping = existsSync(`../hardware/shopping/${kit.id}.toml`);
 const specs: [string, string][] = [
   ["Tier", d.kit.tier === 0 ? "0 · modules only" : "1 · reference PCBs"],
   ["Zones", String(d.kit.zones)],
@@ -53,6 +55,13 @@ const specs: [string, string][] = [
     <p class="small muted">* Model estimate. No prototype of this kit has been built or measured yet.</p>
 
     <SafetyNote variant="build" />
+
+    {hasShopping && (
+      <a class="card shop-link" href={`/kits/${kit.id}/shopping/`}>
+        <span><span class="eyebrow">Ready to order</span><span class="h-sm shop-link__t">Shopping list and step-by-step build guide</span></span>
+        <span class="text-link">Shopping list<span class="arrow"></span></span>
+      </a>
+    )}
 
     <section class="kit__section" aria-labelledby="specs">
       <h2 id="specs" class="h-md">Specs from the kit file</h2>
@@ -92,7 +101,9 @@ const specs: [string, string][] = [
         <p class="muted">Read the safety concept, complete the commissioning checklist, then tell us how it went. A build report with measurements is the most valuable contribution right now.</p>
       </div>
       <div class="btn-row">
-        <a class="btn btn--primary" href={issueTemplate("build-report.yml")}>Post a build report</a>
+        {hasShopping && <a class="btn btn--primary" href="/build/">Build guide</a>}
+        {hasShopping && <a class="btn btn--secondary" href={`/kits/${kit.id}/shopping/`}>Shopping list</a>}
+        <a class={`btn ${hasShopping ? "btn--secondary" : "btn--primary"}`} href={issueTemplate("build-report.yml")}>Post a build report</a>
         <a class="btn btn--secondary" href="/docs/safety/">Safety concept</a>
       </div>
     </section>
@@ -115,6 +126,8 @@ const specs: [string, string][] = [
   .roles { display: grid; gap: var(--s-lg); grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
   .roles ul { list-style: none; padding: 0; margin-top: var(--s-xs); display: grid; gap: 6px; }
   .roles li { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .shop-link { display: flex; flex-wrap: wrap; gap: var(--s-sm) var(--s-lg); justify-content: space-between; align-items: center; border-color: color-mix(in oklab, var(--warm) 45%, var(--hairline)); }
+  .shop-link__t { display: block; color: var(--ink); margin-top: 2px; }
   .kit__cta { display: grid; gap: var(--s-lg); align-items: center; }
   .kit__cta p { margin-top: var(--s-xs); max-width: 60ch; }
   @media (min-width: 900px) { .kit__cta { grid-template-columns: 1fr auto; } }

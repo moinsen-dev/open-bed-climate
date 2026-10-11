@@ -1,0 +1,16 @@
+---
+import { getCollection, render } from "astro:content";
+import Build from "../../layouts/Build.astro";
+import { orderSteps } from "../../lib/build-steps.ts";
+
+export async function getStaticPaths() {
+  const all = await getCollection("build");
+  const steps = orderSteps(all);
+  return steps.map((s) => ({ params: { slug: s.id }, props: { entry: all.find((e) => e.id === s.id)!, steps, current: s } }));
+}
+const { entry, steps, current } = Astro.props;
+const { Content, headings } = await render(entry);
+---
+<Build title={current.title} steps={steps} current={current} repoPath={`docs/build/${entry.id}.md`} headings={headings} description={`Build guide step ${current.n} of ${steps.length}: ${current.title}.`}>
+  <Content />
+</Build>

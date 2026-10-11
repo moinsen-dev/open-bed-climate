@@ -5,6 +5,13 @@ edition = "2024"
 license = "Apache-2.0"
 description = "Open Bed Climate control firmware for the Raspberry Pi Pico 2 (RP2350)"
 
+# Kit limits (src/board.rs). Exactly one; for a non-default kit add --no-default-features.
+[features]
+default = ["kit-duo-standard"]
+kit-solo-starter = []
+kit-duo-standard = []
+kit-duo-reference = []
+
 [dependencies]
 cortex-m = { version = "0.7.9", features = ["inline-asm"] }
 cortex-m-rt = "0.7"

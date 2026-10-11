@@ -13,6 +13,7 @@ npm run dev        # http://localhost:4321
 npm run verify     # astro check → node tests → build → byte budget → content/CSP guard → internal link check
 npm run preview    # serve dist/
 npm run data       # regenerate src/data/model.json from the Python model (needs uv)
+node scripts/fetch-firmware.mjs # runs before every build (prebuild): latest release -> public/firmware/
 node scripts/gen-temp-css.mjs   # regenerate src/styles/temp-scale.css after changing src/lib/temp.ts
 ```
 
@@ -87,3 +88,16 @@ Where the plans conflict or didn't survive contact with the toolchain:
     the moinsen.dev pages instead. The outbound links are plain `<a href>` links, which the guard allows because they are not requests.
 15. **Repo data issues found** (not fixed here). Two example-part links in `hardware/parts.toml` are dead: china.org.ru (403)
     and the Espressif ESP32-S3-DevKitC user-guide URL (404).
+16. **Firmware installer (`/install/`).** The hub installs from the browser with ESP Web Tools
+    (`esp-web-tools` 10.4.0, pinned; `@material/web` pinned to 2.4.1 via `overrides`, because 2.5.0 removed files
+    esp-web-tools imports). It is bundled by Vite, so no CDN. Only the button loads with the page (~2.7 KB gz, budget 4 KB);
+    the dialog and flasher (~80 KB gz) load after a click. The firmware is **not** in git: `scripts/fetch-firmware.mjs`
+    runs as `prebuild`, downloads the latest GitHub release (UF2s, hub `.bin`, `SHA256SUMS`, all checksum-verified) into
+    `public/firmware/` (gitignored) and writes `release.json` + the ESP Web Tools `manifest.json`. With no release or no
+    network the page renders "no release yet", so `npm run verify` stays green offline. Test the release path with local
+    files: `FIRMWARE_DIR=<dir with release.yml asset names> npm run build`. **Cloudflare Pages does not rebuild on a new
+    release by itself:** redeploy after publishing one.
+17. **CSP `connect-src 'self'`** (was `'none'`). ESP Web Tools `fetch()`es its manifest and the firmware from this origin.
+    Set site-wide because Cloudflare `_headers` joins a second, path-scoped `Content-Security-Policy` into a second policy
+    and both are enforced, so `'none'` would still win on `/install/`. Still no third-party requests: `'self'` only.
+    The "no port picked" help dialog has two inline `style=""` icon sizes in esp-web-tools that the CSP drops (cosmetic).

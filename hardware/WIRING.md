@@ -10,17 +10,20 @@ If you change pins, change them there and here.
 
 ```mermaid
 flowchart LR
-  B24["24 V IEC-inlet supply<br/>(tec_psu)"] --> F["DC fuse 20 A"] --> DPS["DPS-class buck<br/>CC mode, Modbus addr 1/2"]
-  DPS --> ZR["Zone relay contacts<br/>(NO)"] --> PR["DPDT polarity relay"] --> TECS["4× TEC in parallel<br/>on cold plates"]
-  B12["12 V IEC-inlet supply<br/>(aux_psu)"] --> CUT["Bimetal cutoffs in series:<br/>4× 50 °C (cold plates)<br/>+ 1× 80 °C (heatsink)"] --> COIL["Zone relay coil"]
+  B24["24 V IEC-inlet supply<br/>(tec_psu)"] --> DPS["DPS-class buck<br/>CC mode, Modbus addr 1/2"]
+  DPS --> F["DC fuse 20 A"] --> ZR["Zone relay contacts<br/>(NO)"] --> PR["DPDT polarity relay"] --> TECS["4× TEC in parallel<br/>on cold plates"]
+  B12["12 V IEC-inlet supply<br/>(aux_psu)"] --> CUT["Bimetal cutoffs in series:<br/>one 50 °C per cold plate<br/>+ one 80 °C per heatsink"] --> COIL["Zone relay coil"]
   COIL --> DRV["Low-side driver<br/>(NPN/MOSFET, pull-down)"] --> GND((GND))
   PICO["Pico 2 GP10 / GP16"] --> DRV
 ```
 
+- **The 20 A fuse sits after the DPS**, where the current is highest (the DPS can deliver up to 20 A; the 24 V side is
+  limited to ~11.7 A by the supply's own protection). Solo Starter: 3 TECs, 3 cold plates, 3 heatsinks, zone 0 only.
 - **The zone relay sits between the TEC driver and the TECs.** If any cutoff opens, the coil drops and the TECs lose
   power, whatever the firmware or the DPS module does.
-- Every relay, pump and fan driver input has an **external 10 kΩ pull-down** to GND, so a Pico that is in reset,
-  unflashed or crashed leaves everything off. Don't rely on the RP2350's internal pull-downs (erratum E9).
+- Every relay, pump and fan driver input has an **external 4.7 kΩ pull-down** to GND, so a Pico that is in reset,
+  unflashed or crashed leaves everything off. Don't rely on the RP2350's internal pull-downs: erratum E9 can latch a
+  pad near mid-rail with a weak pull-down, so the external one must be **≤ 8.2 kΩ** (10 kΩ is not enough).
 - The firmware closes the zone relay only when the DPS output state and setpoint are confirmed over Modbus. The
   **polarity relay** (GP11 / GP17) switches only after the DPS output is off and reads back < 0.1 A.
 - Ground: connect the 24 V negative, the 12 V negative and the Pico GND at **one** star point near the DPS modules.

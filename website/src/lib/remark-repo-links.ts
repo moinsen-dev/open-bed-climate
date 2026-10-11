@@ -5,12 +5,15 @@
 import { posix, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { REPO_URL } from "../site.ts";
-import { docId, isRenderedDoc } from "./docs-map.ts";
+import { buildHref, docId, isRenderedDoc } from "./docs-map.ts";
 
 const REPO_ROOT = resolve(process.cwd(), "..");
 
 export function siteHrefForRepoPath(target: string, hash: string): string {
   if (isRenderedDoc(target)) return `/docs/${docId(target)}/${hash}`;
+  const build = buildHref(target);
+  if (build) return `${build}${hash}`;
+  if (/^hardware\/shopping\/[^/]+\.(md|toml)$/.test(target)) return `/kits/${target.split("/").pop()!.replace(/\.(md|toml)$/, "")}/shopping/${hash}`;
   const kit = /^hardware\/kits\/([^/]+)\.toml$/.exec(target);
   if (kit) return `/kits/${kit[1]}/${hash}`;
   if (target === "hardware/parts.toml" || target === "hardware/PARTS.md") return `/parts/${hash}`;
@@ -23,6 +26,7 @@ export function siteHrefForRepoPath(target: string, hash: string): string {
 /** New URL for a link found in the repo file `srcRepoPath`, or null to leave it unchanged. */
 export function rewriteRepoLink(url: string, srcRepoPath: string): string | null {
   if (/^([a-z][a-z0-9+.-]*:|#|\/)/i.test(url)) return null; // absolute, anchor-only or site-rooted
+  if (/\.(svg|png|jpe?g|webp|gif)$/i.test(url.split("#")[0])) return null; // images: bundled by Astro from the file next to the doc
   const [path, ...rest] = url.split("#");
   const hash = rest.length ? `#${rest.join("#")}` : "";
   const target = posix.normalize(posix.join(posix.dirname(srcRepoPath), path));

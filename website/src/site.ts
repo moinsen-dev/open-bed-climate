@@ -30,6 +30,7 @@ export const DISCUSSIONS_URL = `${REPO_URL}/discussions`;
 export const NAV = [
   { href: "/how-it-works/", label: "How it works" },
   { href: "/kits/", label: "Kits" },
+  { href: "/build/", label: "Build" },
   { href: "/docs/safety/", label: "Safety" },
   { href: "/status/", label: "Status" },
   { href: "/contribute/", label: "Contribute" },
@@ -39,10 +40,13 @@ export const FOOTER_NAV = [
   {
     title: "Build",
     links: [
+      { href: "/build/", label: "Build guide" },
+      { href: "/kits/solo-starter/shopping/", label: "Shopping list" },
       { href: "/kits/", label: "Kits" },
       { href: "/parts/", label: "Parts" },
       { href: "/docs/safety/", label: "Safety" },
       { href: "/docs/hardware/wiring/", label: "Wiring" },
+      { href: "/install/", label: "Install firmware" },
     ],
   },
   {

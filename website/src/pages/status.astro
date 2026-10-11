@@ -33,12 +33,12 @@ const decisions = [
       </ol>
     </section>
     <section aria-labelledby="measure" class="col col--help">
-      <h2 id="measure" class="h-md"><Status state="measure" /> Measurements needed from prototype 0</h2>
-      <p class="small muted">Every temperature on this site is a model estimate. These five measurements replace estimates with data.</p>
+      <h2 id="measure" class="h-md"><Status state="measure" /> Prototype 0: the bench build and its measurements</h2>
+      <p class="small muted">Every temperature on this site is a model estimate. The bench build comes first; its measurements replace estimates with data.</p>
       <ol class="measure">
         {by("measure").map((i) => <li>{i.data.text}</li>)}
       </ol>
-      <a class="btn btn--primary" href="/contribute/#builder">Help measure</a>
+      <a class="btn btn--primary" href="/build/">Start the bench build</a>
     </section>
   </div>
   <section class="section" aria-labelledby="decisions">

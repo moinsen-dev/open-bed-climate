@@ -1,0 +1,51 @@
+# Open Bed Climate hub, ready-made image: what the browser installer (openbedclimate.moinsen.dev/install/)
+# flashes, and what Home Assistant's ESPHome Device Builder adopts. No secrets in here:
+# - Wi-Fi: set in the browser right after flashing (Improv over USB), over Bluetooth (Improv), or via the
+#   "open-bed-climate-xxxxxx" access point + captive portal.
+# - API: encryption without a key; Home Assistant sets a key when it adopts the device.
+# - Adopting writes a small YAML that pulls this file as a package (dashboard_import below), so the hub keeps
+#   building from this repository.
+# The release workflow builds this file with the components from the tagged checkout instead of GitHub
+# (hub/esphome/factory_local.py).
+
+substitutions:
+  name: open-bed-climate
+  friendly_name: Open Bed Climate
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+  name_add_mac_suffix: true
+  project:
+    name: moinsen-dev.open-bed-climate
+    version: dev
+
+external_components:
+  - source:
+      type: git
+      url: https://github.com/moinsen-dev/open-bed-climate
+      ref: main
+      path: hub/esphome/components
+    components: [opod]
+
+packages:
+  device: !include opod-hub-common.yaml
+
+dashboard_import:
+  package_import_url: github://moinsen-dev/open-bed-climate/hub/esphome/opod-hub-factory.yaml@main
+
+api:
+  encryption: {}
+
+ota:
+  - platform: esphome
+
+wifi:
+  ap: {}
+
+captive_portal:
+
+improv_serial:
+
+esp32_improv:
+  authorizer: none

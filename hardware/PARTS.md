@@ -68,7 +68,7 @@ Polarity for heat/cool comes from a DPDT relay (role polarity_relay), switched o
 
 ## `temp_sensors` 🛡 · Control
 
-**Requirement:** Water temperature in and out per zone (G1/4 inline), cold plate and heatsink temperatures, room temperature/RH. Two independent sensors on each cold plate for a plausibility check.
+**Requirement:** Read by the firmware today, per zone: one water temperature (G1/4 inline 10k NTC, ADS1115 ch0/ch2) and one TEC hot-face/heatsink temperature (10k NTC, ch1/ch3). Room temperature/RH (e.g. SHT45) on the hub for the dew-point guard. Planned, not yet read: water out, and a second sensor per cold plate for a plausibility check.
 
 | Example | Status | Notes |
 |---|---|---|

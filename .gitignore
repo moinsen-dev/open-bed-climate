@@ -7,3 +7,10 @@ secrets.yaml
 .esphome/
 .wrangler/
 .DS_Store
+
+# ESPHome factory build variant (hub/esphome/factory_local.py)
+*.local.yaml
+
+# Firmware downloaded at build time (website/scripts/fetch-firmware.mjs)
+website/public/firmware/
+website/public/firmware.tmp/

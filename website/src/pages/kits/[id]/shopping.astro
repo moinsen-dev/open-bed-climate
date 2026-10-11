@@ -1,0 +1,124 @@
+---
+// Shopping list per kit, rendered from hardware/shopping/<kit>.toml (one route per list file).
+import { readdirSync } from "node:fs";
+import { getCollection } from "astro:content";
+import Base from "../../../layouts/Base.astro";
+import SafetyNote from "../../../components/SafetyNote.astro";
+import { loadShopping, totals, lineEur, eur, STAGE_TITLE, STAGE_NOTE, type ShoppingItem } from "../../../lib/shopping.ts";
+import { MODULE_ORDER, repoBlob } from "../../../site.ts";
+import { SHOP_STAGES } from "../../../lib/schemas.ts";
+
+export async function getStaticPaths() {
+  return readdirSync("../hardware/shopping").filter((f) => f.endsWith(".toml")).map((f) => ({ params: { id: f.replace(/\.toml$/, "") } }));
+}
+const { id } = Astro.params;
+const list = loadShopping(`../hardware/shopping/${id}.toml`);
+if (list.list.kit !== id) throw new Error(`hardware/shopping/${id}.toml: [list].kit is ${list.list.kit}`);
+const kit = (await getCollection("kits")).find((k) => k.id === id);
+if (!kit) throw new Error(`no kit ${id} for its shopping list`);
+const t = totals(list);
+const modules = new Map((await getCollection("parts")).map((p) => [p.data.id, p.data.module]));
+const EXTRA: Record<string, string> = { consumable: "Consumables", bench: "Bench rig", tool: "Tools" };
+const groupOf = (i: ShoppingItem) => modules.get(i.role) ?? EXTRA[i.role] ?? "Other";
+const order = (g: string) => { const k = MODULE_ORDER.indexOf(g); return k < 0 ? 50 + Object.values(EXTRA).indexOf(g) : k; };
+const stages = SHOP_STAGES.map((stage) => {
+  const items = list.item.filter((i) => i.stage === stage);
+  const groups = [...new Set(items.map(groupOf))].sort((a, b) => order(a) - order(b)).map((g) => ({ name: g, items: items.filter((i) => groupOf(i) === g) }));
+  return { stage, items, groups, subtotal: items.reduce((a, i) => a + lineEur(i), 0) };
+}).filter((s) => s.items.length);
+const notes = list.list.notes.trim().split(/\n(?=\S)/).map((l) => l.replace(/\n/g, " "));
+---
+<Base title={`Shopping list: ${kit.data.kit.name}`} description={`Every part to order for the ${kit.data.kit.name} (prototype 0), grouped by build stage, with prices checked on ${list.list.checked_on}.`}>
+  <div class="container shop">
+    <nav class="crumbs small" aria-label="Breadcrumb"><a href="/kits/">Kits</a> / <a href={`/kits/${id}/`}>{kit.data.kit.name}</a> / <span>Shopping list</span></nav>
+    <header class="shop__head">
+      <p class="eyebrow">Shopping list · prototype 0</p>
+      <h1 class="h-lg">What to order for the {kit.data.kit.name}.</h1>
+      <p class="lead muted">One orderable line per thing to buy, grouped by build stage. Buy stage 1 first: the bench build tells you whether the design works before anything goes near a bed. Every line maps to a role in the <a href="/parts/">parts catalog</a>, so you can swap any product for one that meets the same requirement.</p>
+    </header>
+
+    <dl class="sums" data-shopping-total={t.total.toFixed(2)}>
+      <div class="sum card"><dt class="eyebrow">Stage 1 · bench</dt><dd class="num">€{eur(t.bench)}</dd></div>
+      <div class="sum card"><dt class="eyebrow">Stage 2 · bed</dt><dd class="num">€{eur(t.bed)}</dd></div>
+      <div class="sum card sum--total"><dt class="eyebrow">Total</dt><dd class="num">€{eur(t.total)}</dd></div>
+      <div class="sum card"><dt class="eyebrow">Estimated lines</dt><dd class="num t-warm">{t.estimates}</dd></div>
+    </dl>
+    <p class="note small"><strong>Prices change.</strong> Checked on <time datetime={list.list.checked_on} class="num">{list.list.checked_on}</time> ({list.list.region}). Shipping is not included. Lines marked <span class="badge badge--estimate">estimate</span> have no confirmed price. Re-check every price before you order.</p>
+
+    <SafetyNote variant="build" />
+
+    <details class="notes card">
+      <summary>Notes on this list</summary>
+      <ul>{notes.map((n) => <li class="small muted">{n}</li>)}</ul>
+    </details>
+
+    {stages.map((s) => (
+      <section class="stage" aria-labelledby={`stage-${s.stage}`}>
+        <header class="stage__head">
+          <h2 id={`stage-${s.stage}`} class="h-md">{STAGE_TITLE[s.stage]}</h2>
+          <p class="small muted">{STAGE_NOTE[s.stage]}</p>
+        </header>
+        {s.groups.map((g) => (
+          <div class="table-wrap" tabindex="0" role="region" aria-label={`${STAGE_TITLE[s.stage]}: ${g.name}`}>
+            <table class="data-table shop-table">
+              <caption class="eyebrow">{g.name}</caption>
+              <thead><tr><th scope="col">Item</th><th scope="col" class="num">Qty</th><th scope="col" class="num">Unit €</th>{s.stage !== "tool" && <th scope="col" class="num">Line €</th>}<th scope="col">Shop</th></tr></thead>
+              <tbody>
+                {g.items.map((i) => (
+                  <tr>
+                    <th scope="row">
+                      <span class="item__name">{i.name}</span>
+                      <span class="item__meta">
+                        {modules.has(i.role) ? <a class="mono" href={`/parts/#${i.role}`}>{i.role}</a> : <span class="mono muted">{i.role}</span>}
+                        {i.status === "estimate" && <span class="badge badge--estimate">estimate</span>}
+                      </span>
+                      {i.notes && <span class="item__notes small muted">{i.notes}</span>}
+                    </th>
+                    <td class="num">{i.pack > 1 ? `${i.qty} × ${i.pack}` : i.qty}</td>
+                    <td class="num">{eur(i.unit_eur)}</td>
+                    {s.stage !== "tool" && <td class="num">{eur(lineEur(i))}</td>}
+                    <td><a href={i.url} rel="nofollow noopener">{i.shop}</a></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ))}
+        {s.stage !== "tool" && <p class="stage__sub"><span>Subtotal {s.stage}</span> <span class="num">€{eur(s.subtotal)}</span></p>}
+      </section>
+    ))}
+
+    <p class="grand"><span>Total, bench + bed</span> <span class="num">€{eur(t.total)}</span></p>
+    <p class="small muted">Rendered from <a href={repoBlob(`hardware/shopping/${id}.toml`)}><code>hardware/shopping/{id}.toml</code></a>. Found a cheaper or better part, or a dead link? Open a part substitution issue or a pull request. Next: the <a href="/build/">build guide</a>.</p>
+  </div>
+</Base>
+<style>
+  .shop { display: grid; gap: var(--s-xl); padding-block: var(--s-xl) var(--s-2xl); }
+  .crumbs, .crumbs a { color: var(--ink-muted); }
+  .shop__head { display: grid; gap: var(--s-md); }
+  .shop__head .lead { max-width: 72ch; }
+  .sums { display: grid; gap: var(--s-md); grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @media (min-width: 900px) { .sums { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  .sum { padding: var(--s-md); display: grid; gap: 4px; }
+  .sum dd { font-size: 1.5rem; font-weight: 600; }
+  .sum--total { border-color: var(--primary); }
+  .sum--total dd { color: var(--warm); }
+  .note { margin-top: calc(-1 * var(--s-md)); max-width: 90ch; color: var(--ink-muted); }
+  .note strong { color: var(--ink); }
+  .badge { font-family: var(--font-mono); font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; padding: 1px 6px; border-radius: var(--r-sm); border: 1px solid currentColor; white-space: nowrap; }
+  .badge--estimate { color: var(--warm); }
+  .notes summary { cursor: pointer; font-weight: 600; }
+  .notes ul { margin-top: var(--s-sm); padding-left: 1.1em; display: grid; gap: 6px; }
+  .stage { display: grid; gap: var(--s-md); }
+  .stage__head { padding-top: var(--s-lg); border-top: 1px solid var(--hairline); display: grid; gap: 4px; }
+  .shop-table { min-width: 640px; }
+  .shop-table caption { text-align: left; padding: 12px 16px 0; }
+  .shop-table tbody th { font-weight: 400; width: 58%; }
+  .item__name { display: block; font-weight: 600; color: var(--ink); }
+  .item__meta { display: flex; gap: 8px; align-items: center; margin-top: 2px; font-size: 0.8125rem; }
+  .item__notes { display: block; margin-top: 4px; }
+  .shop-table td.num, .shop-table th.num { white-space: nowrap; }
+  .stage__sub, .grand { display: flex; justify-content: space-between; gap: var(--s-md); font-weight: 600; padding: var(--s-sm) var(--s-md); border-radius: var(--r-md); background: var(--surface); }
+  .grand { font-size: 1.25rem; border: 1px solid var(--primary); }
+  .grand .num { color: var(--warm); }
+</style>

@@ -1,0 +1,19 @@
+---
+import { getCollection, getEntry, render } from "astro:content";
+import Build from "../../layouts/Build.astro";
+import { orderSteps } from "../../lib/build-steps.ts";
+
+const steps = orderSteps(await getCollection("build"));
+const overview = (await getEntry("build", "overview"))!;
+const { Content, headings } = await render(overview);
+---
+<Build title="Build guide" description="Build prototype 0: the Solo Starter, step by step, from the bench to the bed." steps={steps} current={null} repoPath="docs/build/README.md" headings={headings}>
+  <div class="cta not-prose">
+    <a class="btn btn--primary" href={`/build/${steps[0].id}/`}>Start with step 1</a>
+    <a class="btn btn--secondary" href="/kits/solo-starter/shopping/">Shopping list</a>
+  </div>
+  <Content />
+</Build>
+<style>
+  .cta { display: flex; flex-wrap: wrap; gap: var(--s-sm); }
+</style>

@@ -30,6 +30,21 @@
   state: done
   text: Three kits and a parts catalog listed by role (designed, not yet built)
   source: README status · hardware/
+- id: shopping
+  area: Hardware
+  state: done
+  text: Shopping list for prototype 0 (Solo Starter), every line mapped to a parts role
+  source: hardware/shopping/solo-starter.toml
+- id: build-guide
+  area: Hardware
+  state: done
+  text: Step-by-step build guide for prototype 0, from the bench to the bed
+  source: docs/build/
+- id: releases
+  area: Firmware
+  state: done
+  text: Firmware releases and a browser installer for the hub
+  source: /install/ · GitHub releases
 - id: parts-verify
   area: Hardware
   state: next
@@ -50,11 +65,11 @@
   state: next
   text: Rename code identifiers to the new project name in one sweep
   source: STATE.md next step 2
-- id: bringup
+- id: bench-build
   area: Hardware
-  state: next
-  text: First hardware bring-up of the control board and hub
-  source: README status
+  state: measure
+  text: Prototype 0 bench build (Solo Starter, 10 l water container as thermal load), following the build guide
+  source: docs/build/ · help wanted
 - id: m1
   area: Measurement
   state: measure

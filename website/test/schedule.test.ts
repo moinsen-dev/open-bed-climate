@@ -56,7 +56,7 @@ test("validate mirrors Schedule.__post_init__", () => {
 
 test("hub YAML matches the example config format", () => {
   const yaml = hubYaml(model.schedule_default as Schedule);
-  const hub = readFileSync(new URL("../../hub/esphome/opod-hub.yaml", import.meta.url), "utf8");
+  const hub = readFileSync(new URL("../../hub/esphome/opod-hub-common.yaml", import.meta.url), "utf8");
   // The default program in the example hub config is exactly what the copy button produces.
   assert.ok(hub.includes(yaml), `hub config does not contain:\n${yaml}`);
 });

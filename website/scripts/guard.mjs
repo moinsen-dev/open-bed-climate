@@ -71,6 +71,16 @@ for (const file of files.filter((f) => f.endsWith(".css"))) {
   for (const m of css.matchAll(/@import\s+(?:url\()?["']?([^"');]+)/g)) if (isExternal(m[1])) fail(file, `third-party @import: ${m[1]}`);
 }
 
+// Shopping pages: the rendered grand total must equal the total line opod.shopping wrote into the .md.
+for (const file of files.filter((f) => /kits\/[^/]+\/shopping\/index\.html$/.test(relative(DIST, f)))) {
+  const kit = relative(DIST, file).split("/")[1];
+  const shown = /data-shopping-total="([\d.]+)"/.exec(readFileSync(file, "utf8"))?.[1];
+  const mdPath = new URL(`../../hardware/shopping/${kit}.md`, import.meta.url);
+  const md = readFileSync(mdPath, "utf8");
+  const want = /\*\*Total \(bench \+ bed\)\*\*\s*\|\s*\*\*([\d,.]+)\*\*/.exec(md)?.[1]?.replace(/,/g, "");
+  if (!shown || !want || Number(shown).toFixed(2) !== Number(want).toFixed(2)) fail(file, `shopping total ${shown} != ${kit}.md total ${want}`);
+}
+
 if (errors.length) {
   console.error(`guard: ${errors.length} problem(s)\n` + errors.map((e) => "  - " + e).join("\n"));
   process.exit(1);

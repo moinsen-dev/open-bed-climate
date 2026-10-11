@@ -63,6 +63,8 @@ supply protection are the hardware backstops.
 See [`PARTS.md`](PARTS.md) for the role requirements and verified example parts, and [SAFETY.md](../SAFETY.md)
 for what you may and may not change.
 
+**Shopping list:** [Solo Starter, prototype 0](shopping/solo-starter.md) — concrete products, shops and prices (bench build, then bed).
+
 ## Status
 Design phase. No build has been completed and measured yet, so **be the first** and post a
 [build report](../.github/ISSUE_TEMPLATE/build-report.yml).

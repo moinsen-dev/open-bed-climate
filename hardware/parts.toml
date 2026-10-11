@@ -148,7 +148,7 @@ requirement = "Wi-Fi, Home Assistant integration, schedules, UI. Can only reques
 id = "temp_sensors"
 module = "Control"
 safety = true
-requirement = "Water temperature in and out per zone (G1/4 inline), cold plate and heatsink temperatures, room temperature/RH. Two independent sensors on each cold plate for a plausibility check."
+requirement = "Read by the firmware today, per zone: one water temperature (G1/4 inline 10k NTC, ADS1115 ch0/ch2) and one TEC hot-face/heatsink temperature (10k NTC, ch1/ch3). Room temperature/RH (e.g. SHT45) on the hub for the dew-point guard. Planned, not yet read: water out, and a second sensor per cold plate for a plausibility check."
 
   [[role.example]]
   name = "Alphacool Eiszapfen inline temperature sensor G1/4 (10k NTC)"

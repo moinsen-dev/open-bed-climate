@@ -91,11 +91,14 @@ async fn hub_rx(mut rx: BufferedUartRx) {
         let (cmd, ok) = match f.typ {
             msg::HEARTBEAT => (Some(HostCmd::Heartbeat), true),
             msg::SET_TARGET => match protocol::parse_set_target(f.payload) {
-                Ok((side, c)) if (side as usize) < ZONES => (Some(HostCmd::SetTarget { side, c }), true),
+                Ok((side, c)) if (side as usize) < ACTIVE_ZONES => (Some(HostCmd::SetTarget { side, c }), true),
+                // A zone this kit doesn't have is always off: "off" is a no-op, anything else is rejected.
+                Ok((side, c)) if (side as usize) < ZONES => (None, c.is_none()),
                 _ => (None, false),
             },
             msg::CLEAR_FAULTS => match f.payload.first() {
-                Some(&side) if (side as usize) < ZONES => (Some(HostCmd::ClearFaults { side }), true),
+                Some(&side) if (side as usize) < ACTIVE_ZONES => (Some(HostCmd::ClearFaults { side }), true),
+                Some(&side) if (side as usize) < ZONES => (None, true), // inert zone: no faults to clear
                 _ => (None, false),
             },
             msg::PRIME => (Some(HostCmd::Prime), true),
@@ -323,7 +326,9 @@ async fn main(spawner: Spawner) {
     let i2c = I2c::new_async(p.I2C0, p.PIN_9, p.PIN_8, Irqs, i2c::Config::default());
     let mut adc = Ads1115::new(i2c, ADS1115_ADDR);
     spawner.spawn(flow_counter(Input::new(p.PIN_14, Pull::Up), 0).unwrap());
-    spawner.spawn(flow_counter(Input::new(p.PIN_20, Pull::Up), 1).unwrap());
+    if ACTIVE_ZONES > 1 {
+        spawner.spawn(flow_counter(Input::new(p.PIN_20, Pull::Up), 1).unwrap());
+    }
 
     let mut ctrl = [ZoneController::new(MAX_TEC_CURRENT_A), ZoneController::new(MAX_TEC_CURRENT_A)];
     let mut flow_lpm = [0.0f32; ZONES];
@@ -334,7 +339,10 @@ async fn main(spawner: Spawner) {
     let mut tick: u32 = 0;
     let mut last_i = Instant::now();
     let mut ticker = Ticker::every(Duration::from_millis(100));
-    info!("open pod control up, cap {} A/TEC x {}", MAX_TEC_CURRENT_A, TECS_PER_ZONE);
+    info!(
+        "open bed climate control up, kit {}, {} zone(s), cap {} A/TEC x {}",
+        KIT, ACTIVE_ZONES, MAX_TEC_CURRENT_A, TECS_PER_ZONE
+    );
 
     loop {
         ticker.next().await;
@@ -381,7 +389,9 @@ async fn main(spawner: Spawner) {
             faults: 0,
         }; ZONES];
 
-        for z in 0..ZONES {
+        // Only the kit's zones run. An inert zone's outputs stay LOW from init, its driver is never addressed,
+        // it reports no faults, and its telemetry side keeps the default above (mode 0, invalid temperatures).
+        for z in 0..ACTIVE_ZONES {
             let (ch_w, ch_h) = NTC_CHANNELS[z];
             let (cal_w, cal_h) = &NTC_CAL[z];
             let t_water = adc.read_volts(ch_w).await.ok().and_then(|v| ntc_from_volts(cal_w, v));

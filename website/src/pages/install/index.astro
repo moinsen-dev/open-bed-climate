@@ -1,0 +1,103 @@
+---
+// Firmware installer. The files come from the latest GitHub release and are copied into public/firmware/ before the
+// build (scripts/fetch-firmware.mjs), so everything is same-origin. Without a release the page says so.
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { getCollection } from "astro:content";
+import Base from "../../layouts/Base.astro";
+import SafetyNote from "../../components/SafetyNote.astro";
+import { REPO_URL, repoTree } from "../../site.ts";
+
+interface FileInfo { path: string; size: number; sha256: string; file?: string }
+interface Release { tag: string; url: string; hub: FileInfo & { manifest: string }; pico2: Record<string, FileInfo & { file: string }> }
+
+const releaseFile = resolve("public/firmware/release.json"); // astro build runs in website/
+const release: Release | null = existsSync(releaseFile) ? JSON.parse(readFileSync(releaseFile, "utf8")) : null;
+const kits = (await getCollection("kits"))
+  .sort((a, b) => a.data.kit.zones - b.data.kit.zones || a.data.kit.tier - b.data.kit.tier)
+  .map((k) => ({ id: k.id, ...k.data.kit, ...k.data.thermal, uf2: release?.pico2[k.id] }));
+const kb = (n: number) => `${Math.round(n / 1024)} KB`;
+---
+<Base title="Install firmware" description="Install the Open Bed Climate firmware without a toolchain: the ESP32-S3 hub from the browser, the Pico 2 control board by drag and drop.">
+  <section class="container install-head">
+    <p class="eyebrow">Install</p>
+    <h1 class="h-lg">Install the firmware. No toolchain needed.</h1>
+    <p class="lead muted">Two boards, two files: the hub (ESP32-S3, ESPHome) installs from this page over USB, and the control board (Pico 2) takes a file by drag and drop. Both are built from the repository by CI for every release.</p>
+    {release
+      ? <p class="small muted">Release <a class="mono" href={release.url}>{release.tag}</a> · checksums in <a href="/firmware/SHA256SUMS">SHA256SUMS</a></p>
+      : <p class="small muted">No release published yet.</p>}
+  </section>
+
+  <div class="container install-body">
+    <SafetyNote variant="build" />
+    <p class="note"><strong>Not yet run on real hardware.</strong> The firmware passes its tests and builds, but nobody has run it on a finished build yet. Bring the boards up on the bench first, in the order in <a href="/docs/hardware/wiring/">the wiring guide</a>, with the TEC supplies unplugged.</p>
+
+    <section aria-labelledby="hub" class="card step">
+      <p class="eyebrow">1 · Hub</p>
+      <h2 id="hub" class="h-md">ESP32-S3 hub: install from the browser</h2>
+      {release ? (
+        <>
+          <ol class="steps">
+            <li>Plug the ESP32-S3 into this computer with a data USB cable. On a DevKitC-1 use the port labelled <strong>USB</strong> (not UART): Wi-Fi setup after the install talks over that port.</li>
+            <li>Click <strong>Install</strong>, pick the board's serial port and confirm. Erase the device on the first install.</li>
+            <li>When it's done, enter your Wi-Fi in the same dialog. No Wi-Fi setup here? The hub opens a hotspot named <span class="mono">open-bed-climate-xxxxxx</span>; join it and pick your network.</li>
+            <li>Home Assistant finds the hub on its own (ESPHome integration). To change the configuration later, <strong>adopt</strong> it in the ESPHome Device Builder: Home Assistant then sets its own encryption key.</li>
+          </ol>
+          <div class="btn-row">
+            <esp-web-install-button manifest={release.hub.manifest}>
+              <button slot="activate" type="button" class="btn btn--primary">Install the hub firmware</button>
+              <p slot="unsupported" class="note">This browser can't talk to USB serial devices. Use <strong>Chrome or Edge</strong> on a desktop computer (Web Serial). Firefox and Safari don't support it.</p>
+              <p slot="not-allowed" class="note">Installing needs a secure (HTTPS) page.</p>
+            </esp-web-install-button>
+            <a class="btn btn--secondary" href={release.hub.path} download>Download .bin ({kb(release.hub.size)})</a>
+          </div>
+          <p class="small muted">Needs <strong>Chrome or Edge</strong> on a desktop computer (Web Serial). The board isn't listed? Install the USB driver for its serial chip, or hold BOOT while plugging it in. Manual install: <span class="mono">esptool.py write_flash 0x0 opod-hub-factory.bin</span>. SHA-256 <span class="mono hash">{release.hub.sha256}</span></p>
+        </>
+      ) : (
+        <p>No firmware release yet, so there is nothing to install from here. Watch the <a href={`${REPO_URL}/releases`}>releases on GitHub</a>, or build the hub yourself with ESPHome: <a href={repoTree("hub/esphome")}>hub/esphome</a>.</p>
+      )}
+    </section>
+
+    <section aria-labelledby="pico" class="card step">
+      <p class="eyebrow">2 · Control board</p>
+      <h2 id="pico" class="h-md">Pico 2 control board: drag and drop</h2>
+      <p><strong>Use the file for your kit.</strong> The kit sets the zones and the TEC current limit. Another kit's file can run your Peltiers above what your parts are sized for.</p>
+      <div class="table-wrap" tabindex="0" role="region" aria-label="Pico 2 firmware per kit">
+        <table class="data-table">
+          <thead><tr><th scope="col">Kit</th><th scope="col">Zones</th><th scope="col">TECs per zone</th><th scope="col">Current limit</th><th scope="col">Firmware</th></tr></thead>
+          <tbody>
+            {kits.map((k) => (
+              <tr>
+                <th scope="row"><a href={`/kits/${k.id}/`}>{k.name}</a></th>
+                <td class="num">{k.zones}</td>
+                <td class="num">{k.tec_per_zone}</td>
+                <td class="num">{k.max_tec_current_a.toFixed(1)} A per TEC</td>
+                <td>{k.uf2 ? <a class="mono" href={k.uf2.path} download>{k.uf2.file}</a> : <span class="muted">no release yet</span>}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <ol class="steps">
+        <li>Unplug the Pico 2. Hold its <strong>BOOTSEL</strong> button and plug it into the computer, then let go.</li>
+        <li>A drive named <span class="mono">RP2350</span> appears. Drag your kit's <span class="mono">.uf2</span> file onto it.</li>
+        <li>The drive disappears and the board restarts with the new firmware. Its outputs stay off until the hub asks for a temperature and every safety check passes.</li>
+      </ol>
+      <p class="small muted">Works in any browser and on any OS. Your own kit file? Build with <span class="mono">cargo build --release --no-default-features --features kit-…</span>, see <a href={repoTree("firmware")}>firmware/</a>.{!release && <> Releases: <a href={`${REPO_URL}/releases`}>GitHub</a>.</>}</p>
+    </section>
+  </div>
+</Base>
+<script>
+  // ESP Web Tools, bundled (no CDN). Defines <esp-web-install-button>; the install dialog loads on click.
+  import "esp-web-tools/dist/install-button.js";
+</script>
+<style>
+  .install-head { display: grid; gap: var(--s-md); padding-block: var(--s-2xl) var(--s-lg); }
+  .install-body { display: grid; gap: var(--s-lg); padding-bottom: var(--s-2xl); }
+  .step { display: grid; gap: var(--s-md); }
+  .steps { display: grid; gap: var(--s-sm); padding-left: 1.4em; max-width: 72ch; }
+  .note { color: var(--ink-muted); max-width: 90ch; }
+  .note strong { color: var(--ink); }
+  .hash { overflow-wrap: anywhere; }
+  esp-web-install-button { display: inline-flex; }
+</style>

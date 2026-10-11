@@ -106,14 +106,39 @@ def test_golden_vectors_up_to_date():
     assert golden.DST_SCHEDULE.read_text() == golden.build_schedule_txt(), "run: python -m opod.golden"
 
 
-def test_firmware_board_config_matches_duo_standard_kit():
+FIRMWARE = Path(__file__).resolve().parents[3] / "firmware" / "opod-pico2"
+
+
+def _board_kit_blocks():
+    """{kit id: (zones, tec_per_zone, max_tec_current_a)} from the per-kit cfg blocks in board.rs."""
     import re
 
-    board = (Path(__file__).resolve().parents[3] / "firmware" / "opod-pico2" / "src" / "board.rs").read_text()
-    cap = float(re.search(r"MAX_TEC_CURRENT_A: f32 = ([\d.]+);", board).group(1))
-    n = float(re.search(r"TECS_PER_ZONE: f32 = ([\d.]+);", board).group(1))
-    kit = load_kit(Path(__file__).resolve().parents[3] / "hardware" / "kits" / "duo-standard.toml")
-    assert (cap, n) == (kit.max_tec_current_a, kit.tec_per_zone), "board.rs must match the kit it is built for"
+    board = (FIRMWARE / "src" / "board.rs").read_text()
+    blocks = {}
+    for feature, body in re.findall(r'#\[cfg\(feature = "kit-([\w-]+)"\)\]\s*mod kit \{(.*?)\n\}', board, re.S):
+        get = lambda name, ty: re.search(rf"pub const {name}: {ty} = ([\d.]+);", body).group(1)  # noqa: E731
+        assert re.search(rf'pub const KIT: &str = "{feature}";', body), feature
+        blocks[feature] = (int(get("ACTIVE_ZONES", "usize")), float(get("TECS_PER_ZONE", "f32")), float(get("MAX_TEC_CURRENT_A", "f32")))
+    return blocks
+
+
+def test_firmware_has_one_kit_feature_per_kit():
+    import tomllib
+
+    features = tomllib.loads((FIRMWARE / "Cargo.toml").read_text())["features"]
+    kit_features = {f.removeprefix("kit-") for f in features if f.startswith("kit-")}
+    assert kit_features == {p.stem for p in KITS} == set(_board_kit_blocks()), "one kit-<id> feature + board.rs block per kit file"
+    assert features["default"] == ["kit-duo-standard"]
+
+
+@pytest.mark.parametrize("path", KITS, ids=lambda p: p.stem)
+def test_firmware_board_config_matches_kit(path):
+    import tomllib
+
+    raw = tomllib.loads(path.read_text())
+    kit = load_kit(path)
+    expected = (raw["kit"]["zones"], kit.tec_per_zone, kit.max_tec_current_a)
+    assert _board_kit_blocks()[path.stem] == expected, "board.rs kit block must match the kit it is built for"
 
 
 def test_dew_point_guard():

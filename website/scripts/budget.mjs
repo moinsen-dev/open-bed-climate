@@ -2,14 +2,16 @@
 // number of font files. Deterministic, unlike Lighthouse.
 //
 // JS limits deviate from 03-tech on purpose (see README "Decisions"): every page loads the tiny theme script
-// (/theme-init.js, ≤ 1 KB gz), the home page adds the hero animation, /kits/ and /schedule/ their islands.
+// (/theme-init.js, ≤ 1 KB gz), the home page adds the hero animation, /kits/ and /schedule/ their islands,
+// /install/ the firmware install button.
 import { readdirSync, readFileSync, statSync, existsSync } from "node:fs";
 import { join, relative } from "node:path";
 import { gzipSync } from "node:zlib";
 
 const DIST = new URL("../dist/", import.meta.url).pathname;
 const KB = 1024;
-const JS_LIMIT = { "index.html": 7 * KB, "kits/index.html": 15 * KB, "schedule/index.html": 15 * KB };
+// /install/: the ESP Web Tools button; its install dialog and flasher load only after a click (not counted here).
+const JS_LIMIT = { "index.html": 7 * KB, "kits/index.html": 15 * KB, "schedule/index.html": 15 * KB, "install/index.html": 4 * KB };
 const JS_DEFAULT = 1 * KB; // theme script only
 const CSS_TOTAL = 20 * KB;
 const HTML_LIMIT = 60 * KB;

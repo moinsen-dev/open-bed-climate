@@ -5,7 +5,7 @@ import { z } from "astro/zod";
 import { parse } from "smol-toml";
 import { kitSchema, partRoleSchema, featureSchema, featureNameSchema } from "./lib/schemas.ts";
 import { featuresLoader } from "./lib/features.ts";
-import { DOC_FILES, docId } from "./lib/docs-map.ts";
+import { DOC_FILES, docId, BUILD_FILES, buildId } from "./lib/docs-map.ts";
 
 // Paths are relative to website/, so ".." is the repo root. The repo is the CMS.
 
@@ -27,6 +27,11 @@ const features = defineCollection({ loader: featuresLoader("../docs/FEATURES.md"
 // Repo docs rendered in place (no frontmatter; the title comes from the first heading).
 const docs = defineCollection({
   loader: glob({ pattern: DOC_FILES, base: "..", generateId: ({ entry }) => docId(entry) }),
+});
+
+// Build guide (docs/build): overview + numbered steps, rendered in place under /build/.
+const build = defineCollection({
+  loader: glob({ pattern: BUILD_FILES, base: "../docs/build", generateId: ({ entry }) => buildId(entry) }),
 });
 
 // Hand-maintained site data, each entry with a `source` pointer.
@@ -91,6 +96,7 @@ export const collections = {
   parts,
   features,
   docs,
+  build,
   roadmap,
   helpWanted,
   sponsorAsks,
