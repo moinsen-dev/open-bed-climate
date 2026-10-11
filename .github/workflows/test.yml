@@ -69,6 +69,22 @@ jobs:
           uvx --from esphome==2026.9.1 esphome config opod-hub-factory.yaml > /dev/null
           python3 factory_local.py && uvx --from esphome==2026.9.1 esphome compile opod-hub-factory.local.yaml
 
+  ha-card:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: hub/ha-card
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: hub/ha-card/.nvmrc
+          cache: npm
+          cache-dependency-path: hub/ha-card/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+
   website:
     runs-on: ubuntu-latest
     defaults:

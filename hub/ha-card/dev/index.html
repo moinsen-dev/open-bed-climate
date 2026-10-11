@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Open Bed Climate card · dev harness</title>
+    <style>
+      /* Home Assistant default theme variables (light / dark). ?theme=dark switches. */
+      :root {
+        --primary-text-color: #212121;
+        --secondary-text-color: #727272;
+        --divider-color: rgba(0, 0, 0, 0.12);
+        --card-background-color: #ffffff;
+        --primary-background-color: #fafafa;
+        --error-color: #db4437;
+        --ha-card-border-radius: 12px;
+        --ha-card-border-color: #e0e0e0;
+        color-scheme: light;
+      }
+      :root[data-theme="dark"] {
+        --primary-text-color: #e1e1e1;
+        --secondary-text-color: #9b9b9b;
+        --divider-color: rgba(225, 225, 225, 0.12);
+        --card-background-color: #1c1c1c;
+        --primary-background-color: #111111;
+        --error-color: #ef5350;
+        --ha-card-border-color: rgba(225, 225, 225, 0.12);
+        color-scheme: dark;
+      }
+      body {
+        margin: 0;
+        padding: 16px;
+        background: var(--primary-background-color);
+        color: var(--primary-text-color);
+        font-family: Roboto, "Noto Sans", system-ui, -apple-system, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      h1 {
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--secondary-text-color);
+        margin: 0 0 12px;
+      }
+      #grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr));
+        gap: 16px;
+        align-items: start;
+      }
+      figure {
+        margin: 0;
+      }
+      figcaption {
+        font-size: 12px;
+        color: var(--secondary-text-color);
+        margin: 0 0 6px 4px;
+      }
+      #log {
+        font: 12px ui-monospace, monospace;
+        color: var(--secondary-text-color);
+        white-space: pre-wrap;
+        margin-top: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>open-bed-climate-card · mocked hass · <a href="?theme=light">light</a> / <a href="?theme=dark">dark</a></h1>
+    <div id="grid"></div>
+    <div id="log"></div>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

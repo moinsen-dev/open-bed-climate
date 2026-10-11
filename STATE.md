@@ -41,10 +41,11 @@ CERN-OHL-S-2.0 (hardware).
   bench ~€1,084 + bed ~€262, 48 estimate lines), build guide `docs/build/` (bench stage with 10 L bath, 8 steps, SVGs, → /build/),
   per-kit Pico 2 UF2 releases (`release.yml`, picotool 2.3.1, `check_uf2.py`), ESPHome factory image + browser installer (/install/).
   Doc fixes: pull-downs 4.7 kΩ (E9), fuse after DPS, one 80 °C cutoff per heatsink. Open: DPS5020 comm pinout/current scaling.
+- **HA dashboard card (2026-10-11):** `hub/ha-card/` (Lit, single JS, 26 tests incl. curve vectors), release asset from v0.1.1.
 
 ## Next intended step
 
-1. Home Assistant dashboard card (bed thermostat + night curve).
+1. First hardware: bench build of the Solo Starter (owner orders parts).
 2. Seed 10–15 good-first-issues + Discussions categories; NLnet proposal (owner writes it, deadline 2026-11-03).
 2. Rename code identifiers `opod` → new name (package, crates, ESPHome platform) in one sweep.
 3. Fan/pump PWM in the firmware; OPL firmware-update path.

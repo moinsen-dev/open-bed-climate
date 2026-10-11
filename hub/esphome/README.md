@@ -15,6 +15,10 @@ What you get in Home Assistant:
 | clear faults (button) | ✅ | latched faults (over-temperature, leak, sensor) need this explicit action |
 | prime (button) | — | pump-only priming cycle |
 
+**Dashboard card:** [`hub/ha-card`](../ha-card) is a Lovelace card for these entities (the bed split into its sides,
+tinted by water temperature, with targets, night program, wake time and faults). It ships as
+`open-bed-climate-card.js` with each release.
+
 The example also turns the hub into a **Bluetooth proxy**, so Home Assistant can drive a Bluetooth adjustable
 base through the community `ha-adjustable-bed` integration (see `hardware/PARTS.md`, role `adjustable_base`).
 
