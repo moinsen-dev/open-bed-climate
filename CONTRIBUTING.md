@@ -12,7 +12,7 @@ matter as much as code.
 | **A parts hunter** | Find a cheaper, better or locally available part for a role in [`hardware/parts.toml`](hardware/parts.toml) and open a **Part substitution** issue or PR. |
 | **Electronics / safety** | Review [SAFETY.md](SAFETY.md) and [`docs/design/02-electrical-safety.md`](docs/design/02-electrical-safety.md). Design the Tier 1 boards. |
 | **Mechanical / textile** | The water mat is the hardest part. Prototype mats, couplings and enclosures. |
-| **Firmware** | Bring up [`firmware/obc-pico2`](firmware/) on real hardware, add PWM and fan control, write the ESPHome OPL component. |
+| **Firmware** | Bring up [`firmware/obc-pico2`](firmware/) on real hardware, prove the fan/pump PWM and the OPL firmware-update path on a real Pico 2. |
 | **Software / Home Assistant** | Extend the [ESPHome hub](hub/esphome/) (schedules on the hub, sensing options), the Linux hub services, biometrics (BCG) algorithms. |
 | **Writer / translator** | Make the docs clearer. Docs are in English; translations are welcome under `docs/i18n/<lang>/`. |
 
@@ -31,6 +31,8 @@ Look for issues labelled `good first issue` and `help wanted`.
    source link and a `verified_on` date.
 
 ## Development
+
+Using an AI coding agent? Point it at [AGENTS.md](AGENTS.md): repo map, hard rules, generated files, full verification.
 
 ```sh
 cd software/obc
