@@ -190,8 +190,8 @@ the KiCad position file `fab/reports/pos-kicad.csv`.
   module. Unplug the module to probe them.
 - **Freerouting**: the traces are autorouted, not hand-optimised. Before ordering, look at the buck loop
   (LM2596 → SS54 → inductor → output cap) and the 12 V path in KiCad, and shorten them by hand if you can.
-- **Pump/fan PWM**: the MOSFETs can switch at PWM rates, but the firmware drives them on/off today. 4-wire PWM
-  fans and the DDC's PWM input aren't broken out.
+- **Pump/fan PWM**: since firmware 0.2 the MOSFETs switch the pump and fan supply at 25 kHz PWM. Use 2- or 3-pin
+  fans; 4-wire PWM fans and the DDC's PWM input aren't broken out.
 - **No on-board RS-485 bias resistors and no TVS on A/B.** The DPS-side adapter usually biases the bus. Keep the
   bus short and inside the enclosure.
 - **LCSC numbers**: about half were confirmed on a product page (marked in `bom-full.csv`). The rest need checking

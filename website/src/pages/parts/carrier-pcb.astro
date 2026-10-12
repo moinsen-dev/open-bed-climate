@@ -59,7 +59,7 @@ const limits = [
   "A 24 V brick plugged in by mistake makes the TVS conduct and blows the fuse (a crowbar). Check the fuse after any wrong plug.",
   "Whether the DevKitC's own USB port can be back-fed from its 5V pin depends on the board revision: don't plug ESP32 USB in while the board is powered.",
   "The ESP32 antenna end has no copper, but the module still sits over the carrier's ground plane. Don't mount it under metal.",
-  "Pump and fan MOSFETs can switch PWM, but the firmware drives them on/off today; 4-wire PWM isn't broken out.",
+  "Since firmware 0.2 the pump and fan MOSFETs are switched at 25 kHz PWM, so speed is set by switching the supply. Use 2- or 3-pin fans: 4-wire PWM and the DDC's PWM input aren't broken out.",
   "No RS-485 bias resistors or TVS on A/B. Keep the bus short and inside the enclosure.",
 ];
 
