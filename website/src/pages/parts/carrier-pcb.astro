@@ -1,0 +1,209 @@
+---
+// Tier 0 carrier PCB (hardware/pcb/carrier). Facts come from its README; the renders are copied from fab/renders into
+// src/assets/pcb (downscaled JPEGs) and optimised by Astro at build time. Downloads point at the repository.
+import { Picture } from "astro:assets";
+import Base from "../../layouts/Base.astro";
+import SafetyNote from "../../components/SafetyNote.astro";
+import { REPO_URL, repoBlob, repoTree, issueTemplate } from "../../site.ts";
+import render3d from "../../assets/pcb/carrier-rev-a-3d.jpg";
+import renderTop from "../../assets/pcb/carrier-rev-a-top.jpg";
+import renderBottom from "../../assets/pcb/carrier-rev-a-bottom.jpg";
+
+const DIR = "hardware/pcb/carrier";
+const raw = (p: string) => `${REPO_URL}/raw/main/${DIR}/${p}`;
+const REVIEW_ISSUES = `${REPO_URL}/issues?q=label%3Apcb`;
+
+// Signal chain, top to bottom (README block diagram).
+const blocks: [string, string][] = [
+  ["12 V in", "12 V aux brick on the J2 screw terminal (Duo) or the 5.5 × 2.5 mm barrel jack (Solo, ≤ 5 A only)."],
+  ["Input protection", "Mini blade fuse (5 A on 1 oz copper, 7.5 A on 2 oz), SMBJ15A TVS, AOD4185 P-FET reverse-polarity protection."],
+  ["5 V rail", "LM2596S-5.0 buck, 12 → 5 V, 3 A. Feeds the Pico 2 (VSYS) and the ESP32-S3 (5V) through SS34 Schottkys, so USB never back-feeds the board."],
+  ["MCUs", "Raspberry Pi Pico 2 and ESP32-S3-DevKitC-1 on female headers, linked by the OPL UART (GP0/GP1, 460 800 Bd)."],
+  ["Temperatures", "ADS1115 @ 0x48 on I2C0 (GP8/GP9), four NTC dividers with 10 kΩ 0.1 % references and RC filters: water and hot face for each zone."],
+  ["Modbus", "SP3485 RS-485 transceiver on UART1 (GP4/GP5, DE on GP6) to the DPS modules. Optional 120 Ω termination jumper."],
+  ["Drivers", "8 × AO3400A low-side MOSFETs (zone relay, polarity, pump, fan per zone), 220 Ω gate resistor, 4.7 kΩ pull-down, SS34 flyback diode."],
+  ["Cutoff loop", "Each zone relay coil gets +12 V only through its CUTOFF LOOP terminal: an open bimetal cutoff drops the relay whatever the MCU does."],
+  ["Inputs", "Flow (GP14/GP20), leak (GP21) and level (GP22): 1 kΩ series, BAT54S clamp, 10 kΩ pull-up. 5 V sensor outputs are safe."],
+];
+
+const zoneTerminals: [string, string, string][] = [
+  ["CUTOFF LOOP", "J13 / J20", "+12 V out to the bimetal cutoffs in series and back; the only feed of the zone relay coil"],
+  ["ZONE RLY", "J14 / J21", "zone relay coil, GP10 / GP16"],
+  ["POL A, POL B", "J15 + J16 / J22 + J23", "polarity relay coils, GP11 / GP17 (low = cool). One DPDT relay: use POL A only"],
+  ["PUMP", "J17 / J24", "pump, ≥ 2 A, GP12 / GP18"],
+  ["FAN", "J18 / J25", "heatsink fans, ≥ 2 A, GP13 / GP19"],
+  ["FLOW", "J19 / J26", "hall flow sensor (5V, G, S), GP14 / GP20"],
+  ["NTC WTR, NTC HOT", "J4 + J5 / J6 + J7", "water and hot-face NTCs, ADS1115 A0 + A1 / A2 + A3"],
+];
+const sharedTerminals: [string, string, string][] = [
+  ["RS-485", "J10", "A, B, G to the DPS module(s)"],
+  ["LEAK", "J11", "leak module, 12 V powered; contact to GND while dry (GP21)"],
+  ["LEVEL", "J12", "level sensor at 5 V; LOW = OK (GP22)"],
+  ["12V IN", "J2", "12 V aux brick; use this one for Duo"],
+  ["STAR GND", "J3", "one wire to the star point near the DPS (24 V −)"],
+  ["I2C HUB / I2C PICO", "J9 / J8", "room SHT45 on the ESP32 (GPIO8/9); expansion on the Pico's ADS1115 bus"],
+];
+
+const review = [
+  "Terminal pin order against board.rs and WIRING.md (CI checks the PCB file; a second pair of eyes checks the silkscreen).",
+  "ESP32-S3-DevKitC-1 row spacing of 22.86 mm: measure your module. Clones with 25.4 mm rows don't fit.",
+  "Buck loop (LM2596 → SS54 → inductor → output capacitor) and the 12 V path: autorouted, not hand-optimised.",
+  "Barrel-jack pinout against KiCad's BarrelJack_Horizontal footprint: a mismatched jack leaves GND or +12 V open.",
+  "Rotation of every polarized part in JLC's placement preview: diodes, LED, electrolytics, SOT-23, ADS1115, SP3485, LM2596.",
+  "The LCSC numbers marked “check” in bom-full.csv, and the parts without one (AOD4185, SS54, BZT52C12, inductor, electrolytics, 0.1 % resistors).",
+  "12 V current: 1.5 mm traces carry about 4.5 A on 1 oz, 7.5 A on 2 oz. Duo near full load needs 2 oz and a 7.5 A fuse.",
+];
+
+const limits = [
+  "Untested: not built, not powered, not measured. The first boards are a bring-up exercise: follow the step 2 checkpoint (gate pull-downs, reset test, rails) before you connect relays or Peltiers.",
+  "A 24 V brick plugged in by mistake makes the TVS conduct and blows the fuse (a crowbar). Check the fuse after any wrong plug.",
+  "Whether the DevKitC's own USB port can be back-fed from its 5V pin depends on the board revision: don't plug ESP32 USB in while the board is powered.",
+  "The ESP32 antenna end has no copper, but the module still sits over the carrier's ground plane. Don't mount it under metal.",
+  "Pump and fan MOSFETs can switch PWM, but the firmware drives them on/off today; 4-wire PWM isn't broken out.",
+  "No RS-485 bias resistors or TVS on A/B. Keep the bus short and inside the enclosure.",
+];
+
+const downloads: { label: string; href: string; note: string }[] = [
+  { label: "Gerbers + drill (ZIP)", href: raw("fab/carrier-rev-a-gerbers.zip"), note: "2 layers, 100 × 100 mm, upload to JLCPCB as is" },
+  { label: "JLC BOM (CSV)", href: raw("fab/jlc-bom.csv"), note: "SMD parts for PCB assembly" },
+  { label: "JLC placement / CPL (CSV)", href: raw("fab/jlc-cpl.csv"), note: "check every rotation in the preview" },
+  { label: "Full BOM (CSV)", href: raw("fab/bom-full.csv"), note: "every part, LCSC numbers and which ones are confirmed" },
+  { label: "Schematic (PDF)", href: raw("fab/carrier-schematic.pdf"), note: "one sheet, grouped by function" },
+  { label: "Assembly drawing (PDF)", href: raw("fab/carrier-assembly-top.pdf"), note: "top side, reference designators" },
+  { label: "Position file for other fabs (CSV)", href: raw("fab/reports/pos-kicad.csv"), note: "AISLER, PCBWay" },
+];
+---
+<Base title="Carrier PCB" description="The Tier 0 carrier PCB: one 100 × 100 mm board for the Pico 2, the ESP32-S3, sensors and relay drivers. Rev A, untested: review it before you order.">
+  <div class="container pcb">
+    <nav class="crumbs small" aria-label="Breadcrumb"><a href="/parts/">Parts</a> <span aria-hidden="true">/</span> <span>Carrier PCB</span></nav>
+    <header class="pcb__head">
+      <div class="pcb__chips"><span class="chip chip--plain">Tier 0 · optional</span><span class="chip chip--plain">Rev A</span><span class="status chip chip--danger">Untested</span></div>
+      <p class="eyebrow">Hardware · CERN-OHL-S-2.0</p>
+      <h1 class="h-lg">The carrier PCB: one board instead of perfboard and breakouts.</h1>
+      <p class="lead muted">It replaces the perfboard and loose breakout boards of <a href="/build/02-control-board/">build step 2</a> with one 100 × 100 mm, 2-layer board, so a small series of about ten can be ordered assembled. It carries the signals and the 12 V aux rail only. The Peltier current stays off the board, on ≥ 2.5 mm² wire: 24 V supply → DPS5020 → 20 A fuse → zone relay → polarity relays → Peltiers.</p>
+    </header>
+
+    <aside class="untested" aria-label="Rev A is untested">
+      <p><strong>Rev A is untested: review it before you order.</strong> Nobody has built, powered or measured this board yet. The design checks (ERC, DRC and a CI test against the firmware pin map) pass, but that is not a working board. Read the review checklist below, look at the open <a href={REVIEW_ISSUES}>review issues labelled <code>pcb</code></a>, and post a build report if you build one.</p>
+    </aside>
+
+    <figure class="shot shot--hero">
+      <Picture src={render3d} formats={["avif", "webp"]} widths={[640, 960, 1400]} sizes="(min-width: 1100px) 1040px, 100vw" alt="3D render of the carrier PCB: screw terminals along the top and bottom edges for zone 0 and zone 1, sockets for the Pico 2 and the ESP32-S3 in the middle, power section with fuse, buck converter and barrel jack at the lower right." loading="eager" />
+      <figcaption class="small muted">KiCad 3D render of Rev A. The 12 × 12 mm inductor has no 3D model and shows as a bare footprint.</figcaption>
+    </figure>
+
+    <SafetyNote variant="build" />
+
+    <section class="pcb__section" aria-labelledby="what">
+      <h2 id="what" class="h-md">What's on the board</h2>
+      <p class="muted">Signal chain from the 12 V input to the sensors, as in the README's block diagram.</p>
+      <div class="table-wrap" tabindex="0" role="region" aria-label="Board blocks">
+        <table class="data-table"><tbody>
+          {blocks.map(([k, v]) => <tr><th scope="row">{k}</th><td>{v}</td></tr>)}
+        </tbody></table>
+      </div>
+      <p class="small muted">What plugs in: a Raspberry Pi Pico 2 on 2 × 1x20 female headers, an ESP32-S3-DevKitC-1 on 2 × 1x22 female headers, and screw terminals for every external wire (5.08 mm for 12 V loads and power, 3.5 mm for sensors).</p>
+    </section>
+
+    <section class="pcb__section" aria-labelledby="renders">
+      <h2 id="renders" class="h-md">Top and bottom</h2>
+      <div class="shots">
+        <figure class="shot">
+          <Picture src={renderTop} formats={["avif", "webp"]} widths={[480, 800, 1200]} sizes="(min-width: 900px) 50vw, 100vw" alt="Top view render: zone 0 terminals along the top edge, zone 1 terminals along the bottom edge, RS-485, leak and level terminals on the right edge." />
+          <figcaption class="small muted">Top: zone 0 along the top edge, zone 1 along the bottom edge (mirrored), shared terminals on the right.</figcaption>
+        </figure>
+        <figure class="shot">
+          <Picture src={renderBottom} formats={["avif", "webp"]} widths={[480, 800, 1200]} sizes="(min-width: 900px) 50vw, 100vw" alt="Bottom view render of the carrier PCB with ground pour, stitching vias and back-side labels for the NTC terminals." />
+          <figcaption class="small muted">Bottom: ground pour with stitching vias, and back-side labels for the NTC terminals hidden by the barrel jack.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="pcb__section" aria-labelledby="terminals">
+      <h2 id="terminals" class="h-md">Terminals</h2>
+      <p class="muted">The pin map comes from <a href={repoBlob("firmware/obc-pico2/src/board.rs")}><code>board.rs</code></a>. A test in CI parses the PCB file and checks it against the firmware and the hub configuration. Pin 1 is the square pad.</p>
+      <div class="table-wrap" tabindex="0" role="region" aria-label="Per-zone terminals">
+        <table class="data-table">
+          <caption class="eyebrow">Per zone (zone 0 / zone 1)</caption>
+          <thead><tr><th scope="col">Label</th><th scope="col">Ref</th><th scope="col">Function</th></tr></thead>
+          <tbody>{zoneTerminals.map(([l, r, f]) => <tr><th scope="row" class="mono">{l}</th><td class="mono">{r}</td><td>{f}</td></tr>)}</tbody>
+        </table>
+      </div>
+      <div class="table-wrap" tabindex="0" role="region" aria-label="Shared terminals">
+        <table class="data-table">
+          <caption class="eyebrow">Shared</caption>
+          <thead><tr><th scope="col">Label</th><th scope="col">Ref</th><th scope="col">Function</th></tr></thead>
+          <tbody>{sharedTerminals.map(([l, r, f]) => <tr><th scope="row" class="mono">{l}</th><td class="mono">{r}</td><td>{f}</td></tr>)}</tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="pcb__section" aria-labelledby="review">
+      <h2 id="review" class="h-md">Review checklist</h2>
+      <p class="muted">Before anyone orders Rev A, these need a second pair of eyes. Found something? Comment on an existing review issue, or open a new one and say which point it is about.</p>
+      <ol class="checklist">{review.map((r) => <li>{r}</li>)}</ol>
+      <div class="btn-row">
+        <a class="btn btn--primary" href={REVIEW_ISSUES}>Review issues (label pcb)</a>
+        <a class="btn btn--secondary" href={`${REPO_URL}/issues/new?labels=pcb&title=${encodeURIComponent("Carrier PCB Rev A review: ")}`}>Open a review issue</a>
+        <a class="btn btn--secondary" href={issueTemplate("build-report.yml")}>Post a build report</a>
+      </div>
+    </section>
+
+    <section class="pcb__section" aria-labelledby="order">
+      <h2 id="order" class="h-md">Ordering and cost</h2>
+      <div class="grid grid--2">
+        <div class="card">
+          <h3 class="h-sm">JLCPCB, about ten boards</h3>
+          <ul class="small muted">
+            <li>PCB: 2 layers, 1.6 mm FR-4, HASL lead-free. 1 oz copper for Solo; <strong>2 oz with a 7.5 A fuse for Duo</strong>.</li>
+            <li>Assembly: Economic, top side. Upload the JLC BOM and CPL, check every part match and every rotation.</li>
+            <li>The THT parts (terminals, sockets, barrel jack, fuse holder) are hand-soldered or added as THT assembly.</li>
+            <li>AISLER (EU) and PCBWay take the same Gerbers with the full BOM and the KiCad position file.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3 class="h-sm">Rough cost</h3>
+          <p class="num pcb__cost">≈ €20–27 per board</p>
+          <p class="small muted">For ten assembled boards, Oct 2026, including THT parts, shipping to the EU and import VAT; without the Pico 2 and the ESP32-S3. One builder alone pays the fixed costs (setup, extended-part fees, shipping): roughly €100 for the minimum order. Get a live quote.</p>
+        </div>
+      </div>
+      <p class="small muted">The <a href="/kits/duo-reference/shopping/">Duo Reference shopping list</a> uses the carrier. Solo Starter and Duo Standard can use it too, in place of the perfboard, ADS1115 breakout, RS-485 adapter at the Pico and the MOSFET modules.</p>
+    </section>
+
+    <section class="pcb__section" aria-labelledby="files">
+      <h2 id="files" class="h-md">Files</h2>
+      <ul class="files">
+        {downloads.map((d) => <li class="card"><a href={d.href}>{d.label}</a><span class="small muted">{d.note}</span></li>)}
+      </ul>
+      <p class="small muted">Source: <a href={repoTree(DIR)}><code>{DIR}</code></a>. The design lives in <code>scripts/design.py</code>; the KiCad files are generated from it, so change the script, not the board file. <a href={repoBlob(`${DIR}/README.md`)}>Read the full README</a>.</p>
+    </section>
+
+    <section class="pcb__section" aria-labelledby="limits">
+      <h2 id="limits" class="h-md">Known limitations of Rev A</h2>
+      <ul class="limits">{limits.map((l) => <li class="muted">{l}</li>)}</ul>
+    </section>
+  </div>
+</Base>
+<style>
+  .pcb { display: grid; gap: var(--s-xl); padding-block: var(--s-xl) var(--s-2xl); }
+  .crumbs, .crumbs a { color: var(--ink-muted); }
+  .pcb__head { display: grid; gap: var(--s-sm); }
+  .pcb__head .lead { max-width: 72ch; }
+  .pcb__chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .untested { background: var(--surface); border: 1px solid var(--hairline); border-left: 4px solid var(--danger); border-radius: var(--r-md); padding: var(--s-md) var(--s-lg); }
+  .untested p { color: var(--ink-muted); max-width: 90ch; }
+  .untested strong { color: var(--danger); font-weight: 600; }
+  .shot { display: grid; gap: var(--s-xs); margin: 0; }
+  .shot :global(img) { width: 100%; height: auto; border-radius: var(--r-lg); border: 1px solid var(--hairline); background: var(--surface); }
+  .shots { display: grid; gap: var(--s-md); grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 900px) { .shots { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .pcb__section { display: grid; gap: var(--s-md); }
+  .pcb__section .data-table caption { text-align: left; padding: 12px 16px 0; }
+  .pcb__section tbody th { color: var(--ink-muted); font-weight: 500; width: 26%; }
+  .checklist, .limits { padding-left: 1.3em; display: grid; gap: 8px; max-width: 90ch; }
+  .card ul { padding-left: 1.1em; display: grid; gap: 6px; margin-top: var(--s-xs); }
+  .pcb__cost { font-size: 1.75rem; font-weight: 600; color: var(--warm); margin-block: var(--s-xs); }
+  .files { list-style: none; padding: 0; display: grid; gap: var(--s-sm); grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+  .files li { display: grid; gap: 4px; padding: var(--s-md); }
+  .files a { font-weight: 600; }
+</style>

@@ -44,6 +44,7 @@ export const FOOTER_NAV = [
       { href: "/kits/solo-starter/shopping/", label: "Shopping list" },
       { href: "/kits/", label: "Kits" },
       { href: "/parts/", label: "Parts" },
+      { href: "/parts/carrier-pcb/", label: "Carrier PCB" },
       { href: "/docs/safety/", label: "Safety" },
       { href: "/docs/hardware/wiring/", label: "Wiring" },
       { href: "/install/", label: "Install firmware" },

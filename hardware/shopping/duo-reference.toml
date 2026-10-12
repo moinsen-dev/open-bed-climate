@@ -1,0 +1,826 @@
+# Open Bed Climate shopping list: Duo Reference, prototype 0.
+#
+# Same format as solo-starter.toml (read its header for the field meanings). Lines copied from the Solo Starter list keep
+# the price seen there on 2026-10-11; lines added for the Duo kits were checked on 2026-10-12.
+# MD is generated:  cd software/obc && uv run python -m obc.shopping
+
+[list]
+kit = "duo-reference"
+currency = "EUR"
+checked_on = "2026-10-12"
+region = "Germany / EU, prices incl. VAT"
+notes = """
+Shipping is not included (expect ~6 EUR per shop; ~9 shops plus the PCB order). Prices change; re-check before ordering.
+What you can build today: duo-reference.toml describes a Tier 1 power board and a cover sensor board. Neither exists yet. The firmware drives DPS5020 modules for every kit, so this list is the Duo Standard build with the Tier 0 carrier PCB instead of perfboard and breakout boards, and one 24 V 750 W supply in a closed power module instead of two desktop bricks.
+Power module: the RSP-750-24 has mains screw terminals. It goes into a closed, earthed enclosure with an IEC C14 inlet (switch + fuse), and the mains side is assembled and tested by a qualified electrician. The builder never wires mains (SAFETY.md, parts.toml tec_psu).
+Carrier PCB: hardware/pcb/carrier, Rev A, UNTESTED. 27 EUR is the upper end of the README's estimate for a 10-board group order (assembled, THT parts included, shipping and VAT included). One builder alone pays the fixed costs (setup, extended-part fees, shipping): roughly 100 EUR for JLC's minimum of 5 bare / 2 assembled boards. Order 2 oz copper, fit a 7.5 A fuse and feed 12 V through J2 (the barrel jack is <= 5 A).
+The carrier has the ADS1115, the 0.1 % NTC dividers, the SP3485 transceiver, 8 low-side drivers with 4.7 k pull-downs and flyback diodes, and the 12 V to 5 V buck, so those breakout lines are not on this list.
+Sensors match the firmware (board.rs, feature kit-duo-reference) exactly as in the Duo Standard list: one ADS1115 (on the carrier) with 4 NTCs, pumps GP12/GP18, flow GP14/GP20, DPS addresses 1 and 2, one leak and one level input.
+Level: each loop has its own reservoir; the two sensors are OR-ed into the carrier's LEVEL input (GP22). Open item: a second level input in board.rs.
+Current: 4 x 5.0 A = 20 A per zone, the DPS5020's maximum and the 20 A fuse's rating. Expect the fuse to run hot; open item.
+Aux supply: GST120A12 = 102 W at 12 V (duo-reference.toml: aux_psu_w = 100). The model's 65 W is 64 %; with fans and pumps at full speed the worst case is ~74 W (~6.2 A): still inside 80 % and the carrier's 7.5 A fuse. Since firmware 0.2 the Pico PWM-controls fans and pumps (25 kHz on the switched supply), so the typical load is lower; noise vs. the 30 dB(A) target is still to be measured.
+Not bought: the piezo grid and cover sensor board (bcg_sensing) do not exist yet and nothing in the firmware reads them.
+"""
+
+# ---------------------------------------------------------------- Power (one 24 V 750 W supply in a closed module, one DPS5020 per zone, one 12 V supply)
+
+[[item]]
+role = "tec_psu"
+name = "Mean Well RSP-750-24 (24 V / 31.3 A, 751 W, active PFC, enclosed, fan)"
+qty = 1
+unit_eur = 161.90
+shop = "Reichelt"
+url = "https://www.reichelt.de/de/de/shop/produkt/schaltnetzteil_geschlossen_750_w_24_v_31_3_a-132738"
+status = "listing"
+stage = "bench"
+notes = "Reichelt no. SNT RSP-750-24 (price from the search page). Feeds both DPS5020s (2 x ~230 W input at full cooling, kit budget 375 W per zone). Mains on screw terminals: inside the closed module only, assembled by a qualified person."
+
+[[item]]
+role = "tec_psu"
+name = "Schurter DD11 power entry module: IEC C14 inlet + 2-pole switch + fuse holder (with 5 x 20 mm fuses)"
+qty = 1
+unit_eur = 18.00
+shop = "Reichelt"
+url = "https://www.reichelt.de/de/de/shop/search/kaltger%C3%A4teeinbaustecker%20schalter%20sicherung"
+status = "estimate"
+stage = "bench"
+notes = "Any certified C14 inlet with switch and fuse drawer. The electrician picks the fuse for the RSP-750's inrush (40 A cold start)."
+
+[[item]]
+role = "tec_psu"
+name = "Closed metal enclosure for the power module (fits 250 x 127 x 41 mm, vent slots for the PSU fan, PE stud)"
+qty = 1
+unit_eur = 45.00
+shop = "Reichelt"
+url = "https://www.reichelt.de/de/de/shop/search/aluminiumgeh%C3%A4use"
+status = "estimate"
+stage = "bench"
+notes = "Earthed, no user-accessible mains parts, cable glands/strain relief. Exact box chosen with the electrician."
+
+[[item]]
+role = "tec_psu"
+name = "DC outputs from the module: 2 pairs Anderson Powerpole PP45 + panel mount (one per DPS)"
+qty = 1
+unit_eur = 15.00
+shop = "Reichelt"
+url = "https://www.reichelt.de/de/de/shop/search/powerpole"
+status = "estimate"
+stage = "bench"
+notes = "24 V DC only. Run a separate >= 2.5 mm2 pair to each DPS5020."
+
+[[item]]
+role = "tec_psu"
+name = "Assembly and safety test of the power module by a qualified electrician (DIN VDE 0701-0702 test record)"
+qty = 1
+unit_eur = 120.00
+shop = "Local electrician"
+url = "https://github.com/moinsen-dev/open-bed-climate/blob/main/SAFETY.md"
+status = "estimate"
+stage = "bench"
+notes = "Labour, not a part: about one hour plus the test. Required by SAFETY.md for every Tier 1 build; the builder never wires mains. No shop: the link goes to SAFETY.md."
+
+[[item]]
+role = "aux_psu"
+name = "Mean Well GST120A12-R7B (12 V / 8.5 A = 102 W, IEC C14, desktop)"
+qty = 1
+unit_eur = 47.40
+shop = "Reichelt"
+url = "https://www.reichelt.de/de/de/shop/produkt/tischnetzteil_100_w_12_v_8_5_a-171063"
+status = "listing"
+stage = "bench"
+notes = "Reichelt no. MW GST120A12. Rated 102 W at 12 V (Mean Well manual: 120 W only for the 20-48 V models), not 120 W. Two-zone aux load is 65 W = 64 % of 102 W, inside the 80 % margin. Output is a locking 4-pin DIN plug (R7B): see the DIN jack line."
+
+[[item]]
+role = "consumable"
+name = "IEC C13 mains cord with Schuko plug, 1.8 m"
+qty = 2
+unit_eur = 4.80
+shop = "Reichelt"
+url = "https://www.reichelt.de/de/de/shop/search/kaltger%C3%A4tekabel%201,8m"
+status = "estimate"
+stage = "bench"
+notes = "One for the power module, one for the GST120A12. Price from the search page, exact item not pinned."
+
+[[item]]
+role = "consumable"
+name = "4-pin power DIN panel jack (Kycon KPJX-4S class), mates the GST120A R7B plug"
+qty = 1
+unit_eur = 4.00
+shop = "Reichelt"
+url = "https://www.reichelt.de/de/de/shop/search/kpjx-4s"
+status = "estimate"
+stage = "bench"
+notes = "Or cut the DC plug off (DC side only, never the mains side) and put ferrules on the leads. Check the R7B pinout (2 pins +12 V, 2 pins GND) in the GST120A datasheet. Up to 8.5 A: a 5.5 x 2.5 barrel adapter is not rated for that."
+
+[[item]]
+role = "tec_drive"
+name = "RD DPS5020 programmable buck module, communication version (USB-BT)"
+qty = 2
+unit_eur = 75.00
+shop = "Amazon.de"
+url = "https://www.amazon.de/s?k=DPS5020"
+status = "estimate"
+stage = "bench"
+notes = "One per zone, Modbus addresses 1 (zone 0) and 2 (zone 1). The kit asks for 20 A per zone: the DPS5020's maximum, no headroom. Amazon.de only; buy the communication version (TTL UART for Modbus). Measure output ripple (parts.toml asks)."
+
+[[item]]
+role = "consumable"
+name = "Elecrow UART TTL to RS485 converter, half duplex, 3.3-5 V (Modbus to the DPS)"
+qty = 2
+unit_eur = 1.90
+shop = "Berrybase"
+url = "https://www.berrybase.de/en/search?search=CIA00485T"
+status = "estimate"
+stage = "bench"
+notes = "One at each DPS UART. The Pico end is the carrier's SP3485 (J10); fit JP1 TERM unless the far end is terminated. Price (1.90 EUR) seen in a related-items block."
+
+[[item]]
+role = "polarity_relay"
+name = "Automotive relay 12 V coil, 30/40 A, 1 changeover (SPDT, ISO mini, 5-pin)"
+qty = 6
+unit_eur = 5.49
+shop = "Conrad"
+url = "https://www.conrad.de/de/f/kfz-relais-12v-1725369.html"
+status = "estimate"
+stage = "bench"
+notes = "Per zone: 1 zone enable relay (coil through that zone's cutoff chain, load on NO) + 2 SPDT wired H-bridge style for polarity. TECs see <= 14 V, inside the 14 V automotive rating. Price from the category page, exact part not pinned."
+
+[[item]]
+role = "polarity_relay"
+name = "Relay socket for ISO mini relay with pigtail leads (>= 2.5 mm2 load leads)"
+qty = 6
+unit_eur = 3.00
+shop = "Conrad"
+url = "https://www.conrad.de/de/f/kfz-relais-12v-1725369.html"
+status = "estimate"
+stage = "bench"
+
+[[item]]
+role = "polarity_relay"
+name = "Inline ATO/ATC blade fuse holder, waterproof, 2.5-4 mm2 leads"
+qty = 2
+unit_eur = 4.00
+shop = "Conrad"
+url = "https://www.conrad.de/de/search.html?search=flachsicherungshalter%20fliegend"
+status = "estimate"
+stage = "bench"
+notes = "One DC fuse per zone in the TEC path (parts.toml role polarity_relay)."
+
+[[item]]
+role = "polarity_relay"
+name = "ATO blade fuse 20 A (pack of 10)"
+qty = 1
+pack = 10
+unit_eur = 3.50
+shop = "Conrad"
+url = "https://www.conrad.de/de/search.html?search=flachsicherung%2020A"
+status = "estimate"
+stage = "bench"
+
+# ---------------------------------------------------------------- Control (carrier PCB)
+
+[[item]]
+role = "pcb"
+name = "Open Bed Climate Tier 0 carrier PCB, Rev A, assembled (JLCPCB, 2 layers, 2 oz, 100 x 100 mm)"
+qty = 1
+unit_eur = 27.00
+shop = "JLCPCB"
+url = "https://github.com/moinsen-dev/open-bed-climate/tree/main/hardware/pcb/carrier"
+status = "estimate"
+stage = "bench"
+notes = "Rev A is UNTESTED: review it before you order (GitHub issues labelled pcb). Per board in a group order of 10, from the carrier README (USD 210-290 for 10, incl. THT parts, shipping, VAT). Alone, the minimum order is ~100 EUR for 2 assembled boards. Order the 2 oz copper option and fit the 7.5 A fuse (Duo 12 V load). Link: Gerbers, BOM, CPL and ordering steps."
+
+[[item]]
+role = "control_mcu"
+name = "Raspberry Pi Pico 2 (RP2350), SC1631"
+qty = 1
+unit_eur = 4.90
+shop = "Reichelt"
+url = "https://www.reichelt.com/de/en/shop/product/raspberry_pi_pico_2_rp235x_cortex-m33_microusb-383358"
+status = "listing"
+stage = "bench"
+notes = "Without headers; see the pin-header line. Plugs into the carrier's 1x20 sockets."
+
+[[item]]
+role = "consumable"
+name = "Pin header set for Raspberry Pi Pico"
+qty = 1
+unit_eur = 0.50
+shop = "Berrybase"
+url = "https://www.berrybase.de/en/search?search=RPIP-PINH"
+status = "estimate"
+stage = "bench"
+notes = "BerryBase RPIP-PINH, 0.50 EUR seen on berrybase.at."
+
+[[item]]
+role = "hub_controller"
+name = "Espressif ESP32-S3-DevKitC-1-N8R8"
+qty = 1
+unit_eur = 18.90
+shop = "Berrybase"
+url = "https://www.berrybase.de/en/espressif-esp32-s3-devkitc-1-development-kit-esp32-s3-wroom-wifi-bluetooth-le-240mhz-5v-3-3v-01a0a08fef6771fab6d4b97a830c7c92"
+status = "estimate"
+stage = "bench"
+notes = "18.90 EUR (BerryBase ADA5336) seen in a related-items block; check the SKU is N8R8. Plugs into the carrier's 1x22 sockets: measure the row spacing (22.86 mm) first, clones with 25.4 mm rows don't fit."
+
+[[item]]
+role = "temp_sensors"
+name = "Alphacool Eiszapfen temperature sensor flat G1/4, 10k NTC (water, return line)"
+qty = 2
+unit_eur = 10.98
+shop = "Alphacool"
+url = "https://shop.alphacool.com/en/shop/controllers-and-sensors/temperature-sensor/sen-alphacool-eiszapfen-temperature-sensor-flat-g1/4-black"
+status = "listing"
+stage = "bench"
+notes = "ADS ch0 (zone 0) and ch2 (zone 1). One per loop, in the T-adapter in the return line. B value not published: calibrate in an ice bath and at ~40 C."
+
+[[item]]
+role = "temp_sensors"
+name = "10k NTC epoxy bead thermistor, B ~3950, with leads (TEC hot face, 2 + 2 spares)"
+qty = 4
+unit_eur = 1.20
+shop = "Reichelt"
+url = "https://www.reichelt.de/de/de/shop/search/ntc%2010k"
+status = "estimate"
+stage = "bench"
+notes = "ADS ch1 (zone 0) and ch3 (zone 1): one per zone on the heatsink base of an inner TEC, clamped with thermal paste. Calibrate like the inline sensors."
+
+[[item]]
+role = "temp_sensors"
+name = "Adafruit SHT45 breakout (room temperature / humidity for the dew-point guard)"
+qty = 1
+unit_eur = 13.00
+shop = "Berrybase"
+url = "https://www.berrybase.de/en/search?search=SHT45"
+status = "estimate"
+stage = "bench"
+notes = "Read by the ESP32-S3 hub (02-electrical-safety.md, Condensation)."
+
+[[item]]
+role = "thermal_cutoff"
+name = "Bimetal thermostat, normally closed (Oeffner), 50 C, auto-reset (cold plates)"
+qty = 8
+unit_eur = 2.98
+shop = "sensorshop24"
+url = "https://www.sensorshop24.de/bimetall-temperaturschalter-thermostat-oeffner-schliesser"
+status = "listing"
+stage = "bench"
+notes = "One per cold plate (8). Select Oeffner + 50 C. Uncertified. Test every unit with a hot-air gun and a thermometer."
+
+[[item]]
+role = "thermal_cutoff"
+name = "Bimetal thermostat, normally closed (Oeffner), 80 C, auto-reset (heatsink bases)"
+qty = 8
+unit_eur = 2.98
+shop = "sensorshop24"
+url = "https://www.sensorshop24.de/bimetall-temperaturschalter-thermostat-oeffner-schliesser"
+status = "listing"
+stage = "bench"
+notes = "One per cooler base (8). Select Oeffner + 80 C. Each zone's eight cutoffs in series in that zone's relay-coil circuit (12 V, coil current only)."
+
+[[item]]
+role = "leak_sensor"
+name = "HW group Sensor WLD Relay 1W-UNI (incl. 2 m WLD sensing cable A)"
+qty = 1
+unit_eur = 95.00
+shop = "BellEquip (AT)"
+url = "https://www.bellequip.at/produkte/sensoren-wasser-und-leckage/sensor-wld-relay-1w-uni-hw-group-wassleck-detektor-mit-relais-ausgang"
+status = "estimate"
+stage = "bench"
+notes = "One for the whole hub (GP21). Relay output signals water OR disconnected cable. Price not shown on the page. Wire the contact so dry = LOW at GP21 with the 10 k pull-up (WIRING.md). Kept for the open-wire detection (see the Solo list for the cheaper options checked and rejected)."
+
+[[item]]
+role = "consumable"
+name = "Small perfboard + 3.5 mm screw terminals (level OR gate next to the carrier)"
+qty = 1
+unit_eur = 3.00
+shop = "Reichelt"
+url = "https://www.reichelt.de/de/de/shop/search/lochrasterplatine"
+status = "estimate"
+stage = "bench"
+notes = "The only off-board logic: 74HCT32 + two 10 k pull-ups. Its 5 V output goes straight to the carrier's LEVEL terminal (5 V-safe clamp)."
+
+[[item]]
+role = "consumable"
+name = "Resistor 10 kOhm 1/4 W (pull-ups / pull-downs, pack of 100)"
+qty = 1
+pack = 100
+unit_eur = 1.50
+shop = "Reichelt"
+url = "https://www.reichelt.de/de/de/shop/search/metallschicht%2010k"
+status = "estimate"
+stage = "bench"
+notes = "Level OR-gate pull-ups; the carrier has its own on-board pull-ups."
+
+[[item]]
+role = "consumable"
+name = "Resistor 4.7 kOhm 1/4 W (MOSFET gate pull-downs, DS18B20 pull-up; pack of 100)"
+qty = 1
+pack = 100
+unit_eur = 1.50
+shop = "Reichelt"
+url = "https://www.reichelt.de/de/de/shop/search/metallschicht%204,7k"
+status = "estimate"
+stage = "bench"
+notes = "Only one is needed: the DS18B20 bench probes' pull-up (the carrier has the driver pull-downs)."
+
+[[item]]
+role = "consumable"
+name = "Raspberry Pi Debug Probe (optional, for defmt logs and flashing)"
+qty = 1
+unit_eur = 12.20
+shop = "Berrybase"
+url = "https://www.berrybase.de/en/raspberry-pi-debug-probe"
+status = "listing"
+stage = "bench"
+notes = "Optional; a second Pico 2 with debugprobe firmware works too. WIRING.md bring-up step 1 uses it."
+
+# ---------------------------------------------------------------- Wiring
+
+[[item]]
+role = "consumable"
+name = "Single-core flexible wire H07V-K 2.5 mm2, red, per m (TEC path)"
+qty = 10
+unit_eur = 0.80
+shop = "Reichelt"
+url = "https://www.reichelt.de/de/de/shop/search/h07v-k%202,5"
+status = "estimate"
+stage = "bench"
+notes = "Each zone's TEC path carries up to 18-20 A: >= 2.5 mm2 from DPS through fuse and relays to the TECs."
+
+[[item]]
+role = "consumable"
+name = "Single-core flexible wire H07V-K 2.5 mm2, black, per m (TEC path)"
+qty = 10
+unit_eur = 0.80
+shop = "Reichelt"
+url = "https://www.reichelt.de/de/de/shop/search/h07v-k%202,5"
+status = "estimate"
+stage = "bench"
+
+[[item]]
+role = "consumable"
+name = "Stranded hook-up wire 0.25-0.5 mm2, assorted colours (signals, coils, sensors)"
+qty = 1
+unit_eur = 12.00
+shop = "Reichelt"
+url = "https://www.reichelt.de/de/de/shop/search/litze%200,25"
+status = "estimate"
+stage = "bench"
+
+[[item]]
+role = "consumable"
+name = "WAGO 221-415 lever connector, 5-conductor, up to 4 mm2"
+qty = 15
+unit_eur = 0.95
+shop = "Reichelt"
+url = "https://www.reichelt.de/de/de/shop/produkt/verbindungsklemme_5-leiteranschluss-149800"
+status = "estimate"
+stage = "bench"
+notes = "Price not shown in the fetched page. Use for the 24 V / 12 V / GND star point."
+
+[[item]]
+role = "consumable"
+name = "Knipex ferrule assortment, insulated, 0.5-2.5 mm2 (400 pcs)"
+qty = 1
+unit_eur = 14.10
+shop = "Reichelt"
+url = "https://www.reichelt.de/de/de/shop/produkt/aderendhuelsen-sortiment_isoliert_0_5_-_2_5_mm_-222111"
+status = "listing"
+stage = "bench"
+
+[[item]]
+role = "consumable"
+name = "Dupont jumper wires F-F / M-F (40 each) and heat-shrink assortment"
+qty = 1
+unit_eur = 8.00
+shop = "Berrybase"
+url = "https://www.berrybase.de/en/search?search=jumper%20kabel"
+status = "estimate"
+stage = "bench"
+
+# ---------------------------------------------------------------- Thermal (per zone: 4 TECs, 4 cold plates, 4 coolers, 1 pump, 1 reservoir, 1 flow sensor)
+
+[[item]]
+role = "tec_module"
+name = "Peltier module 40 x 40 x 3.8 mm, 6.0 A, 15.4 V, 51.4 W (Reichelt TECB 1)"
+qty = 8
+unit_eur = 28.40
+shop = "Reichelt"
+url = "https://www.reichelt.de/de/de/shop/produkt/thermo-modul_peltierelement_40x40x3_8mm-32052"
+status = "listing"
+stage = "bench"
+notes = "Sold singly; check that Reichelt has 8 (+ spares) in stock. Specs close to the TEC1-12706 the model uses; get the datasheet from the product page and compare Qmax/R. At 4.5-5 A per TEC they run well below Imax."
+
+[[item]]
+role = "cold_plate"
+name = "Copper water block 40 x 40 mm for Peltier modules, barbed ports"
+qty = 8
+unit_eur = 10.00
+shop = "Amazon.de"
+url = "https://www.amazon.de/s?k=kupfer+wasserk%C3%BChlblock+40x40"
+status = "estimate"
+stage = "bench"
+notes = "Copper, not aluminium (no mixed metals). Barbs are ~8 mm OD: see the reducer line. Lap flat if needed."
+
+[[item]]
+role = "heatsink"
+name = "Thermalright Peerless Assassin 120 SE dual-tower cooler (2x 120 mm PWM, 0.20 A each)"
+qty = 8
+unit_eur = 43.90
+shop = "Caseking"
+url = "https://www.caseking.de/en/brands/thermalright"
+status = "listing"
+stage = "bench"
+notes = "One per TEC. The kit assumes 0.07 K/W per zone, i.e. <= 0.28 K/W per cooler with 4 in parallel. Four of the Solo list's single-tower Arctic Freezer 36 CO (0.11 K/W for 3, ~0.33 K/W each) would give ~0.083 K/W per zone, so the Duo list uses a dual tower. Its real K/W on a 40 x 40 TEC is unmeasured: measure it. Fans are not rated for 24/7 like the Arctic CO fans. Socket mounts do not fit a TEC: see the mounting line."
+
+[[item]]
+role = "consumable"
+name = "TEC sandwich mounting: M3/M4 threaded rod, nuts, springs, 3 mm aluminium backplate"
+qty = 8
+unit_eur = 5.00
+shop = "Amazon.de"
+url = "https://www.amazon.de/s?k=gewindestange+m4+edelstahl+federn+set"
+status = "estimate"
+stage = "bench"
+notes = "Even clamping pressure on the ceramic; insulating washers so the block and cooler are not shorted through the screws."
+
+[[item]]
+role = "consumable"
+name = "Arctic MX-6 thermal paste, 4 g"
+qty = 2
+unit_eur = 6.90
+shop = "Caseking"
+url = "https://www.caseking.de/en/search?search=arctic%20mx-6"
+status = "estimate"
+stage = "bench"
+notes = "16 TEC faces + NTC beads."
+
+[[item]]
+role = "pump"
+name = "Alphacool Laing DDC310 Single Edition, silver (12 V, tach)"
+qty = 2
+unit_eur = 68.58
+shop = "Aquatuning"
+url = "https://www.aquatuning.com/en/watercooling/custom-watercooling/pumps/laing-ddc/ddc-pumps/alphacool-laing-ddc310-single-edition-silver"
+status = "listing"
+stage = "bench"
+notes = "One per zone (GP12 / GP18). Pump without top: mounts into the Eisstation below. Speed set by the firmware (25 kHz PWM on the switched supply; 100 % while priming or on low flow). Tach to a Pico input via the 10 k pull-up."
+
+[[item]]
+role = "reservoir"
+name = "Alphacool Eisstation DDC - Solo reservoir (mounts directly on the DDC pump, G1/4)"
+qty = 2
+unit_eur = 34.63
+shop = "Aquatuning"
+url = "https://www.aquatuning.com/en/watercooling/custom-watercooling/reservoirs/reservoir-without-pump/for-ddc/alphacool-eisstation-ddc-solo-reservoir"
+status = "listing"
+stage = "bench"
+notes = "One per zone: the two zones run at different temperatures, so they get separate loops (a shared reservoir would mix them). Plastic wall, so the capacitive level sensor works. See the OR-gate line for the single level input."
+
+[[item]]
+role = "reservoir"
+name = "XKC-Y25-NPN non-contact capacitive level sensor, 5-12 V (LOW_WATER)"
+qty = 2
+unit_eur = 8.00
+shop = "Amazon.de"
+url = "https://www.amazon.de/s?k=XKC-Y25-NPN"
+status = "estimate"
+stage = "bench"
+notes = "One per reservoir, both into GP22 through the OR gate. Power at 5 V and measure the idle output before connecting. Wanted per sensor: LOW = water present, HIGH = low water or broken wire (WIRING.md)."
+
+[[item]]
+role = "reservoir"
+name = "74HCT32 quad 2-input OR gate, DIP-14, + socket (combines the two level sensors into GP22)"
+qty = 1
+unit_eur = 0.80
+shop = "Reichelt"
+url = "https://www.reichelt.de/de/de/shop/search/74hct32"
+status = "estimate"
+stage = "bench"
+notes = "board.rs reads ONE level input (GP22) but each zone has its own reservoir. Power the gate at 5 V, give each input a 10 k pull-up to 5 V (open sensor wire = HIGH = fault) and feed the output to GP22 (through the 2.2 k / 3.3 k divider on perfboard; the carrier's LEVEL input is 5 V-safe). Either reservoir low, or a broken wire, reads HIGH = LOW_WATER. Open item: not in WIRING.md yet."
+
+[[item]]
+role = "flow_sensor"
+name = "YF-S401 hall flow sensor, 98 Hz per L/min, 7 mm barbs (for 6 mm ID hose)"
+qty = 2
+unit_eur = 4.00
+shop = "TinyTronics (NL, ships to DE)"
+url = "https://www.tinytronics.nl/en/sensors/liquid/yf-s401-water-flow-sensor"
+status = "listing"
+stage = "bench"
+notes = "One per zone (GP14 / GP20). Matches the prebuilt UF2: FLOW_HZ_PER_LPM = 98. Range 0.3-6 L/min, +-10 %: calibrate with a measuring jug. Power at 5 V; measure the idle level before connecting. Flow direction arrow matters."
+
+[[item]]
+role = "consumable"
+name = "Barbed hose reducer 10 mm to 6 mm, straight (13/10 loop to the YF-S401) + 20 cm 6 mm ID tube + clamps"
+qty = 4
+unit_eur = 2.50
+shop = "Amazon.de"
+url = "https://www.amazon.de/s?k=schlauchverbinder+reduzierst%C3%BCck+10mm+6mm"
+status = "estimate"
+stage = "bench"
+notes = "Keep 5 cm of straight tube before the sensor. Plastic (PP/POM) reducers, no aluminium."
+
+[[item]]
+role = "consumable"
+name = "Alphacool Eiszapfen 13/10 mm compression fitting G1/4, deep black, six-pack"
+qty = 4
+pack = 6
+unit_eur = 35.62
+shop = "Aquatuning"
+url = "https://www.aquatuning.com/en/watercooling/custom-watercooling/fittings/compression-fittings/alphacool-eiszapfen-13/10mm-compression-fitting-g1/4-deep-black-sixpack"
+status = "listing"
+stage = "bench"
+notes = "Two loops: reservoirs, pump outlets, flow sensors, T-adapters, cold-plate reducers; spares for the bed stage. Brass."
+
+[[item]]
+role = "consumable"
+name = "G1/4 T-adapter (3x inner thread), for the inline water temperature sensor"
+qty = 2
+unit_eur = 5.00
+shop = "Alphacool"
+url = "https://shop.alphacool.com/en/shop/fittings"
+status = "estimate"
+stage = "bench"
+
+[[item]]
+role = "consumable"
+name = "Phobya EPDM tube 13/10 mm, black, per m"
+qty = 16
+unit_eur = 4.49
+shop = "Aquatuning"
+url = "https://www.aquatuning.com/en/watercooling/custom-watercooling/fittings/compression-fittings/alphacool-eiszapfen-13/10mm-compression-fitting-g1/4-deep-black-sixpack"
+status = "listing"
+stage = "bench"
+notes = "Price shown as recommended accessory on the fittings page. Per zone: 3 m loop + 5 m coiled in that zone's bench container. Check per-m vs per-pack unit at checkout."
+
+[[item]]
+role = "consumable"
+name = "Reducers / short 10/8 mm tube and hose clamps to the cold-plate barbs"
+qty = 2
+unit_eur = 10.00
+shop = "Aquatuning"
+url = "https://www.aquatuning.com/en/watercooling/custom-watercooling/fittings/quick-release-fittings"
+status = "estimate"
+stage = "bench"
+notes = "Cold plates in series; match the barb OD of the blocks you receive."
+
+[[item]]
+role = "consumable"
+name = "Aqua Computer Double Protect Ultra, 5 l canister (ready-mixed coolant with inhibitor)"
+qty = 2
+unit_eur = 32.90
+shop = "Aqua Computer"
+url = "https://shop.aquacomputer.de/Water-Cooling/Coolant/Double-Protect-Ultra-5l-canister::3127.html?language=en"
+status = "listing"
+stage = "bench"
+notes = "One canister per loop + mat. Replace yearly."
+
+[[item]]
+role = "consumable"
+name = "Distilled water 5 l (flushing and leak test)"
+qty = 2
+unit_eur = 3.00
+shop = "Amazon.de"
+url = "https://www.amazon.de/s?k=destilliertes+wasser+5l"
+status = "estimate"
+stage = "bench"
+notes = "Any drugstore. The bench container (10 l) can be plain tap water: the coil keeps it out of the loop."
+
+[[item]]
+role = "consumable"
+name = "Self-adhesive closed-cell insulation tape (Armaflex type), 3 mm x 50 mm x 15 m"
+qty = 2
+unit_eur = 12.00
+shop = "Aquatuning"
+url = "https://www.aquatuning.com/en/aquaristics"
+status = "estimate"
+stage = "bench"
+notes = "Wrap 8 cold plates and the short lines against condensation (02-electrical-safety.md)."
+
+[[item]]
+role = "consumable"
+name = "Electronics enclosure, ABS ~300 x 250 x 120 mm (dry compartment, above water level)"
+qty = 1
+unit_eur = 35.00
+shop = "Reichelt"
+url = "https://www.reichelt.de/de/de/shop/search/kunststoffgeh%C3%A4use%20abs"
+status = "estimate"
+stage = "bench"
+notes = "Bigger than the Solo box: two DPS modules (or the carrier), 6 relays, two fuse holders."
+
+[[item]]
+role = "consumable"
+name = "Drip tray: plastic storage tray ~80 x 60 cm, low rim (both loops and the leak cable)"
+qty = 1
+unit_eur = 15.00
+shop = "Amazon.de"
+url = "https://www.amazon.de/s?k=auffangwanne+kunststoff+80x60"
+status = "estimate"
+stage = "bench"
+
+[[item]]
+role = "bench"
+name = "Insulated cool box ~10 l (thermal load: the 'sleeper' for bench tests)"
+qty = 2
+unit_eur = 25.00
+shop = "Amazon.de"
+url = "https://www.amazon.de/s?k=k%C3%BChlbox+10l+passiv"
+status = "estimate"
+stage = "bench"
+notes = "One per zone, filled with water; that zone's 5 m tube coil lies in it."
+
+[[item]]
+role = "bench"
+name = "DS18B20 waterproof temperature probe, 1 m cable (bath temperature, logged by the hub)"
+qty = 2
+unit_eur = 3.50
+shop = "Berrybase"
+url = "https://www.berrybase.de/en/search?search=DS18B20%20wasserdicht"
+status = "estimate"
+stage = "bench"
+notes = "One per bench container, on the ESP32-S3 (ESPHome dallas) with one 4.7 k pull-up on the bus."
+
+[[item]]
+role = "bench"
+name = "Power resistor 1 Ohm, >= 100 W, aluminium housing (DPS bring-up dummy load)"
+qty = 1
+unit_eur = 8.00
+shop = "Reichelt"
+url = "https://www.reichelt.de/de/de/shop/search/hochlastwiderstand%201%20ohm"
+status = "estimate"
+stage = "bench"
+notes = "WIRING.md bring-up step 3: test the DPS on a 1 Ohm load before any TEC, set to 1-2 A from the DPS front panel (not from the Pico, which would request up to 15 A = 225 W into 1 Ohm). Mount on a heatsink."
+
+# ---------------------------------------------------------------- Bed stage (two mats, one per side)
+
+[[item]]
+role = "quick_disconnect"
+name = "Koolance QD3 no-spill female, straight, 13/10 mm, black"
+qty = 4
+unit_eur = 22.98
+shop = "Aquatuning"
+url = "https://www.aquatuning.com/en/watercooling/custom-water-cooling/fittings/quick-release-fittings/koolance-qd3-quick-disconnect-no-spill-female-straight-for-13/10mm-3/8-x-1/2-tubing-black"
+status = "listing"
+stage = "bed"
+notes = "~0.2 ml freed per disconnect (Koolance spec). Hub side, supply + return per zone."
+
+[[item]]
+role = "quick_disconnect"
+name = "Koolance QD3 no-spill male, straight, 13/10 mm, black"
+qty = 4
+unit_eur = 21.98
+shop = "Aquatuning"
+url = "https://www.aquatuning.com/en/koolance"
+status = "estimate"
+stage = "bed"
+notes = "The 16/10 male is listed at 21.98 EUR; 13/10 assumed the same. Mat side."
+
+[[item]]
+role = "water_mat"
+name = "DIY mat: PVC tube 4 mm ID / 6 mm OD (fabric-reinforced if available), per m"
+qty = 60
+unit_eur = 1.20
+shop = "Amazon.de"
+url = "https://www.amazon.de/s?k=pvc+schlauch+4mm+innen+6mm+au%C3%9Fen"
+status = "estimate"
+stage = "bed"
+notes = "~30 m per mat in parallel channels (parts.toml water_mat). 8 mm was too stiff in the documented build."
+
+[[item]]
+role = "water_mat"
+name = "DIY mat: foam topper 80-90 x 200 cm, ~4 cm (channels cut in), one per side"
+qty = 2
+unit_eur = 45.00
+shop = "Amazon.de"
+url = "https://www.amazon.de/s?k=schaumstoff+topper+90x200+4cm"
+status = "estimate"
+stage = "bed"
+
+[[item]]
+role = "water_mat"
+name = "DIY mat: 1-to-8 manifold, 10 mm inlet to 8x 4 mm barbs (supply + return)"
+qty = 4
+unit_eur = 12.00
+shop = "Amazon.de"
+url = "https://www.amazon.de/s?k=verteiler+messing+4mm+schlauch+8+fach"
+status = "estimate"
+stage = "bed"
+notes = "Must be pressure-rated (brass or PP), not an aquarium air manifold. Parallel channels keep flow resistance low."
+
+[[item]]
+role = "consumable"
+name = "Phobya EPDM tube 13/10 mm, black, per m (insulated bed lines, 4 x 3 m)"
+qty = 12
+unit_eur = 4.49
+shop = "Aquatuning"
+url = "https://www.aquatuning.com/en/watercooling/custom-watercooling/fittings/compression-fittings/alphacool-eiszapfen-13/10mm-compression-fitting-g1/4-deep-black-sixpack"
+status = "listing"
+stage = "bed"
+
+[[item]]
+role = "consumable"
+name = "Closed-cell tube insulation for 13 mm OD tube, 2 m pieces"
+qty = 6
+unit_eur = 5.00
+shop = "Amazon.de"
+url = "https://www.amazon.de/s?k=armaflex+schlauch+13mm"
+status = "estimate"
+stage = "bed"
+notes = "Against condensation and heat loss on the hub-to-mat lines."
+
+[[item]]
+role = "leak_sensor"
+name = "HW group WLD sensing cable A, extra length for the hub-side couplings"
+qty = 1
+unit_eur = 25.00
+shop = "BellEquip (AT)"
+url = "https://www.bellequip.at/produkte/sensoren-wasser-und-leckage/sensor-wld-relay-1w-uni-hw-group-wassleck-detektor-mit-relais-ausgang"
+status = "estimate"
+stage = "bed"
+notes = "Optional: route under all four QD3 couplings; the included 2 m covers the drip tray."
+
+# ---------------------------------------------------------------- Tools (qty 0: you probably have them)
+
+[[item]]
+role = "tool"
+name = "Digital multimeter (CAT III)"
+qty = 0
+unit_eur = 30.00
+shop = "Reichelt"
+url = "https://www.reichelt.de/de/de/shop/search/multimeter"
+status = "estimate"
+stage = "tool"
+
+[[item]]
+role = "tool"
+name = "DC clamp meter (Hall, >= 20 A DC) for TEC current checks"
+qty = 0
+unit_eur = 45.00
+shop = "Reichelt"
+url = "https://www.reichelt.de/de/de/shop/search/stromzange%20dc"
+status = "estimate"
+stage = "tool"
+notes = "AC-only clamp meters do not read the TEC current."
+
+[[item]]
+role = "tool"
+name = "Ferrule crimping tool (0.25-6 mm2)"
+qty = 0
+unit_eur = 25.00
+shop = "Reichelt"
+url = "https://www.reichelt.de/de/de/shop/search/crimpzange%20aderendh%C3%BClsen"
+status = "estimate"
+stage = "tool"
+
+[[item]]
+role = "tool"
+name = "Soldering iron + solder"
+qty = 0
+unit_eur = 40.00
+shop = "Reichelt"
+url = "https://www.reichelt.de/de/de/shop/search/l%C3%B6tstation"
+status = "estimate"
+stage = "tool"
+
+[[item]]
+role = "tool"
+name = "Hot-air gun (bimetal cutoff test)"
+qty = 0
+unit_eur = 25.00
+shop = "Amazon.de"
+url = "https://www.amazon.de/s?k=hei%C3%9Fluftf%C3%B6hn"
+status = "estimate"
+stage = "tool"
+
+[[item]]
+role = "tool"
+name = "Reference thermometer with probe, 0.1 C resolution (NTC calibration)"
+qty = 0
+unit_eur = 15.00
+shop = "Amazon.de"
+url = "https://www.amazon.de/s?k=einstichthermometer+0.1"
+status = "estimate"
+stage = "tool"
+
+[[item]]
+role = "tool"
+name = "Plug-in mains power meter (energy monitor socket)"
+qty = 0
+unit_eur = 15.00
+shop = "Reichelt"
+url = "https://www.reichelt.de/de/de/shop/search/energiekostenmessger%C3%A4t"
+status = "estimate"
+stage = "tool"
+notes = "Measures real wall power of both supplies during bench tests."
+
+[[item]]
+role = "tool"
+name = "Wire stripper and side cutter"
+qty = 0
+unit_eur = 20.00
+shop = "Reichelt"
+url = "https://www.reichelt.de/de/de/shop/search/abisolierzange"
+status = "estimate"
+stage = "tool"

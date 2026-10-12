@@ -6,7 +6,9 @@
 #![cfg_attr(not(test), no_std)]
 
 pub mod control;
+pub mod cooling;
 pub mod driver;
+pub mod fwupdate;
 pub mod modbus;
 pub mod ntc;
 pub mod protocol;

@@ -9,8 +9,10 @@ import ModuleMap from "../../components/ModuleMap.astro";
 import SafetyNote from "../../components/SafetyNote.astro";
 import { joinKit, sortKits } from "../../lib/kits.ts";
 import { repoBlob } from "../../site.ts";
+import { existsSync } from "node:fs";
 
 const kits = (await getCollection("kits")).map((k) => joinKit(k.id, k.data)).sort(sortKits);
+const shopping = kits.filter((k) => existsSync(`../hardware/shopping/${k.id}.toml`));
 ---
 <Base title="Kits" description="Compare the Solo Starter, Duo Standard and Duo Reference kits. Every kit's claims are checked against an open thermal model.">
   <section class="container page-head">
@@ -22,6 +24,9 @@ const kits = (await getCollection("kits")).map((k) => joinKit(k.id, k.data)).sor
   <div class="container stack-lg">
     <SafetyNote variant="build" />
     <div class="kit-grid">{kits.map((k) => <KitCard kit={k} headingLevel="h2" />)}</div>
+    {shopping.length > 0 && (
+      <p class="shop-links small"><span class="eyebrow">Shopping lists</span> {shopping.map((k) => <a class="chip chip--plain" href={`/kits/${k.id}/shopping/`}>{k.data.kit.name}</a>)} <span class="muted">Every part to order, by build stage, with prices and sources.</span></p>
+    )}
     <KitPicker kits={kits} />
   </div>
 
@@ -56,7 +61,7 @@ const kits = (await getCollection("kits")).map((k) => joinKit(k.id, k.data)).sor
         <div class="card">
           <span class="chip chip--plain">Tier 0</span>
           <h3 class="h-md">Modules only</h3>
-          <p class="muted">Off-the-shelf boards and PC-watercooling parts on a DIN rail or carrier plate. No custom PCB, and soldering is optional. Power comes from certified plug-in supplies: you never wire mains.</p>
+          <p class="muted">Off-the-shelf boards and PC-watercooling parts on a DIN rail or carrier plate. No custom PCB needed, and soldering is optional; the optional <a href="/parts/carrier-pcb/">carrier PCB</a> replaces the perfboard. Power comes from certified plug-in supplies: you never wire mains.</p>
         </div>
         <div class="card">
           <span class="chip chip--plain">Tier 1</span>
@@ -89,6 +94,7 @@ cd software/obc && uv run pytest -q</code></pre>
   .page-head { padding-block: var(--s-2xl) var(--s-xl); display: grid; gap: var(--s-md); }
   .page-head .lead { max-width: 72ch; }
   .stack-lg { display: grid; gap: var(--s-xl); padding-bottom: var(--s-2xl); }
+  .shop-links { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; }
   .kit-grid { display: grid; gap: var(--s-lg); grid-template-columns: minmax(0, 1fr); }
   @media (min-width: 640px) { .kit-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   @media (min-width: 900px) { .kit-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }

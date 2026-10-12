@@ -2,6 +2,7 @@
 // Build & run:  c++ -std=c++17 -Wall -Wextra -Werror -I.. test_opl.cpp -o /tmp/test_opl && /tmp/test_opl frames.txt
 #include "guard.h"
 #include "opl.h"
+#include "opl_fw.h"
 
 #include <cassert>
 #include <cmath>
@@ -23,6 +24,7 @@ static std::vector<uint8_t> unhex(const std::string &s) {
 }
 
 static int failures = 0;
+static void test_fw_update();
 #define CHECK(c)                                              \
   do {                                                        \
     if (!(c)) {                                               \
@@ -38,7 +40,7 @@ int main(int argc, char **argv) {
   CHECK(in.good());
   std::string line;
   int n = 0;
-  bool saw_telemetry = false;
+  bool saw_telemetry = false, saw_fw_status = false;
   while (std::getline(in, line)) {
     if (line.empty() || line[0] == '#')
       continue;
@@ -75,9 +77,17 @@ int main(int argc, char **argv) {
       CHECK(t.sides[1].faults == 0x0011 && t.sides[1].mode == 2);
       saw_telemetry = true;
     }
+    if (type == FW_STATUS) {
+      FwStatus st{};
+      CHECK(parse_fw_status(f.payload, f.len, st));
+      CHECK(st.acked_seq == 12 && st.state == FW_RECEIVING && st.result == FW_BAD_OFFSET);
+      CHECK(st.next_offset == 0x1100 && st.running_version == fw_version_word(0, 1, 3));
+      saw_fw_status = true;
+    }
     n++;
   }
-  CHECK(n >= 6 && saw_telemetry);
+  CHECK(n >= 12 && saw_telemetry && saw_fw_status);
+  test_fw_update();
 
   // Roundtrip across COBS block boundaries (golden frames are all short).
   uint32_t x = 1;
@@ -126,4 +136,243 @@ int main(int argc, char **argv) {
   }
   std::printf("opl.h: %d golden frames OK\n", n);
   return 0;
+}
+
+// ---- firmware update: sender against a simulated MCU (same rules as obc-core::fwupdate) -----------------------
+
+struct SimMcu {
+  std::vector<uint8_t> flash;
+  uint32_t size{0}, crc_expected{0}, next{0}, crc{0}, running{fw_version_word(0, 1, 0)}, installed{0};
+  uint8_t state{FW_IDLE};
+  bool zones_on{false}, partitions{true}, rolls_back{false};
+
+  uint8_t handle(uint8_t type, const uint8_t *p, size_t len) {
+    switch (type) {
+      case FW_BEGIN:
+        if (len != 12)
+          return FW_BAD_PAYLOAD;
+        if (zones_on)
+          return FW_BUSY;
+        if (!partitions)
+          return FW_NO_PARTITIONS;
+        *this = SimMcu{flash, rd_u32(p), rd_u32(p + 4), 0, 0, running, rd_u32(p + 8), FW_RECEIVING, false, true, rolls_back};
+        flash.assign(size, 0);
+        return FW_OK;
+      case FW_CHUNK: {
+        if (state != FW_RECEIVING)
+          return FW_NO_SESSION;
+        uint32_t off = rd_u32(p), n = (uint32_t) len - 4;
+        if (off + n <= next)
+          return FW_OK;
+        if (off != next || off + n > size)
+          return FW_BAD_OFFSET;
+        std::memcpy(flash.data() + off, p + 4, n);
+        crc = crc32(p + 4, n, crc);
+        next = off + n;
+        return FW_OK;
+      }
+      case FW_END:
+        if (state == FW_DONE)
+          return FW_OK;
+        if (state != FW_RECEIVING)
+          return FW_NO_SESSION;
+        if (next != size)
+          return FW_INCOMPLETE;
+        if (crc != crc_expected) {
+          state = FW_IDLE;
+          return FW_BAD_CRC;
+        }
+        state = FW_DONE;
+        return FW_OK;
+      case FW_ABORT:
+        state = FW_IDLE;
+        return FW_OK;
+      default:
+        return FW_OK;
+    }
+  }
+  void reboot() {
+    if (!rolls_back)
+      running = installed;
+    state = FW_IDLE;
+    next = 0;
+  }
+};
+
+// Runs a transfer over a lossy link: drops every `drop_req`-th request and every `drop_resp`-th answer.
+static FwSender::Phase run_transfer(SimMcu &mcu, const std::vector<uint8_t> &img, uint32_t version, int drop_req,
+                                    int drop_resp, int *frames_out = nullptr, bool drop_end_answer = false,
+                                    bool *verified = nullptr) {
+  FwSender tx;
+  if (!tx.start(img.data(), img.size(), version, false, false))
+    return tx.phase();
+  uint32_t now = 0;
+  uint8_t seq = 0;
+  int k = 0;
+  bool rebooted = false;
+  for (int step = 0; step < 200000 && (tx.busy()); step++, now += 10) {
+    uint8_t type;
+    uint8_t payload[4 + FW_CHUNK_MAX];
+    size_t len = 0;
+    if (!tx.poll(now, type, payload, len))
+      continue;
+    uint8_t s = seq++;
+    tx.sent(s, now);
+    k++;
+    if (drop_req && k % drop_req == 0)
+      continue;
+    if (mcu.state == FW_DONE && !rebooted) {
+      mcu.reboot();
+      rebooted = true;
+    }
+    uint8_t r = mcu.handle(type, payload, len);
+    if (type == FW_ABORT)
+      continue;  // no answer awaited
+    if (drop_resp && k % drop_resp == 0)
+      continue;
+    if (drop_end_answer && type == FW_END && mcu.state == FW_DONE) {
+      drop_end_answer = false;
+      continue;
+    }
+    // Encode + decode the answer through the real codec.
+    uint8_t st[11] = {s, mcu.state, r};
+    wr_u32(st + 3, mcu.next);
+    wr_u32(st + 7, mcu.running);
+    uint8_t wire[64];
+    size_t w = encode(s, FW_STATUS, st, sizeof(st), wire, sizeof(wire));
+    StreamDecoder dec;
+    Frame f{};
+    for (size_t i = 0; i < w; i++)
+      if (dec.push(wire[i], f)) {
+        FwStatus fs{};
+        CHECK(parse_fw_status(f.payload, f.len, fs));
+        tx.on_status(fs, now + 5);
+      }
+  }
+  if (frames_out)
+    *frames_out = k;
+  if (verified)
+    *verified = tx.verified();
+  return tx.phase();
+}
+
+static void test_fw_update() {
+  CHECK(crc32((const uint8_t *) "123456789", 9) == 0xCBF43926u);
+  CHECK(crc32((const uint8_t *) "6789", 4, crc32((const uint8_t *) "12345", 5)) == 0xCBF43926u);
+
+  std::vector<uint8_t> img(70001);
+  for (size_t i = 0; i < img.size(); i++)
+    img[i] = (uint8_t) (i * 7 + 3);
+  const uint32_t v2 = fw_version_word(0, 2, 0);
+
+  {  // clean link
+    SimMcu mcu;
+    int frames = 0;
+    CHECK(run_transfer(mcu, img, v2, 0, 0, &frames) == FwSender::DONE);
+    CHECK(mcu.flash == img && mcu.running == v2);
+    CHECK(frames == 1 + 1 + (int) ((img.size() + 255) / 256) + 1 + 1);  // query, begin, chunks, end, query
+  }
+  {  // lossy link both ways: retries + resends, image still exact
+    SimMcu mcu;
+    CHECK(run_transfer(mcu, img, v2, 7, 5) == FwSender::DONE);
+    CHECK(mcu.flash == img && mcu.running == v2);
+  }
+  {  // the answer to FW_END is lost and the MCU reboots: the resent FW_END hits the new image, still DONE
+    SimMcu mcu;
+    bool verified = false;
+    CHECK(run_transfer(mcu, img, v2, 0, 0, nullptr, true, &verified) == FwSender::DONE);
+    CHECK(verified && mcu.running == v2);
+  }
+  {  // same version as installed: done, but not verifiable
+    SimMcu mcu;
+    bool verified = true;
+    CHECK(run_transfer(mcu, img, mcu.running, 0, 0, nullptr, false, &verified) == FwSender::DONE);
+    CHECK(!verified);
+  }
+  {  // trial boot rolled back: reported as failure
+    SimMcu mcu;
+    mcu.rolls_back = true;
+    CHECK(run_transfer(mcu, img, v2, 0, 0) == FwSender::FAILED);
+  }
+  {  // zones on: BUSY is retried, then gives up
+    SimMcu mcu;
+    mcu.zones_on = true;
+    CHECK(run_transfer(mcu, img, v2, 0, 0) == FwSender::FAILED);
+  }
+  {  // no partition table
+    SimMcu mcu;
+    mcu.partitions = false;
+    CHECK(run_transfer(mcu, img, v2, 0, 0) == FwSender::FAILED);
+  }
+  {  // night guard on the hub
+    FwSender tx;
+    CHECK(!tx.start(img.data(), img.size(), v2, true, false) && tx.phase() == FwSender::FAILED);
+    CHECK(tx.start(img.data(), img.size(), v2, true, true) && tx.phase() == FwSender::QUERY);
+  }
+  {  // MCU silent: fails after retries and releases the session
+    FwSender tx;
+    CHECK(tx.start(img.data(), img.size(), v2, false, false));
+    uint8_t type, payload[300];
+    size_t len;
+    uint32_t now = 0;
+    int sent = 0;
+    for (; now < 60000 && tx.phase() != FwSender::FAILED; now += 100)
+      if (tx.poll(now, type, payload, len)) {
+        tx.sent((uint8_t) sent++, now);
+      }
+    CHECK(tx.phase() == FwSender::FAILED && sent == 1 + FwSender::MAX_RETRIES);  // FW_QUERY never answered
+    CHECK(!tx.poll(now, type, payload, len));  // no session was opened: nothing to abort
+  }
+  {  // MCU goes silent mid-transfer: fails and releases the session with FW_ABORT
+    SimMcu mcu;
+    FwSender tx;
+    CHECK(tx.start(img.data(), img.size(), v2, false, false));
+    uint8_t type, payload[300];
+    size_t len;
+    uint32_t now = 0;
+    uint8_t seq = 0;
+    for (; now < 120000 && tx.phase() != FwSender::FAILED; now += 100)
+      if (tx.poll(now, type, payload, len)) {
+        uint8_t s = seq++;
+        tx.sent(s, now);
+        if (mcu.next < 4096) {  // answers until 4 KiB arrived, then silence
+          uint8_t r = mcu.handle(type, payload, len);
+          tx.on_status(FwStatus{s, mcu.state, r, mcu.next, mcu.running}, now);
+        }
+      }
+    CHECK(tx.phase() == FwSender::FAILED && tx.progress() == 4096);
+    CHECK(tx.poll(now, type, payload, len) && type == FW_ABORT);
+  }
+  {  // version from the IMAGE_DEF block, as obc-pico2 links it (image type item, VERSION item, BLOCK_LAST)
+    std::vector<uint8_t> im(512, 0);
+    const uint32_t words[] = {0xffffded3, 0x90210142, 0x248, 0x00020001, 0x3ff, 0, 0xab123579};
+    for (size_t i = 0; i < 7; i++)
+      wr_u32(im.data() + 0x114 + 4 * i, words[i]);
+    CHECK(image_version(im.data(), im.size()) == 0x00020001);
+    CHECK(image_version(img.data(), 64) == 0);
+  }
+  {  // UF2 -> image: E10 absolute block skipped, gap filled with 0xFF
+    std::vector<uint8_t> uf2;
+    auto block = [&](uint32_t addr, uint32_t family, uint8_t fill) {
+      uint8_t b[512] = {};
+      wr_u32(b, 0x0A324655);
+      wr_u32(b + 4, 0x9E5D5157);
+      wr_u32(b + 8, 0x2000);
+      wr_u32(b + 12, addr);
+      wr_u32(b + 16, 256);
+      wr_u32(b + 28, family);
+      std::memset(b + 32, fill, 256);
+      wr_u32(b + 508, 0x0AB16F30);
+      uf2.insert(uf2.end(), b, b + 512);
+    };
+    block(0x10FFFF00, 0xe48bff57, 0xEE);
+    block(0x10000000, UF2_FAMILY_RP2350_ARM_S, 0x11);
+    block(0x10000200, UF2_FAMILY_RP2350_ARM_S, 0x22);
+    std::vector<uint8_t> out(4096);
+    size_t n = uf2_to_image(uf2.data(), uf2.size(), out.data(), out.size());
+    CHECK(n == 768 && out[0] == 0x11 && out[255] == 0x11 && out[256] == 0xFF && out[511] == 0xFF && out[512] == 0x22);
+    CHECK(uf2_to_image(uf2.data(), uf2.size(), out.data(), 600) == 0);  // too big for the buffer
+    uf2[4] ^= 1;
+    CHECK(uf2_to_image(uf2.data(), uf2.size(), out.data(), out.size()) == 0);  // bad magic
+  }
 }

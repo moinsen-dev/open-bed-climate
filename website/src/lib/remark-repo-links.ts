@@ -13,6 +13,7 @@ export function siteHrefForRepoPath(target: string, hash: string): string {
   if (isRenderedDoc(target)) return `/docs/${docId(target)}/${hash}`;
   const build = buildHref(target);
   if (build) return `${build}${hash}`;
+  if (/^hardware\/pcb\/carrier\/?(README\.md)?$/.test(target)) return `/parts/carrier-pcb/${hash}`;
   if (/^hardware\/shopping\/[^/]+\.(md|toml)$/.test(target)) return `/kits/${target.split("/").pop()!.replace(/\.(md|toml)$/, "")}/shopping/${hash}`;
   const kit = /^hardware\/kits\/([^/]+)\.toml$/.exec(target);
   if (kit) return `/kits/${kit[1]}/${hash}`;

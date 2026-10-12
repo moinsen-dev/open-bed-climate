@@ -28,6 +28,10 @@ const slug = (m: string) => m.toLowerCase().replace(/[^a-z0-9]+/g, "-");
       <p><strong>Verify a part.</strong> Check one unverified or listing-only example against its datasheet, or suggest a new one. No coding needed.</p>
       <a class="btn btn--primary btn--small" href={issueTemplate("part-substitution.yml")}>Suggest or verify a part</a>
     </div>
+    <a class="parts__pcb card" href="/parts/carrier-pcb/">
+      <span><span class="eyebrow">Tier 0 · optional · Rev A, untested</span><span class="h-sm parts__pcb-t">Carrier PCB: one board for the Pico 2, ESP32-S3, sensors and relay drivers</span></span>
+      <span class="text-link">Carrier PCB<span class="arrow"></span></span>
+    </a>
     <dl class="legend small">
       {Object.entries(PART_STATUS_LABEL).map(([k, v]) => <div><dt><span class={`status chip chip--${tone[k]}`}>{v}</span></dt><dd class="muted">{{ datasheet: "key specs confirmed in the manufacturer datasheet", listing: "only seen in a distributor or retailer listing", unverified: "plausible, not yet confirmed: please verify", rejected: "checked and found unsuitable, kept so nobody re-checks it" }[k]}</dd></div>)}
       <div><dt><span class="chip chip--safety">Safety</span></dt><dd class="muted">the role affects the limits in the safety concept</dd></div>
@@ -75,6 +79,8 @@ const slug = (m: string) => m.toLowerCase().replace(/[^a-z0-9]+/g, "-");
   .stat { display: grid; gap: 2px; padding: var(--s-md); }
   .stat__n { font-size: 2rem; font-weight: 600; line-height: 1.1; }
   .stat--help { border-color: color-mix(in oklab, var(--warm) 40%, var(--hairline)); }
+  .parts__pcb { display: flex; flex-wrap: wrap; gap: var(--s-sm) var(--s-lg); justify-content: space-between; align-items: center; }
+  .parts__pcb-t { display: block; color: var(--ink); margin-top: 2px; }
   .parts__cta { display: flex; flex-wrap: wrap; gap: var(--s-md); align-items: center; justify-content: space-between; }
   .legend { display: grid; gap: var(--s-xs); grid-template-columns: minmax(0, 1fr); }
   .legend div { display: flex; gap: var(--s-sm); align-items: baseline; flex-wrap: wrap; }

@@ -10,8 +10,11 @@
 #include "esphome/components/uart/uart.h"
 #include "esphome/core/component.h"
 
+#include <vector>
+
 #include "guard.h"
 #include "opl.h"
+#include "opl_fw.h"
 #include "schedule.h"
 
 namespace esphome {
@@ -40,6 +43,12 @@ class ObcHub : public Component, public uart::UARTDevice {
   void set_desired(int zone, float target_c);
   void prime();
   void clear_faults(int zone);
+  /// Update the control board's firmware over OPL from a release UF2 (obc-pico2-<kit>.uf2) held in memory; the image
+  /// is copied. Refused while any zone is on, unless `force` (then every zone is switched off first; the night program
+  /// and the 10 s resend switch them back on after the update). Progress and result are logged.
+  /// Fetching the UF2 (e.g. from the GitHub release) is not part of this component yet, see firmware/README.md.
+  bool start_firmware_update(const uint8_t *uf2, size_t len, bool force);
+  bool firmware_update_busy() const { return this->fw_.busy(); }
 
   void register_climate(int zone, ObcClimate *c) { this->climates_[zone] = c; }
   void set_water_temperature_sensor(int zone, sensor::Sensor *s) { this->water_[zone] = s; }
@@ -55,6 +64,7 @@ class ObcHub : public Component, public uart::UARTDevice {
 
  protected:
   void send_(uint8_t type, const uint8_t *payload, size_t len);
+  void pump_firmware_update_(uint32_t now);
   void send_target_(int zone);
   void handle_frame_(const opl::Frame &f);
   void publish_telemetry_(const opl::Telemetry &t);
@@ -67,6 +77,9 @@ class ObcHub : public Component, public uart::UARTDevice {
   uint32_t last_resend_ms_{0};
   uint32_t last_telemetry_ms_{0};
   bool link_ok_{false};
+  opl::FwSender fw_;
+  std::vector<uint8_t> fw_image_;
+  uint8_t fw_last_phase_{opl::FwSender::IDLE};
 
   ObcClimate *climates_[ZONES]{};
   sensor::Sensor *water_[ZONES]{};

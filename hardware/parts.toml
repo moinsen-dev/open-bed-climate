@@ -51,10 +51,10 @@ requirement = "Certified, 12 V, IEC inlet, sized so the continuous load stays â‰
 
   [[role.example]]
   name = "Mean Well GST120A12-R7B (desktop, two-zone kits)"
-  status = "unverified"
-  source = "https://www.meanwell.com/productSeries.aspx"
-  verified_on = ""
-  notes = "Same GST family, 12 V / 120 W class. Confirm current rating, IEC C14 inlet and DC plug in the datasheet."
+  status = "listing"
+  source = "https://www.meanwellusa.com/Upload/PDF/Adaptor_EN.pdf"
+  verified_on = "2026-10-12"
+  notes = "Mean Well's adaptor installation manual: the 12 V model is 8.5 A = 102 W (120 W only for 20-48 V), so it is not a 120 W supply. Distributor listings (TRC, TME, Mouser): IEC320-C14 inlet, built-in active PFC, UL 62368-1, R7B output = locking 4-pin DIN (KYCON KPPX-4P), 1 m 16 AWG. Two-zone load 65 W = 64 % of 102 W, inside the 80 % margin. GST120A spec sheet itself not opened."
 
 [[role]]
 id = "tec_drive"

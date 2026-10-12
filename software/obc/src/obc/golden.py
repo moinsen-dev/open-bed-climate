@@ -13,9 +13,11 @@ import json
 from dataclasses import replace
 from pathlib import Path
 
+from . import fwupdate as F
 from . import protocol as P
 from .control import Inputs, SideController
-from .control import Pid
+from .control import Mode, Pid
+from .cooling import Cooling, CoolingInputs
 from .thermal import SideParams, SideState, step
 
 ROOT = Path(__file__).resolve().parents[4]
@@ -143,6 +145,169 @@ def scenarios():
     )
 
 
+def cooling_scripted(name, pump_run_duty, script):
+    """script: list of (t, CoolingInputs-kwargs); each step's inputs carry over to the next."""
+    c = Cooling(pump_run_duty=pump_run_duty)
+    kw = dict(mode=Mode.OFF, fan_request=0.0, pump_request=False, t_hot_face=28.3, flow_lpm=0.0, leak=False, water_ok=True)
+    steps = []
+    for t, change in script:
+        kw.update(change)
+        i = CoolingInputs(**kw)
+        o = c.update(i, t)
+        # Row: [t, [mode, fan_request, pump_request, t_hot_face, flow_lpm, leak, water_ok, priming, tach_rpm],
+        #          [fan_duty, pump_duty, fan_stalled, tec_allowed]]
+        steps.append(
+            [
+                t,
+                [i.mode.value, i.fan_request, int(i.pump_request), i.t_hot_face, i.flow_lpm, int(i.leak), int(i.water_ok), int(i.priming), i.tach_rpm],
+                [round(o.fan_duty, 5), round(o.pump_duty, 5), int(o.fan_stalled), int(o.tec_allowed)],
+            ]
+        )
+    return {"name": name, "pump_run_duty": pump_run_duty, "steps": steps}
+
+
+def cooling_scenarios():
+    run = dict(mode=Mode.RUN, pump_request=True)
+    # Temperatures stay clear of the curve/hysteresis thresholds so f32 (Rust) and f64 (Python) take the same branches.
+    yield cooling_scripted(
+        "fan_curve_and_pump_modes",
+        0.8,
+        [
+            (0.0, {}),  # all off
+            (0.5, {**run, "fan_request": 0.2, "t_hot_face": 30.1}),  # start: kick + pump start, no flow yet
+            (1.0, {}),
+            (2.0, {}),  # kick over: request 0.2 -> min duty
+            (3.0, {"flow_lpm": 0.5}),  # flow: interlock releases, boost hold runs to 32 s
+            (10.0, {"fan_request": 0.6, "t_hot_face": 41.7}),
+            (20.0, {"t_hot_face": 52.3}),  # curve above request
+            (25.0, {"t_hot_face": 51.1}),  # inside the hysteresis band: hold
+            (31.5, {"t_hot_face": 47.6}),  # below the band: falls
+            (32.5, {}),  # boost hold over: pump run duty
+            (40.0, {"flow_lpm": 0.1}),  # flow lost: pump full again, held
+            (41.0, {"flow_lpm": 0.5}),
+            (69.5, {}),  # still held: the boost from t=40 lasts until t=70
+            (70.5, {}),
+            (80.0, {"mode": Mode.OFF, "fan_request": 0.0, "pump_request": False, "t_hot_face": 40.3}),  # heat soak run-on
+            (90.0, {"t_hot_face": 33.4}),
+            (100.0, {"t_hot_face": 31.2}),  # below FAN_T_OFF_C: off
+            (110.0, {"t_hot_face": 33.9}),  # between off and on thresholds: stays off
+            (120.0, {"t_hot_face": 36.2}),  # above FAN_T_ON_C: kick, then curve
+            (120.5, {}),
+            (121.5, {}),
+            (130.0, {"mode": Mode.SAFE, "leak": True, "t_hot_face": 30.4}),  # leak: pump off whatever is requested
+            (131.0, {"leak": False, "priming": True}),  # priming: full
+            (132.0, {"leak": True}),  # priming but leak: off
+            (133.0, {"leak": False, "water_ok": False}),  # priming but low water: off
+            (134.0, {"water_ok": True, "priming": False, "pump_request": True, "fan_request": 1.0}),  # SAFE: full
+            (150.0, {"t_hot_face": None, "fan_request": 0.2, "mode": Mode.RUN}),  # no hot-face reading: fan full
+            (151.0, {"t_hot_face": None, "fan_request": 0.0, "mode": Mode.OFF, "pump_request": False}),
+        ],
+    )
+    yield cooling_scripted(
+        "fan_stall_with_tach",
+        0.4,  # below PUMP_MIN_DUTY: clamped
+        [
+            (0.0, {**run, "fan_request": 0.5, "t_hot_face": 30.2, "flow_lpm": 0.5, "tach_rpm": 0.0}),
+            (2.0, {}),  # spin-up grace
+            (3.5, {}),  # grace over, low since 3.5
+            (6.0, {}),
+            (8.75, {}),  # 5 s low: stalled, TECs cut
+            (9.0, {"tach_rpm": 1400.0}),  # spinning again: clears
+            (12.0, {"tach_rpm": 250.0}),
+            (16.5, {"tach_rpm": 900.0}),  # recovered before 5 s
+            (20.0, {"tach_rpm": 100.0}),
+            (26.0, {}),  # stalled
+            (27.0, {"mode": Mode.OFF, "fan_request": 0.0, "pump_request": False}),  # fan off: clears
+            (30.0, {**run, "fan_request": 0.3, "tach_rpm": 0.0}),  # restart: grace again
+            (32.5, {}),
+        ],
+    )
+
+
+def _image(n: int) -> bytes:
+    x, out = 7, bytearray()
+    for _ in range(n):
+        x = (1103515245 * x + 12345) % (1 << 31)
+        out.append((x >> 16) & 0xFF)
+    return bytes(out)
+
+
+def fw_scripted(name, slot, script):
+    """script: list of events; each recorded with the session's answer (result, state, next_offset[, write plan])."""
+    u = F.FwUpdate()
+    steps = []
+    for ev in script:
+        kind = ev[0]
+        if kind == "begin":
+            _, size, crc, version, idle = ev
+            r = u.begin(F.fw_begin(size, crc, version), slot, idle)
+            row = [kind, size, crc, version, int(idle)]
+        elif kind == "begin_raw":  # malformed payload
+            r = u.begin(bytes.fromhex(ev[1]), slot, True)
+            row = [kind, ev[1]]
+        elif kind == "chunk":
+            _, offset, data, flash_ok = ev
+            payload = F.fw_chunk(offset, data)
+            r, plan = u.chunk(payload)
+            if plan is not None:
+                r = u.written(payload, flash_ok)
+            row = [kind, offset, data.hex(), int(flash_ok), None if plan is None else [plan.erase_from, plan.erase_to, plan.addr]]
+        elif kind == "end":
+            r = u.end()
+            row = [kind]
+        elif kind == "abort":
+            u.abort()
+            r = F.FwResult.OK
+            row = [kind]
+        else:
+            raise ValueError(kind)
+        steps.append([row, [int(r), int(u.state), u.next_offset]])
+    return {"name": name, "slot": None if slot is None else [slot.offset, slot.size], "steps": steps}
+
+
+def fw_scenarios():
+    slot = F.FwSlot(0x0020_0000, 0x0010_0000)  # e.g. partition B at 2 MiB, 1 MiB
+    img = _image(9000)
+    crc = F.crc32(img)
+    ver = F.version_word(0, 2, 0)
+    chunks = [(o, img[o : o + 256]) for o in range(0, len(img), 256)]
+    script = [["begin", len(img), crc, ver, False], ["begin", len(img), crc, ver, True], ["chunk", 256, chunks[1][1], True]]
+    for k, (o, d) in enumerate(chunks):
+        script.append(["chunk", o, d, True])
+        if k == 3:
+            script.append(["chunk", o, d, True])  # resend after a lost status: OK, nothing written
+            script.append(["end"])  # too early
+    script.append(["chunk", 1000, img[1000:1100], True])  # fully behind next_offset: treated as a resend (no-op)
+    script.append(["end"])
+    script.append(["end"])  # resend
+    yield fw_scripted("full_transfer", slot, script)
+
+    yield fw_scripted(
+        "errors",
+        slot,
+        [
+            ["chunk", 0, img[:16], True],  # no session
+            ["end"],
+            ["begin", slot.size + 1, 0, ver, True],  # too large
+            ["begin_raw", "0102"],
+            ["begin", 300, F.crc32(img[:300]), ver, True],
+            ["chunk", 200, img[200:300], True],  # not at next_offset
+            ["chunk", 0, img[:256] + b"\x00", True],  # too long
+            ["chunk", 0, img[:256], True],
+            ["chunk", 256, img[256:356], True],  # past the end of the image
+            ["chunk", 256, img[256:300], False],  # flash error: session dropped
+            ["begin", 300, F.crc32(img[:300]) ^ 1, ver, True],
+            ["chunk", 0, img[:256], True],
+            ["chunk", 256, img[256:300], True],
+            ["end"],  # bad crc: session dropped
+            ["begin", 300, 0, ver, True],
+            ["abort"],
+            ["chunk", 0, img[:256], True],
+        ],
+    )
+    yield fw_scripted("no_partition_table", None, [["begin", 300, 0, ver, True]])
+
+
 def protocol_vectors():
     sb = P.SensorBlock(1, 5000, 500, tuple(tuple(i * c - 300 for c in range(9)) for i in range(3)), (100, 200, 300))
     side = P.SideTelemetry(2150, 4010, 2100, 3200, 480, 55, 1, 0)
@@ -154,12 +319,20 @@ def protocol_vectors():
         P.Frame(9, P.MsgType.TELEMETRY, tel.pack()),
         P.Frame(10, P.MsgType.FAULT, bytes([1, 0x11, 0x00])),
         P.Frame(255, P.MsgType.SENSOR_BLOCK, sb.pack()),
+        P.Frame(11, P.MsgType.FW_BEGIN, F.fw_begin(9000, 0xCBF43926, F.version_word(0, 2, 0))),
+        P.Frame(12, P.MsgType.FW_CHUNK, F.fw_chunk(0x1100, _image(256))),
+        P.Frame(13, P.MsgType.FW_END),
+        P.Frame(14, P.MsgType.FW_ABORT),
+        P.Frame(15, P.MsgType.FW_QUERY),
+        P.Frame(16, P.MsgType.FW_STATUS, F.FwStatus(12, 1, 4, 0x1100, F.version_word(0, 1, 3)).pack()),
     ]
     return [{"seq": f.seq, "type": int(f.type), "payload": f.payload.hex(), "wire": P.encode(f).hex()} for f in frames]
 
 
 def build() -> str:
-    data = {"generator": "python -m obc.golden", "scenarios": list(scenarios()), "frames": protocol_vectors()}
+    data = {"generator": "python -m obc.golden", "scenarios": list(scenarios()), "cooling": list(cooling_scenarios()),
+        "fwupdate": list(fw_scenarios()),
+        "frames": protocol_vectors()}
     return json.dumps(data, separators=(",", ":")) + "\n"
 
 

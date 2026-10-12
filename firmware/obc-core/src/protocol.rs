@@ -12,8 +12,14 @@ pub mod msg {
     pub const SET_TARGET: u8 = 0x10;
     pub const CLEAR_FAULTS: u8 = 0x11;
     pub const PRIME: u8 = 0x12;
+    pub const FW_BEGIN: u8 = 0x20;
+    pub const FW_CHUNK: u8 = 0x21;
+    pub const FW_END: u8 = 0x22;
+    pub const FW_ABORT: u8 = 0x23;
+    pub const FW_QUERY: u8 = 0x24;
     pub const TELEMETRY: u8 = 0x80;
     pub const FAULT: u8 = 0x81;
+    pub const FW_STATUS: u8 = 0x82;
     pub const SENSOR_BLOCK: u8 = 0x90;
     pub const ACK: u8 = 0xF0;
 }

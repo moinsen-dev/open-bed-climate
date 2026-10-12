@@ -89,3 +89,9 @@ pub const FLOW_HZ_PER_LPM: f32 = 98.0;
 
 /// Pump-only priming duration after a PRIME command.
 pub const PRIME_SECONDS: u64 = 60;
+
+/// Pump and fan PWM frequency (power PWM of the low-side switches; the carrier routes no 4-pin PWM signal wire).
+pub const PWM_HZ: u32 = 25_000;
+/// Pump duty in normal running (obc-core::cooling runs it at 100 % while priming, starting, in SAFE and whenever flow
+/// is low, and clamps this to >= 50 %). Lower = quieter; check on your loop that flow stays well above 0.15 L/min.
+pub const PUMP_RUN_DUTY: f32 = 0.8;

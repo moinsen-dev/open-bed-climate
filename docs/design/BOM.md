@@ -1,5 +1,8 @@
 # BOM v0.1: Duo Reference kit (Tier 1, queen, two zones), rough prototype quantities
 
+> This is the **target** BOM once the Tier 1 power board and cover sensor board exist. What you can buy and build
+> today is in [hardware/shopping/duo-reference.md](../../hardware/shopping/duo-reference.md) (about €2,860 incl. VAT).
+
 For Tier 0 kits (modules only) see [`hardware/PARTS.md`](../../hardware/PARTS.md).
 
 Prices are rough single-unit estimates (EUR) to show the order of magnitude, not quotes.

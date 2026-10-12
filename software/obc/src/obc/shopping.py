@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[4]
 SHOP_DIR = ROOT / "hardware" / "shopping"
 PARTS = ROOT / "hardware" / "parts.toml"
 KITS_DIR = ROOT / "hardware" / "kits"
-EXTRA_ROLES = {"consumable": "Consumables", "bench": "Bench rig", "tool": "Tools"}
+EXTRA_ROLES = {"pcb": "Project PCBs", "consumable": "Consumables", "bench": "Bench rig", "tool": "Tools"}
 STAGES = ("bench", "bed", "tool")
 STAGE_TITLE = {
     "bench": "Stage 1: bench build (no bed, 10 l water container as thermal load)",

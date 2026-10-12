@@ -47,11 +47,20 @@ CERN-OHL-S-2.0 (hardware).
   UNTESTED: LCSC numbers for P-FET/SS54/zener/inductor/electrolytics/0.1 % resistors, rotations, ESP32 row pitch, buck layout, 12 V copper (2 oz for Duo).
 - **Water mat sourcing (2026-10-11):** `docs/research/water-mat-sourcing-2026-10.md` + RFQ template. ~€250–600/mat at 10 pcs, tooling €0.8–9k; tiled 45×100 cm design as mitigation.
 
+- **2026-10-12 batch:** `opod` → `obc` rename (CI green). 15 issues (#1–15, labels pcb/firmware/hub/needs-hardware/safety) +
+  3 discussions (#16 welcome, #17 build logs, #18 kit poll); custom Discussion categories can only be added in the web UI.
+  Duo shopping lists: Duo Standard €2,724.59, Duo Reference €2,860.69 (buildable today with carrier PCB + RSP-750-24 module;
+  BOM.md ~€1,000 is the Tier 1 target). GST120A12 = 102 W → duo-standard aux_psu_w = 102. Duo level sensors OR-ed into GP22 (WIRING.md).
+  Website: /parts/carrier-pcb/, /kits/<kit>/shopping/ for all kits. Firmware 0.2.0: fan/pump 25 kHz PWM (`cooling.py`/`cooling.rs`,
+  golden), OPL firmware update FW_BEGIN/CHUNK/END/ABORT/QUERY/STATUS (`fwupdate.py/.rs`, `ota.rs` A/B via bootrom, `partitions.json`,
+  hub `opl_fw.h` sender, host-tested against a simulated MCU). TBYB is opt-in (`--features tbyb`); releases ship WITHOUT it until
+  the update path is proven on hardware. Not built: hub UF2 download + HA update entity. embassy `imagedef-none` + own IMAGE_DEF with version.
+
 ## Next intended step
 
 1. First hardware: bench build of the Solo Starter (owner orders parts).
 2. Seed 10–15 good-first-issues + Discussions categories; NLnet proposal (owner writes it, deadline 2026-11-03).
-3. Fan/pump PWM in the firmware; OPL firmware-update path.
+3. Hub side of firmware update (UF2 download, HA update entity); second level input for Duo; prove TBYB/rollback on hardware.
 
 ## Open friction
 

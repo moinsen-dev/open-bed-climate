@@ -38,14 +38,24 @@ flowchart LR
 | GP8 / GP9 | I2C0 SDA / SCL | ADS1115 @ 0x48 (3.3 V) |
 | GP10 / GP16 | zone relay, zone 0 / 1 | relay driver input (via the cutoff chain, see above) |
 | GP11 / GP17 | polarity relay, zone 0 / 1 | relay driver input; low = cool, high = heat |
-| GP12 / GP18 | pump on, zone 0 / 1 | MOSFET / pump enable (D5 pumps: PWM input, later) |
-| GP13 / GP19 | fans on, zone 0 / 1 | MOSFET for the heatsink fans |
+| GP12 / GP18 | pump, zone 0 / 1 | low-side MOSFET, 25 kHz PWM (duty from the firmware; D5 pumps: PWM input, later) |
+| GP13 / GP19 | fans, zone 0 / 1 | low-side MOSFET for the heatsink fans, 25 kHz PWM of the fan supply |
 | GP14 / GP20 | flow sensor pulse, zone 0 / 1 | open-collector output, internal pull-up |
 | GP21 | leak sensor | **LOW = dry**; HIGH = leak *or broken wire*. External 10 kΩ pull-up to 3.3 V |
 | GP22 | water level | **LOW = level OK**; HIGH = low *or broken wire*. External 10 kΩ pull-up to 3.3 V |
 
+Pump and fans are speed-controlled by switching their supply at 25 kHz. The carrier has no 4-pin PWM signal wire and
+no tach input: wire 4-pin fans by their +12 V and GND only, and leave PWM and tach open. Most 4-pin fans run at full
+speed with PWM open, but here their supply is switched, so check that your fan tolerates a switched supply. Plain
+2-pin and 3-pin fans are the safer choice.
+
 Both inputs are wired so that a broken wire reads as a fault. Choose sensor modules (or add an inverter) whose
 output is LOW in the good state.
+
+**Duo kits (two reservoirs, one GP22 input):** combine the two level sensors with an OR gate (74HCT32, powered from
+3.3 V or 5 V with a level-safe output), so GP22 reads HIGH when *either* reservoir is low or either wire is broken.
+Pull each gate input up with 10 kΩ, so a broken sensor wire still reads as a fault. A second level input in the
+firmware would replace the gate in a later revision.
 
 The DPS modules have a TTL UART. Put an RS-485 adapter on each module and run one RS-485 bus (A/B, 120 Ω
 termination at both ends) to the Pico's transceiver. Give the modules Modbus addresses 1 (zone 0) and 2 (zone 1).

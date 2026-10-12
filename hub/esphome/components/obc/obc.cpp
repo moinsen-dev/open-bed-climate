@@ -29,6 +29,10 @@ void ObcHub::loop() {
   }
 
   const uint32_t now = millis();
+  if (this->fw_.busy())
+    this->pump_firmware_update_(now);
+  if (this->fw_.active())
+    return;  // stop-and-wait: nothing but FW frames while the MCU may be writing flash
   if (now - this->last_heartbeat_ms_ >= HEARTBEAT_MS) {
     this->last_heartbeat_ms_ = now;
     this->send_(opl::HEARTBEAT, nullptr, 0);
@@ -52,10 +56,78 @@ void ObcHub::dump_config() {
 }
 
 void ObcHub::send_(uint8_t type, const uint8_t *payload, size_t len) {
+  if (this->fw_.active())
+    return;  // firmware update in flight: the MCU keeps every zone off anyway; targets are resent afterwards
   uint8_t wire[64];  // hub->MCU frames are tiny
   size_t n = opl::encode(this->seq_++, type, payload, len, wire, sizeof(wire));
   if (n > 0)
     this->write_array(wire, n);
+}
+
+bool ObcHub::start_firmware_update(const uint8_t *uf2, size_t len, bool force) {
+  if (this->fw_.busy()) {
+    ESP_LOGW(TAG, "Firmware update already running");
+    return false;
+  }
+  bool zones_on = false;
+  for (int z = 0; z < ZONES; z++)
+    zones_on |= !std::isnan(this->desired_[z]);
+  this->fw_image_.assign(len, 0xFF);  // the flat image is never larger than its UF2
+  size_t n = opl::uf2_to_image(uf2, len, this->fw_image_.data(), this->fw_image_.size());
+  this->fw_image_.resize(n);
+  if (n == 0) {
+    ESP_LOGE(TAG, "Firmware update: not a Pico 2 (rp2350-arm-s) UF2");
+    return false;
+  }
+  uint32_t version = opl::image_version(this->fw_image_.data(), n);
+  if (zones_on && force) {
+    ESP_LOGW(TAG, "Firmware update forced: switching every zone off");
+    for (int z = 0; z < ZONES; z++) {
+      uint8_t p[4];
+      opl::set_target_payload((uint8_t) z, NAN, p);
+      this->send_(opl::SET_TARGET, p, sizeof(p));
+    }
+  }
+  // The Pico has no wall clock, so "not while the bed is in use" is enforced here.
+  if (!this->fw_.start(this->fw_image_.data(), n, version, zones_on, force)) {
+    ESP_LOGE(TAG, "Firmware update %s", this->fw_.error());
+    this->fw_image_ = std::vector<uint8_t>();
+    return false;
+  }
+  ESP_LOGI(TAG, "Firmware update: %u bytes, version 0x%08X", (unsigned) n, (unsigned) version);
+  return true;
+}
+
+void ObcHub::pump_firmware_update_(uint32_t now) {
+  uint8_t type;
+  uint8_t payload[4 + opl::FW_CHUNK_MAX];
+  size_t len = 0;
+  if (this->fw_.poll(now, type, payload, len)) {
+    uint8_t wire[opl::MAX_WIRE];
+    uint8_t seq = this->seq_++;
+    size_t n = opl::encode(seq, type, payload, len, wire, sizeof(wire));
+    if (n > 0)
+      this->write_array(wire, n);
+    if (type != opl::FW_ABORT)
+      this->fw_.sent(seq, now);
+  }
+  uint8_t phase = this->fw_.phase();
+  if (phase != this->fw_last_phase_) {
+    this->fw_last_phase_ = phase;
+    if (phase == opl::FwSender::END)
+      ESP_LOGI(TAG, "Firmware update: %u bytes sent, verifying", (unsigned) this->fw_.size());
+    else if (phase == opl::FwSender::CONFIRM)
+      ESP_LOGI(TAG, "Firmware update: control board rebooting into the new image (trial boot)");
+    else if (phase == opl::FwSender::DONE && this->fw_.verified())
+      ESP_LOGI(TAG, "Firmware update done: control board runs version 0x%08X", (unsigned) this->fw_.running_version());
+    else if (phase == opl::FwSender::DONE)
+      ESP_LOGW(TAG, "Firmware update finished, but the image has the same version (0x%08X) as before: can't confirm "
+                    "the switch (bump the firmware version for releases)", (unsigned) this->fw_.running_version());
+    else if (phase == opl::FwSender::FAILED)
+      ESP_LOGE(TAG, "Firmware update failed: %s (MCU result %u)", this->fw_.error(), this->fw_.last_result());
+  }
+  if (!this->fw_.busy())
+    this->fw_image_ = std::vector<uint8_t>();  // release the copy
 }
 
 void ObcHub::send_target_(int zone) {
@@ -108,6 +180,12 @@ void ObcHub::handle_frame_(const opl::Frame &f) {
       if (f.len == 3)
         ESP_LOGW(TAG, "Zone %u faults 0x%04X", f.payload[0], f.payload[1] | (f.payload[2] << 8));
       break;
+    case opl::FW_STATUS: {
+      opl::FwStatus st{};
+      if (opl::parse_fw_status(f.payload, f.len, st))
+        this->fw_.on_status(st, millis());
+      break;
+    }
     case opl::ACK:
       if (f.len == 2 && f.payload[1] != 0)
         ESP_LOGW(TAG, "Control board rejected command seq %u (status %u)", f.payload[0], f.payload[1]);

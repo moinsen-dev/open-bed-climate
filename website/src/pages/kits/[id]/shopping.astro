@@ -18,7 +18,7 @@ const kit = (await getCollection("kits")).find((k) => k.id === id);
 if (!kit) throw new Error(`no kit ${id} for its shopping list`);
 const t = totals(list);
 const modules = new Map((await getCollection("parts")).map((p) => [p.data.id, p.data.module]));
-const EXTRA: Record<string, string> = { consumable: "Consumables", bench: "Bench rig", tool: "Tools" };
+const EXTRA: Record<string, string> = { pcb: "Project PCBs", consumable: "Consumables", bench: "Bench rig", tool: "Tools" }; // = obc.shopping.EXTRA_ROLES
 const groupOf = (i: ShoppingItem) => modules.get(i.role) ?? EXTRA[i.role] ?? "Other";
 const order = (g: string) => { const k = MODULE_ORDER.indexOf(g); return k < 0 ? 50 + Object.values(EXTRA).indexOf(g) : k; };
 const stages = SHOP_STAGES.map((stage) => {

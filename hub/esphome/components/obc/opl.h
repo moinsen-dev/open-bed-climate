@@ -21,8 +21,14 @@ enum MsgType : uint8_t {
   SET_TARGET = 0x10,
   CLEAR_FAULTS = 0x11,
   PRIME = 0x12,
+  FW_BEGIN = 0x20,  // size:u32 crc32:u32 version:u32 (firmware update, see opl_fw.h)
+  FW_CHUNK = 0x21,  // offset:u32 data[1..256]
+  FW_END = 0x22,
+  FW_ABORT = 0x23,
+  FW_QUERY = 0x24,
   TELEMETRY = 0x80,
   FAULT = 0x81,
+  FW_STATUS = 0x82,  // acked_seq:u8 state:u8 result:u8 next_offset:u32 running_version:u32
   SENSOR_BLOCK = 0x90,
   ACK = 0xF0,
 };
@@ -38,6 +44,7 @@ enum FaultBit : uint16_t {
   HOST_TIMEOUT = 1 << 6,
   LOW_WATER = 1 << 7,
   DRIVER_COMM = 1 << 8,
+  FAN_STALL = 1 << 9,
 };
 
 inline uint16_t crc16_ccitt_false(const uint8_t *data, size_t len) {
@@ -171,6 +178,13 @@ class StreamDecoder {
 
 inline int16_t rd_i16(const uint8_t *p) { return (int16_t) (p[0] | (p[1] << 8)); }
 inline uint16_t rd_u16(const uint8_t *p) { return (uint16_t) (p[0] | (p[1] << 8)); }
+inline uint32_t rd_u32(const uint8_t *p) {
+  return (uint32_t) p[0] | ((uint32_t) p[1] << 8) | ((uint32_t) p[2] << 16) | ((uint32_t) p[3] << 24);
+}
+inline void wr_u32(uint8_t *p, uint32_t v) {
+  for (int i = 0; i < 4; i++)
+    p[i] = (uint8_t) (v >> (8 * i));
+}
 
 inline float centi_to_c(int16_t v) { return v == INVALID_CENTI ? NAN : v / 100.0f; }
 

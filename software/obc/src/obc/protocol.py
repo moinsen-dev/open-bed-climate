@@ -22,8 +22,14 @@ class MsgType(IntEnum):
     SET_TARGET = 0x10  # host -> mcu: side:u8 enable:u8 centi_c:i16
     CLEAR_FAULTS = 0x11  # host -> mcu: side:u8
     PRIME = 0x12  # host -> mcu: empty
+    FW_BEGIN = 0x20  # host -> mcu: size:u32 crc32:u32 version:u32 (see fwupdate.py)
+    FW_CHUNK = 0x21  # host -> mcu: offset:u32 data[1..256]
+    FW_END = 0x22  # host -> mcu: empty; verify, then reboot into the new image
+    FW_ABORT = 0x23  # host -> mcu: empty
+    FW_QUERY = 0x24  # host -> mcu: empty; answered with FW_STATUS
     TELEMETRY = 0x80  # mcu -> host, see Telemetry
     FAULT = 0x81  # mcu -> host: side:u8 faults:u16
+    FW_STATUS = 0x82  # mcu -> host: answer to every FW_* frame, see fwupdate.FwStatus
     SENSOR_BLOCK = 0x90  # cover -> host, see SensorBlock
     ACK = 0xF0  # either way: acked_seq:u8 status:u8
 

@@ -18,7 +18,7 @@ option = "pneumatic"
 # One certified IEC-inlet 24 V desktop supply per zone for the TECs, plus one 12 V brick for pumps/fans/electronics.
 # No mains wiring by the builder (see SAFETY.md and hardware/PARTS.md, role psu).
 tec_psu_w_per_zone = 280
-aux_psu_w = 120
+aux_psu_w = 102  # Mean Well GST120A12: 8.5 A at 12 V = 102 W (the "120" is the family name)
 
 [claims]
 min_water_c = 18.8

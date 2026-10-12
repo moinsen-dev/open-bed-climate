@@ -3,6 +3,8 @@
 //! same TEC current within f32 tolerance, and must produce byte-identical OPL frames.
 
 use obc_core::control::{Inputs, Mode, ZoneController};
+use obc_core::cooling::{Cooling, CoolingInputs};
+use obc_core::fwupdate::{FwResult, FwSlot, FwUpdate};
 use obc_core::protocol::{self, MAX_BODY};
 use serde_json::Value;
 
@@ -62,6 +64,118 @@ fn control_scenarios_match_python_reference() {
         }
         eprintln!("{name}: max current deviation {max_err:.5} A");
     }
+}
+
+fn mode_of(v: &Value) -> Mode {
+    match v.as_u64().unwrap() {
+        0 => Mode::Off,
+        1 => Mode::Run,
+        2 => Mode::Safe,
+        m => panic!("mode {m}"),
+    }
+}
+
+#[test]
+fn cooling_scenarios_match_python_reference() {
+    let data = load();
+    let scenarios = data["cooling"].as_array().unwrap();
+    assert!(scenarios.len() >= 2);
+    for sc in scenarios {
+        let name = sc["name"].as_str().unwrap();
+        let mut c = Cooling::new(sc["pump_run_duty"].as_f64().unwrap() as f32);
+        for (k, row) in sc["steps"].as_array().unwrap().iter().enumerate() {
+            let t = row[0].as_f64().unwrap();
+            let i = &row[1];
+            let inp = CoolingInputs {
+                mode: mode_of(&i[0]),
+                fan_request: i[1].as_f64().unwrap() as f32,
+                pump_request: i[2].as_u64().unwrap() != 0,
+                t_hot_face: opt(&i[3]),
+                flow_lpm: i[4].as_f64().unwrap() as f32,
+                leak: i[5].as_u64().unwrap() != 0,
+                water_ok: i[6].as_u64().unwrap() != 0,
+                priming: i[7].as_u64().unwrap() != 0,
+                tach_rpm: opt(&i[8]),
+            };
+            let o = c.update(&inp, t);
+            let e = &row[2];
+            let ctx = format!("{name} step {k} t={t}");
+            assert!((o.fan_duty - e[0].as_f64().unwrap() as f32).abs() <= 1e-4, "fan {ctx}: rust {} python {}", o.fan_duty, e[0]);
+            assert!((o.pump_duty - e[1].as_f64().unwrap() as f32).abs() <= 1e-4, "pump {ctx}");
+            assert_eq!(o.fan_stalled, e[2].as_u64().unwrap() != 0, "stall {ctx}");
+            assert_eq!(o.tec_allowed, e[3].as_u64().unwrap() != 0, "tec_allowed {ctx}");
+        }
+    }
+}
+
+#[test]
+fn fwupdate_scenarios_match_python_reference() {
+    let data = load();
+    let scenarios = data["fwupdate"].as_array().unwrap();
+    assert!(scenarios.len() >= 3);
+    for sc in scenarios {
+        let name = sc["name"].as_str().unwrap();
+        let slot = sc["slot"].as_array().map(|s| FwSlot { offset: s[0].as_u64().unwrap() as u32, size: s[1].as_u64().unwrap() as u32 });
+        let mut u = FwUpdate::new();
+        for (k, step) in sc["steps"].as_array().unwrap().iter().enumerate() {
+            let ev = &step[0];
+            let u32v = |i: usize| ev[i].as_u64().unwrap() as u32;
+            let r = match ev[0].as_str().unwrap() {
+                "begin" => {
+                    let mut p = [0u8; 12];
+                    p[0..4].copy_from_slice(&u32v(1).to_le_bytes());
+                    p[4..8].copy_from_slice(&u32v(2).to_le_bytes());
+                    p[8..12].copy_from_slice(&u32v(3).to_le_bytes());
+                    u.begin(&p, slot, ev[4].as_u64().unwrap() != 0)
+                }
+                "begin_raw" => u.begin(&unhex(ev[1].as_str().unwrap()), slot, true),
+                "chunk" => {
+                    let mut p = u32v(1).to_le_bytes().to_vec();
+                    p.extend(unhex(ev[2].as_str().unwrap()));
+                    let (r, plan) = u.chunk(&p);
+                    let expect = &ev[4];
+                    match plan {
+                        None => assert!(expect.is_null(), "{name} step {k}: no plan, python {expect}"),
+                        Some(w) => {
+                            let e: Vec<u64> = expect.as_array().unwrap().iter().map(|v| v.as_u64().unwrap()).collect();
+                            assert_eq!(vec![w.erase_from as u64, w.erase_to as u64, w.addr as u64], e, "{name} step {k} plan");
+                        }
+                    }
+                    if plan.is_some() { u.written(&p, ev[3].as_u64().unwrap() != 0) } else { r }
+                }
+                "end" => u.end(),
+                "abort" => {
+                    u.abort();
+                    FwResult::Ok
+                }
+                other => panic!("unknown event {other}"),
+            };
+            let e = &step[1];
+            let got = [r as u64, u.state() as u64, u.next_offset() as u64];
+            let want = [e[0].as_u64().unwrap(), e[1].as_u64().unwrap(), e[2].as_u64().unwrap()];
+            assert_eq!(got, want, "{name} step {k} {}", ev[0]);
+        }
+    }
+}
+
+#[test]
+fn fw_status_pack_matches_python() {
+    let data = load();
+    let f = data["frames"].as_array().unwrap().iter().find(|f| f["type"] == 0x82).unwrap();
+    let expect = unhex(f["payload"].as_str().unwrap());
+    // FwStatus(12, state 1, result 4, 0x1100, version 0.1.3): reproduce it through a real session
+    let mut u = FwUpdate::new();
+    let mut b = [0u8; 12];
+    b[0..4].copy_from_slice(&0x2000u32.to_le_bytes());
+    assert_eq!(u.begin(&b, Some(FwSlot { offset: 0x20_0000, size: 0x10_0000 }), true), FwResult::Ok);
+    for off in (0..0x1100u32).step_by(256) {
+        let mut p = off.to_le_bytes().to_vec();
+        p.extend([0u8; 256]);
+        assert!(u.chunk(&p).1.is_some());
+        u.written(&p, true);
+    }
+    let v = obc_core::fwupdate::version_word(0, 1, 3);
+    assert_eq!(&u.status(12, FwResult::BadOffset, v)[..], &expect[..]);
 }
 
 fn unhex(s: &str) -> Vec<u8> {

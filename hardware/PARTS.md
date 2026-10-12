@@ -25,7 +25,7 @@ Found a better or local part? Open a *Part substitution* issue or edit `parts.to
 | Example | Status | Notes |
 |---|---|---|
 | [Mean Well GST90A12-P1M (desktop)](https://www.meanwellusa.com/upload/pdf/GST90A/GST90A-spec.pdf) | ✅ datasheet (2026-10-11) | Confirmed: 12 V / 6.67 A / 80 W (not 90 W: the 90 W versions are the 15 V and up models), IEC320-C14 inlet, DC plug P1M (5.5 x 2.5 x 11 mm, center positive), UL/CSA/EN/IEC 62368-1, PF > 0.91 at 230 VAC. Enough for one zone (Solo Starter, 40 W load); too small for two zones (65 W > 80 % of 80 W). |
-| [Mean Well GST120A12-R7B (desktop, two-zone kits)](https://www.meanwell.com/productSeries.aspx) | ❔ unverified | Same GST family, 12 V / 120 W class. Confirm current rating, IEC C14 inlet and DC plug in the datasheet. |
+| [Mean Well GST120A12-R7B (desktop, two-zone kits)](https://www.meanwellusa.com/Upload/PDF/Adaptor_EN.pdf) | 🟡 listing (2026-10-12) | Mean Well's adaptor installation manual: the 12 V model is 8.5 A = 102 W (120 W only for 20-48 V), so it is not a 120 W supply. Distributor listings (TRC, TME, Mouser): IEC320-C14 inlet, built-in active PFC, UL 62368-1, R7B output = locking 4-pin DIN (KYCON KPPX-4P), 1 m 16 AWG. Two-zone load 65 W = 64 % of 102 W, inside the 80 % margin. GST120A spec sheet itself not opened. |
 
 ## `tec_drive` 🛡 · Power
 
