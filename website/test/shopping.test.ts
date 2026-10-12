@@ -1,5 +1,5 @@
 // Shopping lists: the site's totals equal the sum over the TOML lines, and match the total line that
-// opod.shopping rendered into hardware/shopping/<kit>.md (the same numbers as the Python reference).
+// obc.shopping rendered into hardware/shopping/<kit>.md (the same numbers as the Python reference).
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readdirSync, readFileSync } from "node:fs";
@@ -22,7 +22,7 @@ for (const f of lists) {
     assert.ok(Math.abs(t.total - (sum("bench") + sum("bed"))) < 1e-9);
     const md = readFileSync(new URL(f.replace(/\.toml$/, ".md"), dir), "utf8");
     const line = /\|\s*\*\*Total \(bench \+ bed\)\*\*\s*\|\s*\*\*([\d,.]+)\*\*\s*\|/.exec(md);
-    assert.ok(line, "total line not found in the rendered .md (run: python -m opod.shopping)");
+    assert.ok(line, "total line not found in the rendered .md (run: python -m obc.shopping)");
     assert.equal(eur(t.total), line[1]);
     assert.match(md, new RegExp(`Subtotal stage 1 \\(bench\\) \\| ${eur(t.bench).replace(/[.]/g, "\\.")} \\|`));
   });

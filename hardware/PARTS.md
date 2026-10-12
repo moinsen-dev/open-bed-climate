@@ -1,6 +1,6 @@
 # Parts catalog
 
-<!-- GENERATED from parts.toml by `python -m opod.render_parts`. Edit parts.toml, not this file. -->
+<!-- GENERATED from parts.toml by `python -m obc.render_parts`. Edit parts.toml, not this file. -->
 
 Roles first, then example parts. **Safety-relevant** roles (🛡) affect the limits in [SAFETY.md](../SAFETY.md).
 Status: ✅ key specs confirmed in the datasheet · 🟡 only seen in a listing · ❔ please verify · ❌ checked and rejected.
@@ -51,7 +51,7 @@ Polarity for heat/cool comes from a DPDT relay (role polarity_relay), switched o
 
 ## `control_mcu` 🛡 · Control
 
-**Requirement:** Runs the Open Bed Climate control firmware (port of opod.control): PID, supervisor, watchdog. Separate from any Wi-Fi/network chip.
+**Requirement:** Runs the Open Bed Climate control firmware (port of obc.control): PID, supervisor, watchdog. Separate from any Wi-Fi/network chip.
 
 | Example | Status | Notes |
 |---|---|---|

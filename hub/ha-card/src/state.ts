@@ -202,7 +202,7 @@ export function validateConfig(config: unknown): CardConfig {
   return c as CardConfig;
 }
 
-/** Entity ids that opod-hub-common.yaml produces (device "Open Bed Climate"). */
+/** Entity ids that obc-hub-common.yaml produces (device "Open Bed Climate"). */
 export function defaultSides(prefix = "open_bed_climate"): SideConfig[] {
   return (["left", "right"] as const).map((s) => ({
     name: s === "left" ? "Left" : "Right",

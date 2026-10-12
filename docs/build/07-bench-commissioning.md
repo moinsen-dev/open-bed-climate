@@ -216,7 +216,7 @@ bath temperatures, and the steady-state T_bath and T_loop with room temperature.
 Bonus: **UA_coil ≈ Q_cold / (T_bath − T_loop)** is the coil's heat transfer (W/K). It is the bench cousin of the
 model's body↔water coupling (6 W/K guessed, open measurement item 1), and tells you how much the coil itself limits
 the bench result. There is no model prediction for this
-exact bench setup yet; with your UA_loss the model in `software/opod` can be re-run against it (help wanted).
+exact bench setup yet; with your UA_loss the model in `software/obc` can be re-run against it (help wanted).
 
 ### M4: heatsink thermal resistance (from M3)
 At steady state (or any point late in M3):

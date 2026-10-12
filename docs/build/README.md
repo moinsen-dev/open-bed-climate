@@ -82,7 +82,7 @@ Roles used in this build:
 The guide follows these documents. If the guide and a document disagree, the document wins, and please open an issue.
 
 - [`hardware/WIRING.md`](../../hardware/WIRING.md): pin map, bring-up order (written for Duo Standard; this guide adapts it to one zone)
-- [`firmware/opod-pico2/src/board.rs`](../../firmware/opod-pico2/src/board.rs): pin map source of truth, kit constants
+- [`firmware/obc-pico2/src/board.rs`](../../firmware/obc-pico2/src/board.rs): pin map source of truth, kit constants
 - [`docs/design/01-thermal-fluidics.md`](../design/01-thermal-fluidics.md), [`02-electrical-safety.md`](../design/02-electrical-safety.md), [`04-firmware-protocol.md`](../design/04-firmware-protocol.md)
 - [`hub/esphome/README.md`](../../hub/esphome/README.md): what the hub shows in Home Assistant
 

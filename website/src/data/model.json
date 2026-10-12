@@ -1,5 +1,5 @@
 {
-  "generated_by": "python -m opod.site_data (do not edit)",
+  "generated_by": "python -m obc.site_data (do not edit)",
   "kits": {
     "duo-reference": {
       "check": {

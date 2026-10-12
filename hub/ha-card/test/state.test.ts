@@ -132,7 +132,7 @@ describe("helpers", () => {
     expect(validateConfig({ sides: defaultSides() }).sides).toHaveLength(2);
   });
 
-  it("default entity ids follow ESPHome naming for opod-hub-common.yaml", () => {
+  it("default entity ids follow ESPHome naming for obc-hub-common.yaml", () => {
     expect(defaultSides()[1]).toEqual({
       name: "Right",
       climate: "climate.open_bed_climate_right_side",

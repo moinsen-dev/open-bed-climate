@@ -2,7 +2,7 @@
 
 The hub is an ESP32-S3 running [ESPHome](https://esphome.io). It connects the Open Bed Climate control board (Pico 2) to
 **Home Assistant**. It can only *request* setpoints; temperature limits and all safety logic live in the control
-firmware ([`firmware/opod-pico2`](../../firmware)).
+firmware ([`firmware/obc-pico2`](../../firmware)).
 
 What you get in Home Assistant:
 
@@ -23,28 +23,28 @@ The example also turns the hub into a **Bluetooth proxy**, so Home Assistant can
 base through the community `ha-adjustable-bed` integration (see `hardware/PARTS.md`, role `adjustable_base`).
 
 ## Install without a toolchain
-Each release has a ready-made image, `opod-hub-factory.bin` (built from [`opod-hub-factory.yaml`](opod-hub-factory.yaml)).
+Each release has a ready-made image, `obc-hub-factory.bin` (built from [`obc-hub-factory.yaml`](obc-hub-factory.yaml)).
 Install it from the browser at <https://openbedclimate.moinsen.dev/install/> (ESP Web Tools; **Chrome or Edge** on a
-desktop, Web Serial), or with `esptool.py write_flash 0x0 opod-hub-factory.bin`.
+desktop, Web Serial), or with `esptool.py write_flash 0x0 obc-hub-factory.bin`.
 - On an ESP32-S3-DevKitC-1, plug into the port labelled **USB**: the logger, and with it Improv Wi-Fi setup, is on the
   native USB port.
 - Wi-Fi: right after the install in the browser (Improv serial), over Bluetooth (Improv BLE), or join the
   `open-bed-climate-xxxxxx` hotspot (captive portal).
 - No secrets in the image: the API uses encryption **without a key** until Home Assistant adopts the device and sets
-  one. Adopting it in the ESPHome Device Builder creates a small YAML that pulls `opod-hub-factory.yaml` from this
-  repository (`main`) as a package, together with the `opod` component from GitHub.
+  one. Adopting it in the ESPHome Device Builder creates a small YAML that pulls `obc-hub-factory.yaml` from this
+  repository (`main`) as a package, together with the `obc` component from GitHub.
 
 ## Build it yourself
 
 ```sh
 cd hub/esphome
 cp secrets.example.yaml secrets.yaml   # fill in Wi-Fi etc.
-esphome run opod-hub.yaml              # or: uvx --from esphome esphome run opod-hub.yaml
+esphome run obc-hub.yaml              # or: uvx --from esphome esphome run obc-hub.yaml
 ```
 
-The device (UART, entities, night programs) lives in [`opod-hub-common.yaml`](opod-hub-common.yaml), shared by
-`opod-hub.yaml` (yours, with secrets) and `opod-hub-factory.yaml` (the ready-made image). CI builds the release image
-from the tagged checkout's components: `python3 factory_local.py <version>` writes `opod-hub-factory.local.yaml`.
+The device (UART, entities, night programs) lives in [`obc-hub-common.yaml`](obc-hub-common.yaml), shared by
+`obc-hub.yaml` (yours, with secrets) and `obc-hub-factory.yaml` (the ready-made image). CI builds the release image
+from the tagged checkout's components: `python3 factory_local.py <version>` writes `obc-hub-factory.local.yaml`.
 
 Wiring: ESP32-S3 GPIO17 (TX) → Pico 2 GP1, GPIO18 (RX) ← Pico 2 GP0, common GND. See
 [`hardware/WIRING.md`](../../hardware/WIRING.md).
@@ -56,22 +56,22 @@ Wiring: ESP32-S3 GPIO17 (TX) → Pico 2 GP1, GPIO18 (RX) ← Pico 2 GP0, common 
 - If no telemetry arrives for 5 s: climates show no current temperature, "problem" turns on, and "link" goes off.
 - Climate mode and target are restored after a hub reboot (ESPHome restore).
 - **1-zone kits (Solo Starter):** the control board reports zone 1 as off with no temperatures and rejects any target
-  for it, so the "Right side" entities stay off. Remove them from `opod-hub-common.yaml` if you build the hub yourself.
+  for it, so the "Right side" entities stay off. Remove them from `obc-hub-common.yaml` if you build the hub yourself.
 - **Dew-point guard:** with `room_temperature` and `room_humidity` configured (e.g. an SHT45), a cooling setpoint
   below 16 °C is raised to at least dew point + 1 K before it is sent, and the log says so. Strongly recommended for
-  humid bedrooms. Reference: `software/opod/src/opod/comfort.py`; both implementations are tested on the same cases.
+  humid bedrooms. Reference: `software/obc/src/obc/comfort.py`; both implementations are tested on the same cases.
 - **Night program (on the hub):** one switch per side. Turn it on at bedtime (by hand or from an automation); the
   hub then follows the side's curve of `points` (minutes after bedtime → °C, interpolated). With a `wake_time` entity
   the last `wake_ramp` minutes warm up to `wake_temperature`, and the side turns off at wake time. The start time is
   stored in flash, so a hub reboot resumes the program. Changing the temperature in Home Assistant ends the program
-  for that side. Needs a clock (`time:` from Home Assistant or SNTP). Reference: `software/opod/src/opod/schedule.py`.
+  for that side. Needs a clock (`time:` from Home Assistant or SNTP). Reference: `software/obc/src/obc/schedule.py`.
 
 ## Tests
-`components/opod/opl.h` (the protocol) and `schedule.h` (night curves) have no ESPHome dependency and are tested on
-the host against vectors generated by the Python reference (`python -m opod.golden`):
+`components/obc/opl.h` (the protocol) and `schedule.h` (night curves) have no ESPHome dependency and are tested on
+the host against vectors generated by the Python reference (`python -m obc.golden`):
 
 ```sh
-cd hub/esphome/components/opod/test
+cd hub/esphome/components/obc/test
 c++ -std=c++17 -Wall -Wextra -Werror -I.. test_opl.cpp -o /tmp/test_opl && /tmp/test_opl frames.txt
 c++ -std=c++17 -Wall -Wextra -Werror -I.. test_schedule.cpp -o /tmp/test_schedule && /tmp/test_schedule schedule.txt
 ```

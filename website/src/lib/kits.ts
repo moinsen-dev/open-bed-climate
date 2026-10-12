@@ -22,7 +22,7 @@ export interface KitView {
   auxMarginOk: boolean;
 }
 
-export const PSU_MARGIN = 0.8; // = opod.kit.PSU_MARGIN
+export const PSU_MARGIN = 0.8; // = obc.kit.PSU_MARGIN
 
 export const MODEL = model as unknown as {
   limits: { setpoint_min_c: number; setpoint_max_c: number };

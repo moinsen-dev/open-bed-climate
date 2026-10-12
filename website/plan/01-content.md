@@ -14,7 +14,7 @@ hardware/parts.toml, docs/design/BOM.md, docs/design/OPEN-DECISIONS.md, STATE.md
 | C1 | Coldest-water numbers: README and hardware/README say ~21.5 / ~18.6 / ~18.3 °C. Kit TOML `[claims].min_water_c` says 21.7 / 18.8 / 18.5. | Render **only** from `[claims].min_water_c`. It is the bound that CI checks. Label it "model estimate · sleeper in bed · 25 °C room". Never hand-type these numbers. Ask the lead to align the README. |
 | C2 | TEC supply voltage: BOM.md v0.1 says "12 V ≥ 750 W". The kit TOML, parts.toml and STATE say 24 V. The README ASCII diagram says "certified 12 V power supply". | Don't reuse the README diagram or the BOM wording. Site copy says "certified plug-in supplies (24 V for the Peltiers, 12 V for pumps and electronics)". |
 | C3 | The BOM total "~990–1,040 EUR" comes from the stale v0.1 file (Duo Reference only). | You may use it only as "rough order of magnitude, Duo Reference, BOM v0.1". It is not a price and must not appear on the home page. |
-| C4 | Status: README marks hub schedules as done (and `hub/esphome/components/opod/schedule.h` has tests). STATE still lists them under "next". | README + code decide "done". STATE decides only "next" and "open friction". |
+| C4 | Status: README marks hub schedules as done (and `hub/esphome/components/obc/schedule.h` has tests). STATE still lists them under "next". | README + code decide "done". STATE decides only "next" and "open friction". |
 | C5 | "Pod-class cooling" appears in duo-standard.toml and hardware/README.md. | **Banned on the site.** It is a parity claim we can't back. Use "two zones, four Peltiers per side, our strongest Tier 0 cooling" instead. |
 | C6 | FEATURES.md uses "Pod 6" as its left column (~20 mentions). | Don't render it raw. Transform it to generic capability names (see §4, /features). |
 | C7 | README says it "tracks presence, heart rate and breathing" in the present tense. | All biometrics are planned (status 🔜). Site wording: "planned: presence, heart rate and breathing from in-bed sensors (not a medical device)". |
@@ -35,7 +35,7 @@ Ordered by priority right now: the project's bottleneck is a **first physical bu
 | A4 | **Hardware / electrical engineers, safety reviewers** | The SAFETY limits table (verbatim), the independent hardware backstops, the "no mains wiring by builders" rule, the Tier 1 power board need | "Review the safety concept" → /safety | "Report a safety concern" (`safety-concern.yml`) |
 | A5 | **Mechanical / textile people** | The water mat is the hardest open part: couplings, enclosure, a single combined connector | "Prototype the mat" → /contribute#mechanical | — |
 | A6 | **Parts hunters** | Roles-not-brands catalog; live count of unverified / listing-only examples | "Verify a part" → /parts/ | `part-substitution.yml` |
-| A7 | **Sleep / thermal researchers, students** | The five measurements needed from prototype 0, the open thermal model, open biometrics (BCG) algorithms, the clean data ownership | "Help measure" → /contribute#research | Python model link (`software/opod`) |
+| A7 | **Sleep / thermal researchers, students** | The five measurements needed from prototype 0, the open thermal model, open biometrics (BCG) algorithms, the clean data ownership | "Help measure" → /contribute#research | Python model link (`software/obc`) |
 | A8 | **Sponsors** (component vendors, PCB fabs, maker spaces, foundations, individuals) | What money or parts unlock right now (a concrete list, not tiers), license guarantee (stays open), how they are credited | "Sponsor prototype 0" → /sponsor | Contact (placeholder) |
 | A9 | **Press / bloggers** | One-paragraph pitch, honest status, the right-to-repair and local-first angle, assets they may use | /press (one section on /about for v1) | Contact |
 | A10 | **Writers / translators** | Docs are English; translations go under `docs/i18n/<lang>/` | /contribute#docs | — |
@@ -112,7 +112,7 @@ Shared `<Status>`, `<ModelEstimate>` and `<SafetyNote>` components enforce H1–
 | `/contribute` | Intro ("you don't need to be an engineer") · Role tiles with concrete tasks (§5) · Ground rules (4) · First steps (clone, run tests) · Issue templates | CONTRIBUTING.md · §5 mapping (`website/src/data/help-wanted.yaml`) · .github/ISSUE_TEMPLATE/*.yml (names + links) |
 | `/sponsor` | Why sponsor now · What your support unlocks (concrete list) · In-kind help wanted · How we credit sponsors · Openness guarantee (licenses) · Contact | `website/src/data/sponsor-asks.yaml` · OPEN-DECISIONS measurements · BOM.md (order of magnitude, labelled) · LICENSE files |
 | `/about` | Why Open Pod exists · Clean-room policy · Prior art (community local-control projects, linked) · Licenses · Not-affiliated disclaimer · Press kit (v1: pitch + logo + diagram) | README "Background" · docs/research/prior-art.md (links only) · CONTRIBUTING ground rule 1 |
-| `/schedule/` | Curve visualizer (owned by 03-tech) · intro copy: "Your night, as a curve. Schedules run on the hub, no subscription." · wake-ramp explainer | software/opod schedule + hub schedule.h (see 03-tech) |
+| `/schedule/` | Curve visualizer (owned by 03-tech) · intro copy: "Your night, as a curve. Schedules run on the hub, no subscription." · wake-ramp explainer | software/obc schedule + hub schedule.h (see 03-tech) |
 | `/docs/[...slug]/` | SAFETY, CONTRIBUTING, docs/design/*.md rendered in place; everything else links to the repo | repo Markdown (see 03-tech) |
 | `404` | Short, links to /kits and /contribute | — |
 
@@ -296,7 +296,7 @@ against STATE.md whenever STATE is refrozen.
 | Electronics | Design the Tier 1 power board (6 Peltier channels, protection, relays) and the cover sensor board | CONTRIBUTING · BOM.md items 10, 15 |
 | **Mechanical / textile** | Prototype the water mat (welded TPU channels), dry-break couplings and an enclosure with drip tray | CONTRIBUTING · BOM.md |
 | Mechanical | Design a combined water + data connector (nice to have) | FEATURES (status 🔜) |
-| **Firmware** | First bring-up of `firmware/opod-pico2` on a real Pico 2 (wiring in hardware/WIRING.md) | README · STATE |
+| **Firmware** | First bring-up of `firmware/obc-pico2` on a real Pico 2 (wiring in hardware/WIRING.md) | README · STATE |
 | Firmware | Fan and pump PWM control | STATE next step 3 |
 | Firmware | Firmware-update path over OPL | STATE next step 3 |
 | **Home Assistant / software** | Run the ESPHome hub component on real hardware | README |
@@ -340,7 +340,7 @@ Ground rules shown on /contribute, condensed from CONTRIBUTING:
 2. **Sponsor channel.** GitHub Sponsors, Open Collective (gives a transparent ledger, recommended for hardware
    spend) or direct contact. There are no tiers until this is decided.
 3. **Contact address** for sponsors, press and safety. The CoC contact is still a placeholder.
-4. **Domain** (e.g. `openpod.<tld>`, or a `*.moinsen.dev` subdomain for the preview).
+4. **Domain** (e.g. `openbed.<tld>`, or a `*.moinsen.dev` subdomain for the preview).
 5. **Source fixes:** align the README coldest-water numbers with the kit claims (C1), fix "12 V" in the BOM
    and the README diagram (C2), and replace "Pod-class" in duo-standard.toml and hardware/README.md (C5).
 6. **Community channel** (Matrix, Discord or GitHub Discussions), so builders have somewhere to ask before

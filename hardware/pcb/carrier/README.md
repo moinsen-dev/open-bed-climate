@@ -37,10 +37,10 @@ flowchart LR
 
 ## Terminals and pins (cross-referenced to `board.rs`)
 
-The pin map comes from [`firmware/opod-pico2/src/board.rs`](../../../firmware/opod-pico2/src/board.rs).
-[`software/opod/tests/test_carrier_pcb.py`](../../../software/opod/tests/test_carrier_pcb.py) parses
+The pin map comes from [`firmware/obc-pico2/src/board.rs`](../../../firmware/obc-pico2/src/board.rs).
+[`software/obc/tests/test_carrier_pcb.py`](../../../software/obc/tests/test_carrier_pcb.py) parses
 `carrier.kicad_pcb` and checks it against `board.rs` and
-[`hub/esphome/opod-hub-common.yaml`](../../../hub/esphome/opod-hub-common.yaml) in CI. Pin 1 is the square pad.
+[`hub/esphome/obc-hub-common.yaml`](../../../hub/esphome/obc-hub-common.yaml) in CI. Pin 1 is the square pad.
 Zone 0's terminals run along the top edge, zone 1's along the bottom edge (mirrored). Silk labels sit next to each
 block, with the pin names written in left-to-right order.
 

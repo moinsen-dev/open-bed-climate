@@ -1,6 +1,6 @@
 (kicad_symbol_lib
 	(version 20241209)
-	(generator "opod_carrier")
+	(generator "obc_carrier")
 	(generator_version "1.0")
 	(symbol "ESP32-S3-DevKitC-1"
 		(exclude_from_sim no)

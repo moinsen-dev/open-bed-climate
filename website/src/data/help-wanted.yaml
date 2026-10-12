@@ -113,7 +113,7 @@
   role: software
   task: Make the dew-point guard easier to set up (room sensors are commented out in the example)
   source: STATE.md open friction
-  link: "repo:hub/esphome/opod-hub.yaml"
+  link: "repo:hub/esphome/obc-hub.yaml"
   difficulty: easy
 - id: presets
   role: software

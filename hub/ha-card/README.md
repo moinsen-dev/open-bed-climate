@@ -25,7 +25,7 @@ All states: [`screenshots/states-light.png`](screenshots/states-light.png).
 
 ## Configuration
 
-The example matches the entities that [`opod-hub-common.yaml`](../esphome/opod-hub-common.yaml) creates for a hub
+The example matches the entities that [`obc-hub-common.yaml`](../esphome/obc-hub-common.yaml) creates for a hub
 named *Open Bed Climate* (Home Assistant builds entity ids from the device name plus the entity name). If you renamed
 the device or entities, check the ids under **Settings → Devices → Open Bed Climate**.
 
@@ -54,7 +54,7 @@ sides:
     tec_current: sensor.open_bed_climate_right_tec_current
     flow: sensor.open_bed_climate_right_flow
 # The night curve, only for the chart: the hub runs its own copy. Keep these equal to the hub's switch config.
-# points:                              # default: opod.schedule.DEFAULT
+# points:                              # default: obc.schedule.DEFAULT
 #   - { at: 0min, temperature: 24 }
 #   - { at: 30min, temperature: 21 }
 #   - { at: 120min, temperature: 20 }
@@ -103,8 +103,8 @@ npm run build     # type-check, bundle to dist/open-bed-climate-card.js, check i
 npm run dev       # harness with a mocked hass: http://localhost:5173/dev/  (?theme=dark, ?only=night|cool|fault|board|offline|solo)
 ```
 
-- `src/schedule.ts` ports `software/opod/src/opod/schedule.py` and is tested on the same vectors as the hub's C++
-  port (`hub/esphome/components/opod/test/schedule.txt`, from `python -m opod.golden`).
+- `src/schedule.ts` ports `software/obc/src/obc/schedule.py` and is tested on the same vectors as the hub's C++
+  port (`hub/esphome/components/obc/test/schedule.txt`, from `python -m obc.golden`).
 - `src/color.ts` is the DESIGN.md temperature scale; the tests check WCAG AA contrast for the text colours on light
   and dark cards.
 - `src/state.ts` maps Home Assistant states to what a side shows; `src/card.ts` renders it (Lit, bundled).

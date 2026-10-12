@@ -83,7 +83,7 @@ def socket_footprint(name, descr, pads, outline, texts):
     cx = (outline[0] + outline[2]) / 2
     props = [S("property", "Reference", "REF**", S("at", cx, (outline[1] + outline[3]) / 2 - 2), S("layer", "F.SilkS"), ff),
              S("property", "Value", name, S("at", cx, (outline[1] + outline[3]) / 2 + 2), S("layer", "F.Fab"), ff)]
-    return S("footprint", name, S("version", 20241229), S("generator", "opod_carrier"), S("layer", "F.Cu"),
+    return S("footprint", name, S("version", 20241229), S("generator", "obc_carrier"), S("layer", "F.Cu"),
              S("descr", descr), S("attr", Sym("through_hole")), *(props + txt + gfx + items))
 
 
@@ -105,7 +105,7 @@ def pico_footprint():
 
 def main():
     os.makedirs(os.path.join(LIB, "carrier.pretty"), exist_ok=True)
-    lib = S("kicad_symbol_lib", S("version", 20241209), S("generator", "opod_carrier"), S("generator_version", "1.0"), esp_symbol())
+    lib = S("kicad_symbol_lib", S("version", 20241209), S("generator", "obc_carrier"), S("generator_version", "1.0"), esp_symbol())
     with open(os.path.join(LIB, "carrier.kicad_sym"), "w") as f:
         f.write(dump(lib) + "\n")
     for fp in (esp_footprint(), pico_footprint()):

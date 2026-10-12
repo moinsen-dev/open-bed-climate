@@ -20,7 +20,7 @@
 				)
 				(comment
 					(number "2")
-					(value "Pin map: firmware/opod-pico2/src/board.rs (source of truth)")
+					(value "Pin map: firmware/obc-pico2/src/board.rs (source of truth)")
 				)
 				(comment
 					(number "3")

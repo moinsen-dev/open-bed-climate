@@ -1,6 +1,6 @@
 # Thermal & Fluidics
 
-All numbers come from the lumped model in `software/opod/src/opod/thermal.py`. They are **first-order estimates**
+All numbers come from the lumped model in `software/obc/src/obc/thermal.py`. They are **first-order estimates**
 until a prototype is measured. Re-run the sweep after changing any parameter.
 
 ## Model

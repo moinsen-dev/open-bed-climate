@@ -14,7 +14,7 @@
     "test": "node --test \"test/*.test.ts\"",
     "budget": "node scripts/budget.mjs",
     "links": "linkinator dist --recurse --skip \"^https?://(?!localhost|127\\.0\\.0\\.1)\"",
-    "data": "cd ../software/opod && uv run python -m opod.site_data",
+    "data": "cd ../software/obc && uv run python -m obc.site_data",
     "guard": "node scripts/guard.mjs",
     "verify": "npm run check && npm test && npm run build && npm run budget && npm run guard && npm run links"
   },

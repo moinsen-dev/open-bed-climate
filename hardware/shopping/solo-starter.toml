@@ -8,7 +8,7 @@
 #         "bed"   = added when moving to the bed (mat, couplings, long insulated lines)
 #         "tool"  = not counted in the subtotals
 # pack:   optional, units per pack (default 1). Counted units = qty * pack (the tests check counts per role).
-# MD is generated:  cd software/opod && uv run python -m opod.shopping
+# MD is generated:  cd software/obc && uv run python -m obc.shopping
 
 [list]
 kit = "solo-starter"

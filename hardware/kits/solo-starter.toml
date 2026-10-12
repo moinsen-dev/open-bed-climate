@@ -20,6 +20,6 @@ option = "load_cells"     # none | load_cells | pneumatic | piezo_grid
 tec_psu_w_per_zone = 280
 aux_psu_w = 80
 
-[claims]                  # checked by software/opod tests against the thermal model
+[claims]                  # checked by software/obc tests against the thermal model
 min_water_c = 21.7        # sleeper in bed, 25 degC room
 max_water_c = 43.0        # empty bed, 18 degC room

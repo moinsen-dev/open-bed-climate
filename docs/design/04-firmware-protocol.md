@@ -1,7 +1,7 @@
 # OPL — Open Peltier Link
 
 Wire protocol between the hub computer and (a) the safety MCU over UART and (b) the cover sensor MCU over RS-485.
-Our own design. Reference implementation with tests: `software/opod/src/opod/protocol.py`.
+Our own design. Reference implementation with tests: `software/obc/src/obc/protocol.py`.
 
 ## Framing
 ```

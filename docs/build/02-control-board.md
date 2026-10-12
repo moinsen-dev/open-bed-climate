@@ -37,7 +37,7 @@ signal inputs here and mount them in [step 5](05-water-loop.md).
 
 ## Pin map
 
-From [`board.rs`](../../firmware/opod-pico2/src/board.rs) and [`WIRING.md`](../../hardware/WIRING.md). A Solo build
+From [`board.rs`](../../firmware/obc-pico2/src/board.rs) and [`WIRING.md`](../../hardware/WIRING.md). A Solo build
 uses only the zone 0 pins; **leave GP16–GP20 unconnected.**
 
 | Pico 2 pin | Function | Connects to |

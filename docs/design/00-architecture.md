@@ -47,7 +47,7 @@ flowchart LR
 | Layer | Runs on | Owns | Must survive |
 |---|---|---|---|
 | Hardware safety | bimetal cutoffs on relay coils, hot-swap controllers, PSU OVP | absolute limits | MCU crash, firmware bugs |
-| Real-time control | Control MCU, Pico 2 (Rust or C), same in both tiers | TEC current loop, PID, supervisor (`software/opod/src/opod/control.py` is the reference) | host crash: goes SAFE after 10 s without heartbeat |
+| Real-time control | Control MCU, Pico 2 (Rust or C), same in both tiers | TEC current loop, PID, supervisor (`software/obc/src/obc/control.py` is the reference) | host crash: goes SAFE after 10 s without heartbeat |
 | Hub software | ESP32-S3 with ESPHome (Tier 0 default) or a Linux SBC (heavier biometrics) | schedules, biometrics, MQTT/HA, web UI, OTA of MCU | can be rebooted at any time |
 | Cover sensing | Cover MCU | sampling, sync, framing | — |
 
@@ -55,10 +55,10 @@ Key principle: **the hub can never cause an unsafe state**. It can only request 
 clamps them, and hardware cutoffs clamp the MCU.
 
 ## Documents
-1. `01-thermal-fluidics.md` — TEC sizing, water loop, heat rejection (backed by `opod.thermal`)
+1. `01-thermal-fluidics.md` — TEC sizing, water loop, heat rejection (backed by `obc.thermal`)
 2. `02-electrical-safety.md` — power, isolation, fault handling, standards
 3. `03-sensing-biometrics.md` — cover sensors, BCG signal chain, algorithms
-4. `04-firmware-protocol.md` — OPL wire protocol (backed by `opod.protocol`)
+4. `04-firmware-protocol.md` — OPL wire protocol (backed by `obc.protocol`)
 5. `05-bed-software.md` — hub services, schedule, HA integration
 6. `BOM.md` — Tier 1 (Duo Reference) bill of materials; Tier 0 parts are in `hardware/PARTS.md`
 7. `OPEN-DECISIONS.md` — what still needs a decision or a prototype measurement

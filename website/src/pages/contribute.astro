@@ -70,7 +70,7 @@ const rules = [
         <h2 id="quick" class="h-md">Run it in two minutes, no hardware needed.</h2>
         <p class="muted">Clone the <a href={REPO_URL}>repository</a> and run the tests. The reference model, the safety logic and the kit checks run in Python; the firmware core runs on your computer against the same golden vectors.</p>
         <pre><code>git clone {REPO_URL}
-cd open-bed-climate/software/opod && uv run pytest -q
+cd open-bed-climate/software/obc && uv run pytest -q
 cd ../../firmware && cargo test</code></pre>
       </div>
       <div class="stack">

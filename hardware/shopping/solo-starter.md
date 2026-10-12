@@ -1,6 +1,6 @@
 # Shopping list: solo-starter
 
-<!-- GENERATED from shopping/solo-starter.toml by `python -m opod.shopping`. Edit the .toml, not this file. -->
+<!-- GENERATED from shopping/solo-starter.toml by `python -m obc.shopping`. Edit the .toml, not this file. -->
 
 > **Prices change. Checked on 2026-10-11** (Germany / EU, prices incl. VAT, EUR). Shipping not included.
 > 🟡 listing = price seen on the shop page · ❔ estimate = not confirmed, reasoned guess (48 lines).

@@ -1,7 +1,7 @@
 name: release
 # Builds the installable firmware and, for a v* tag, publishes it as a GitHub release:
-#   opod-pico2-<kit>.uf2     Pico 2 control firmware, one per kit (drag onto the RP2350 drive in BOOTSEL mode)
-#   opod-hub-factory.bin     ESP32-S3 hub, ready-made ESPHome image (browser installer at /install/ on the website)
+#   obc-pico2-<kit>.uf2     Pico 2 control firmware, one per kit (drag onto the RP2350 drive in BOOTSEL mode)
+#   obc-hub-factory.bin     ESP32-S3 hub, ready-made ESPHome image (browser installer at /install/ on the website)
 #   open-bed-climate-card.js Home Assistant dashboard card (hub/ha-card)
 #   SHA256SUMS
 # A manual run (workflow_dispatch) only builds and keeps the files as workflow artifacts.
@@ -31,7 +31,7 @@ jobs:
         with:
           targets: thumbv8m.main-none-eabihf
       - name: Build
-        working-directory: firmware/opod-pico2
+        working-directory: firmware/obc-pico2
         run: cargo build --release --locked --no-default-features --features kit-${{ matrix.kit }}
       - name: Install picotool
         run: |
@@ -43,13 +43,13 @@ jobs:
       - name: Convert ELF to UF2 (RP2350-ARM-S, with RP2350-E10 absolute block)
         run: |
           mkdir -p out
-          "$RUNNER_TEMP/picotool/picotool" uf2 convert firmware/opod-pico2/target/thumbv8m.main-none-eabihf/release/opod-pico2 \
-            -t elf out/opod-pico2-${{ matrix.kit }}.uf2 --family rp2350-arm-s --abs-block
-          python3 -I firmware/tools/check_uf2.py out/opod-pico2-${{ matrix.kit }}.uf2
+          "$RUNNER_TEMP/picotool/picotool" uf2 convert firmware/obc-pico2/target/thumbv8m.main-none-eabihf/release/obc-pico2 \
+            -t elf out/obc-pico2-${{ matrix.kit }}.uf2 --family rp2350-arm-s --abs-block
+          python3 -I firmware/tools/check_uf2.py out/obc-pico2-${{ matrix.kit }}.uf2
       - uses: actions/upload-artifact@v4
         with:
           name: pico2-${{ matrix.kit }}
-          path: out/opod-pico2-${{ matrix.kit }}.uf2
+          path: out/obc-pico2-${{ matrix.kit }}.uf2
           if-no-files-found: error
 
   hub-factory:
@@ -63,15 +63,15 @@ jobs:
       - name: Build the factory image from this commit's components
         run: |
           python3 factory_local.py "${{ github.ref_type == 'tag' && github.ref_name || format('dev-{0}', github.sha) }}"
-          uvx --from "esphome==$ESPHOME_VERSION" esphome compile opod-hub-factory.local.yaml
+          uvx --from "esphome==$ESPHOME_VERSION" esphome compile obc-hub-factory.local.yaml
           mkdir -p "$GITHUB_WORKSPACE/out"
-          cp .esphome/build/open-bed-climate/build/firmware.factory.bin "$GITHUB_WORKSPACE/out/opod-hub-factory.bin"
+          cp .esphome/build/open-bed-climate/build/firmware.factory.bin "$GITHUB_WORKSPACE/out/obc-hub-factory.bin"
           # An ESP32 factory image starts with the bootloader's image header (magic 0xE9).
-          test "$(head -c1 "$GITHUB_WORKSPACE/out/opod-hub-factory.bin" | od -An -tx1 | tr -d ' ')" = e9
+          test "$(head -c1 "$GITHUB_WORKSPACE/out/obc-hub-factory.bin" | od -An -tx1 | tr -d ' ')" = e9
       - uses: actions/upload-artifact@v4
         with:
           name: hub-factory
-          path: out/opod-hub-factory.bin
+          path: out/obc-hub-factory.bin
           if-no-files-found: error
 
   ha-card:
@@ -109,22 +109,22 @@ jobs:
       - name: Checksums and notes
         working-directory: out
         run: |
-          sha256sum opod-pico2-*.uf2 opod-hub-factory.bin open-bed-climate-card.js > SHA256SUMS
+          sha256sum obc-pico2-*.uf2 obc-hub-factory.bin open-bed-climate-card.js > SHA256SUMS
           cat > ../notes.md <<EOF
           Firmware for Open Bed Climate ${GITHUB_REF_NAME}. **Not yet run on real hardware: test it on the bench first** (see SAFETY.md and hardware/WIRING.md).
 
           | File | For |
           |---|---|
-          | \`opod-pico2-solo-starter.uf2\` | Pico 2 control board, Solo Starter kit (1 zone, 3 TECs, 5.0 A per TEC) |
-          | \`opod-pico2-duo-standard.uf2\` | Pico 2 control board, Duo Standard kit (2 zones, 4 TECs, 4.5 A per TEC) |
-          | \`opod-pico2-duo-reference.uf2\` | Pico 2 control board, Duo Reference kit (2 zones, 4 TECs, 5.0 A per TEC) |
-          | \`opod-hub-factory.bin\` | ESP32-S3 hub (ESPHome ${ESPHOME_VERSION}), full flash image at offset 0 |
+          | \`obc-pico2-solo-starter.uf2\` | Pico 2 control board, Solo Starter kit (1 zone, 3 TECs, 5.0 A per TEC) |
+          | \`obc-pico2-duo-standard.uf2\` | Pico 2 control board, Duo Standard kit (2 zones, 4 TECs, 4.5 A per TEC) |
+          | \`obc-pico2-duo-reference.uf2\` | Pico 2 control board, Duo Reference kit (2 zones, 4 TECs, 5.0 A per TEC) |
+          | \`obc-hub-factory.bin\` | ESP32-S3 hub (ESPHome ${ESPHOME_VERSION}), full flash image at offset 0 |
           | \`open-bed-climate-card.js\` | Home Assistant dashboard card: copy to \`/config/www/\`, add the resource \`/local/open-bed-climate-card.js\` (see \`hub/ha-card/README.md\`) |
 
           **Flash the image for your kit.** The kit sets the TEC current limit; another kit's image can exceed your parts' rating.
 
           - Pico 2: hold BOOTSEL, plug in USB, drop the \`.uf2\` on the RP2350 drive.
-          - Hub: use the browser installer at https://openbedclimate.moinsen.dev/install/ (Chrome or Edge), or \`esptool.py write_flash 0x0 opod-hub-factory.bin\`.
+          - Hub: use the browser installer at https://openbedclimate.moinsen.dev/install/ (Chrome or Edge), or \`esptool.py write_flash 0x0 obc-hub-factory.bin\`.
 
           Checksums: \`SHA256SUMS\`.
           EOF
@@ -134,4 +134,4 @@ jobs:
         run: |
           gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --title "$GITHUB_REF_NAME" \
             --notes-file notes.md --verify-tag \
-            out/opod-pico2-*.uf2 out/opod-hub-factory.bin out/open-bed-climate-card.js out/SHA256SUMS
+            out/obc-pico2-*.uf2 out/obc-hub-factory.bin out/open-bed-climate-card.js out/SHA256SUMS

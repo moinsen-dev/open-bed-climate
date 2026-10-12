@@ -11,7 +11,7 @@ and each role can be filled by different standard parts. Pick a **kit** to start
 | [Duo Standard](kits/duo-standard.toml) | 0 | 2 | 4 | pneumatic | 2× 24 V 280 W + 1× 12 V 120 W, plug-in | ~18.8 °C | couples, strongest cooling from standard parts |
 | [Duo Reference](kits/duo-reference.toml) | 1 | 2 | 4 | piezo grid | 24 V 750 W in a closed power module | ~18.5 °C | experienced builders, best biometrics |
 
-\* Sleeper in bed, 25 °C room, from the thermal model (`software/opod`). Cooler rooms or pre-cooling an empty bed get
+\* Sleeper in bed, 25 °C room, from the thermal model (`software/obc`). Cooler rooms or pre-cooling an empty bed get
 lower. Every kit reaches 43 °C (the safety cap) for warming. **The tests check every kit's claims**, so your
 own kit file gets the same check.
 

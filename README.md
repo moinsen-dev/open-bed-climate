@@ -20,7 +20,7 @@ and runs your sleep temperature schedule — like the commercial "smart mattress
 | Feature parity analysis | ✅ [docs/FEATURES.md](docs/FEATURES.md) |
 | System design, safety concept | ✅ [docs/design/](docs/design/) · [SAFETY.md](SAFETY.md) |
 | Kits and parts catalog | ✅ first version: [hardware/](hardware/) |
-| Reference software (thermal model, control + safety logic, protocol, schedules) | ✅ tested: [software/opod](software/opod) |
+| Reference software (thermal model, control + safety logic, protocol, schedules) | ✅ tested: [software/obc](software/obc) |
 | Control firmware for the Pico 2 (Rust/embassy) | ✅ compiles, matches the reference; 🔜 first hardware bring-up: [firmware/](firmware/) |
 | Hub: ESPHome component + Home Assistant entities, night programs on the hub | ✅ compiles for ESP32-S3, protocol and schedule host-tested; 🔜 first hardware run: [hub/esphome/](hub/esphome/) |
 | First physical build + measurements | 🔜 **help wanted, the most valuable contribution right now**: follow the [build guide](docs/build/) |
@@ -61,7 +61,7 @@ there is a place for you. Start with [CONTRIBUTING.md](CONTRIBUTING.md).
 step by step from parts to a commissioned unit and the measurements the model still needs.
 
 ```sh
-cd software/opod && uv run pytest -q    # reference model, safety logic, kit checks
+cd software/obc && uv run pytest -q    # reference model, safety logic, kit checks
 cd firmware && cargo test               # firmware core vs. golden vectors
 ```
 

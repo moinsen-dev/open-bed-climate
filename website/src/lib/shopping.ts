@@ -1,4 +1,4 @@
-// Shopping lists (hardware/shopping/*.toml): parsing and totals. Same arithmetic as opod.shopping (line = qty × unit;
+// Shopping lists (hardware/shopping/*.toml): parsing and totals. Same arithmetic as obc.shopping (line = qty × unit;
 // totals = bench + bed; tools are not counted). test/shopping.test.ts checks it against the Python-rendered Markdown.
 import { readFileSync } from "node:fs";
 import { parse } from "smol-toml";

@@ -16,12 +16,12 @@ current, and zone 1 inert. **Flash only the `solo-starter` image**; another kit'
 ### Option A: download the UF2 (no toolchain)
 
 1. Open the latest release at <https://github.com/moinsen-dev/open-bed-climate/releases> and download
-   **`opod-pico2-solo-starter.uf2`** and `SHA256SUMS`.
-2. Check the file: `sha256sum -c SHA256SUMS --ignore-missing` (Linux) or `shasum -a 256 opod-pico2-solo-starter.uf2`
+   **`obc-pico2-solo-starter.uf2`** and `SHA256SUMS`.
+2. Check the file: `sha256sum -c SHA256SUMS --ignore-missing` (Linux) or `shasum -a 256 obc-pico2-solo-starter.uf2`
    (macOS) and compare with the line in `SHA256SUMS`.
 3. Unplug the 24 V brick. Hold the Pico's **BOOTSEL** button, plug in USB, release. A USB drive appears (named
    `RP2350` on a Pico 2).
-4. Drag `opod-pico2-solo-starter.uf2` onto the drive. The Pico reboots into the firmware and the drive disappears.
+4. Drag `obc-pico2-solo-starter.uf2` onto the drive. The Pico reboots into the firmware and the drive disappears.
 
 Prebuilt images use the **generic NTC values** (10 kΩ, β 3435) and a flow factor of **98 Hz per L/min**, which fits
 YF-S401-class turbine sensors. Use option B if your NTC calibration in [step 2](02-control-board.md#ntc-calibration)
@@ -37,7 +37,7 @@ Needed for your own NTC calibration, your flow factor, or a temporary low curren
 rustup target add thumbv8m.main-none-eabihf
 cd firmware
 cargo test                                    # core logic vs. golden vectors, no hardware needed
-cd opod-pico2
+cd obc-pico2
 # edit src/board.rs: NTC_CAL (your r25/beta), FLOW_HZ_PER_LPM (your sensor)
 cargo build --release --no-default-features --features kit-solo-starter
 ```
@@ -47,13 +47,13 @@ Flash it:
 - **With a debug probe** (a second Pico running `debugprobe`, wired to the SWD pins):
   `cargo run --release --no-default-features --features kit-solo-starter`. This also streams the `defmt` log.
 - **Without a probe:** hold BOOTSEL, plug in, then
-  `picotool load -u -v -x -t elf target/thumbv8m.main-none-eabihf/release/opod-pico2`.
+  `picotool load -u -v -x -t elf target/thumbv8m.main-none-eabihf/release/obc-pico2`.
 
 What you may change in `board.rs`: calibration (`NTC_CAL`, `FLOW_HZ_PER_LPM`), the register map after verifying it
 (`DPS_MAP`), and, for a bench test only, `MAX_TEC_CURRENT_A` in the `kit-solo-starter` block (**down** only; the core
 clamps it to 6 A). Revert that one afterwards and never commit it: it must match `hardware/kits/solo-starter.toml`, and
 the kit tests check that.
-What you must not change: the safety limits in `opod-core::control` (43 °C, 45 °C, 75 °C, flow interlock, heartbeat,
+What you must not change: the safety limits in `obc-core::control` (43 °C, 45 °C, 75 °C, flow interlock, heartbeat,
 dead time). See [SAFETY.md](../../SAFETY.md).
 
 ### ✅ Checkpoint: first boot (24 V brick unplugged)
@@ -72,23 +72,23 @@ dead time). See [SAFETY.md](../../SAFETY.md).
 3. Set Wi-Fi right after flashing in the browser (Improv over USB). Alternatives: Improv over Bluetooth, or the
    `open-bed-climate-xxxxxx` access point and its captive portal.
 
-The installer flashes the same image as `opod-hub-factory.bin` in the release, so you can also flash it with
-`esptool.py write_flash 0x0 opod-hub-factory.bin`.
+The installer flashes the same image as `obc-hub-factory.bin` in the release, so you can also flash it with
+`esptool.py write_flash 0x0 obc-hub-factory.bin`.
 
 ### Option B: ESPHome CLI
 
 ```sh
 cd hub/esphome
 cp secrets.example.yaml secrets.yaml   # Wi-Fi, api_key (openssl rand -base64 32), ota_password
-esphome run opod-hub.yaml              # or: uvx --from esphome esphome run opod-hub.yaml
+esphome run obc-hub.yaml              # or: uvx --from esphome esphome run obc-hub.yaml
 ```
 
-The device (pins, entities, night programs) is defined in `opod-hub-common.yaml`. For a Solo build you can delete the
+The device (pins, entities, night programs) is defined in `obc-hub-common.yaml`. For a Solo build you can delete the
 `right` / zone 1 entries there; with the Solo firmware they are harmless either way.
 
 ### Room sensor (strongly recommended before stage B)
 
-Add an SHT45 (role `temp_sensors`) on the hub's I2C bus and set `room_temperature` / `room_humidity` in the `opod:`
+Add an SHT45 (role `temp_sensors`) on the hub's I2C bus and set `room_temperature` / `room_humidity` in the `obc:`
 block. That enables the **dew-point guard** (cooling setpoints below 16 °C are raised to at least dew point + 1 K) and
 gives you the room temperature for the measurements in step 7. See `hub/esphome/README.md`.
 
@@ -106,7 +106,7 @@ Sensor notes:
 
 - **TEC current is per TEC.** Home Assistant shows 5.0 A when the DPS shows 15 A (3 × 5 A).
 - The example config averages the diagnostic sensors over **30 s** (`throttle_average`). That is fine for the
-  measurements in step 7; shorten it in `opod-hub-common.yaml` if you need faster curves.
+  measurements in step 7; shorten it in `obc-hub-common.yaml` if you need faster curves.
 
 ### Fault code
 

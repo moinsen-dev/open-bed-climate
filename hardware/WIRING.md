@@ -3,7 +3,7 @@
 > ⚠️ Read [SAFETY.md](../SAFETY.md) first. Everything below is **≤ 24 V DC**. Mains only goes into certified
 > plug-in power supplies. This plan has **not been built yet**; please report what you find (build report issue).
 
-The pin map is the source of truth in [`firmware/opod-pico2/src/board.rs`](../firmware/opod-pico2/src/board.rs).
+The pin map is the source of truth in [`firmware/obc-pico2/src/board.rs`](../firmware/obc-pico2/src/board.rs).
 If you change pins, change them there and here.
 
 ## Power and TEC path (per zone)

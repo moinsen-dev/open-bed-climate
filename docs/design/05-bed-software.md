@@ -12,19 +12,19 @@ The Linux variant runs everything the vendor's cloud and app do, locally:
 ## Services
 | Service | Responsibility |
 |---|---|
-| `opod-link` | Owns both serial ports, OPL encode/decode, heartbeats, telemetry fan-out. The only process that talks to the MCUs. |
-| `opod-core` | Per-side state (on/off, target, schedule, away mode), schedule engine (`opod.schedule`), alarm/wake ramps, fault handling and user acknowledgment. |
-| `opod-bio` | Consumes `SENSOR_BLOCK` streams and produces presence, HR, HRV, BR and movement. Writes nightly sessions to SQLite. |
-| `opod-api` | Local REST + WebSocket API and a web UI on the LAN. |
-| `opod-mqtt` | MQTT with Home Assistant discovery: climate entity per side, sensors (water temp, HR, BR, presence), fault binary sensors. |
-| `opod-ota` | Updates for the hub software (A/B or package-based) and MCU firmware. Never auto-updates at night. |
+| `obc-link` | Owns both serial ports, OPL encode/decode, heartbeats, telemetry fan-out. The only process that talks to the MCUs. |
+| `obc-core` | Per-side state (on/off, target, schedule, away mode), schedule engine (`obc.schedule`), alarm/wake ramps, fault handling and user acknowledgment. |
+| `obc-bio` | Consumes `SENSOR_BLOCK` streams and produces presence, HR, HRV, BR and movement. Writes nightly sessions to SQLite. |
+| `obc-api` | Local REST + WebSocket API and a web UI on the LAN. |
+| `obc-mqtt` | MQTT with Home Assistant discovery: climate entity per side, sensors (water temp, HR, BR, presence), fault binary sensors. |
+| `obc-ota` | Updates for the hub software (A/B or package-based) and MCU firmware. Never auto-updates at night. |
 
-Internal bus: a local MQTT broker (Mosquitto). Each service is a small process; `opod-link` is the safety-relevant
+Internal bus: a local MQTT broker (Mosquitto). Each service is a small process; `obc-link` is the safety-relevant
 one and stays minimal.
 
 ## Schedules ("autopilot" replacement)
 - Each side has a user-defined curve: points of (minutes after bedtime, °C) plus a wake ramp
-  (`opod.schedule.Schedule`). Default curve: 24 °C at bedtime → 21 °C after 30 min → 20 °C deep-sleep phase →
+  (`obc.schedule.Schedule`). Default curve: 24 °C at bedtime → 21 °C after 30 min → 20 °C deep-sleep phase →
   23 °C → 25 °C, then a 30 min warm ramp to 32 °C before wake.
 - Bedtime is triggered by presence detection (bed occupied for 5 min) or a fixed time, whichever comes first.
 - Pre-cool or pre-heat starts 45 min before the expected bedtime (needed for the 13–17 °C range, see thermal doc).

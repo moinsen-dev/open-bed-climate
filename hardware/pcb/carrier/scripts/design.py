@@ -1,8 +1,8 @@
 """Open Bed Climate Tier 0 carrier, Rev A: the netlist as code (single source of truth).
 
 Every part lists its symbol, footprint, value, LCSC number and the net on each pin. gen_sch.py turns this into
-the KiCad schematic, gen_pcb.py into the board. The Pico pin map follows firmware/opod-pico2/src/board.rs;
-software/opod/tests/test_carrier_pcb.py checks the generated board against board.rs and the hub YAML.
+the KiCad schematic, gen_pcb.py into the board. The Pico pin map follows firmware/obc-pico2/src/board.rs;
+software/obc/tests/test_carrier_pcb.py checks the generated board against board.rs and the hub YAML.
 
 Runs on Python 3.9 (KiCad's bundled interpreter): no match statements, no `X | Y` type unions.
 """

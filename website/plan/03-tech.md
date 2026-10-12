@@ -1,13 +1,13 @@
 # 03 — Technical architecture
 
 Read: README.md · hardware/kits/*.toml · hardware/parts.toml · docs/FEATURES.md ·
-software/opod/src/opod/{thermal,schedule,kit,golden,render_parts}.py · hub/esphome/opod-hub.yaml ·
-hub/esphome/components/opod/test/schedule.txt · .github/workflows/test.yml · STATE.md · website/plan/01-content.md.
+software/obc/src/obc/{thermal,schedule,kit,golden,render_parts}.py · hub/esphome/obc-hub.yaml ·
+hub/esphome/components/obc/test/schedule.txt · .github/workflows/test.yml · STATE.md · website/plan/01-content.md.
 Versions were checked against the npm registry on 2026-10-11.
 
 **Principle:** the repo is the source of truth and the site is a static view of it.
 - Every number shown on the site comes from a repo file at build time.
-- Every computed number comes from the Python reference implementation (`opod`), never from a second copy in TS.
+- Every computed number comes from the Python reference implementation (`obc`), never from a second copy in TS.
 - The single exception is the schedule curve. It is ported to TS and tested against the golden vectors the C++ hub
   port already uses (§3.2).
 
@@ -60,10 +60,10 @@ All collections are defined in `src/content.config.ts`.
 // src/lib/schemas.ts
 import { z } from "astro/zod"; // Zod 4, re-exported by Astro; no separate zod dependency
 
-export const SENSING = ["none", "load_cells", "pneumatic", "piezo_grid"] as const; // = opod.kit.SENSING_OPTIONS
+export const SENSING = ["none", "load_cells", "pneumatic", "piezo_grid"] as const; // = obc.kit.SENSING_OPTIONS
 export const PART_STATUS = ["datasheet", "listing", "unverified", "rejected"] as const; // = render_parts.BADGE keys
 
-// Mirrors opod.kit.load_kit. Top level is strict: same rule as ALLOWED_TOP.
+// Mirrors obc.kit.load_kit. Top level is strict: same rule as ALLOWED_TOP.
 // Inner tables are not strict, because Python only rejects unknown *sections*. FORBIDDEN_KEYS stay Python's job (CI).
 export const kitSchema = z.strictObject({
   kit: z.object({
@@ -211,16 +211,16 @@ inline Markdown in the page instead with the same remark pipeline.
 
 ### 3.1 Precomputed model data: Python writes JSON, the site reads it
 
-The model is never ported to TS. This mirrors the repo's existing pattern (`python -m opod.golden` →
+The model is never ported to TS. This mirrors the repo's existing pattern (`python -m obc.golden` →
 `schedule.txt`, `render_parts` → `PARTS.md`, each with a pytest freshness test).
 
-- **New module `software/opod/src/opod/site_data.py`**, usage: `cd software/opod && uv run python -m opod.site_data`.
+- **New module `software/obc/src/obc/site_data.py`**, usage: `cd software/obc && uv run python -m obc.site_data`.
   - It writes `website/src/data/model.json`, which is **committed**.
   - The CF Pages build then needs **no Python or uv**.
-- **Small refactor in `opod/kit.py`:** extract `coldest_water(kit, t_ambient) -> (t_water_c, tec_power_w)` from the
+- **Small refactor in `obc/kit.py`:** extract `coldest_water(kit, t_ambient) -> (t_water_c, tec_power_w)` from the
   current-sweep loop in `check_kit`. `check_kit` then calls it with 25.0, so there is one implementation of the sweep.
 - **New pytest `test_site_data_up_to_date`** in `tests/test_kits.py`. It works like `test_golden_vectors_up_to_date`:
-  `assert DST.read_text() == build()`, with the message "run: python -m opod.site_data".
+  `assert DST.read_text() == build()`, with the message "run: python -m obc.site_data".
 - **Cost:** ≈ 0.55 s per kit per ambient, so 3 kits × 4 ambients ≈ 6–7 s added to the `reference` job. Keep the grid
   at 4 ambients.
 - **Output** is stable JSON: `sort_keys=True`, indent 2, values rounded to 0.1 °C / 1 W so float noise never makes
@@ -228,7 +228,7 @@ The model is never ported to TS. This mirrors the repo's existing pattern (`pyth
 
 ```json
 {
-  "generated_by": "python -m opod.site_data (do not edit)",
+  "generated_by": "python -m obc.site_data (do not edit)",
   "limits": { "setpoint_min_c": 13.0, "setpoint_max_c": 43.0 },
   "schedule_default": { "points": [[0, 24.0], [30, 21.0], [120, 20.0], [300, 23.0], [420, 25.0]],
                         "wake_ramp_min": 30.0, "wake_target_c": 32.0 },
@@ -247,7 +247,7 @@ The model is never ported to TS. This mirrors the repo's existing pattern (`pyth
 - **`max_water_c` is `min(raw, 43.0)`.** Raw `check_kit` returns 57–67 °C for an empty bed, which is meaningless
   past the safety cap.
 - Keys are the kit filename stems, i.e. the same ids as the `kits` collection.
-- `limits` and `schedule_default` come straight from `opod.control` and `opod.schedule.DEFAULT`, so TS never
+- `limits` and `schedule_default` come straight from `obc.control` and `obc.schedule.DEFAULT`, so TS never
   restates them.
 
 **Which number is the headline (resolves the README/claims/model mismatch, 01-content C1):**
@@ -258,7 +258,7 @@ The model is never ported to TS. This mirrors the repo's existing pattern (`pyth
 
 ### 3.2 Schedule visualizer (`/schedule/`): TS port tested against shared golden vectors
 
-`src/lib/schedule.ts` is a port of `opod/schedule.py`, about 40 lines:
+`src/lib/schedule.ts` is a port of `obc/schedule.py`, about 40 lines:
 - `base(points, minute)`: linear interpolation between sorted `(minute, °C)` points, held flat before the first
   point and after the last.
 - `setpoint(s, minute, wakeMinute | null) → number | null`:
@@ -267,8 +267,8 @@ The model is never ported to TS. This mirrors the repo's existing pattern (`pyth
 - `wakeOffset(startMinOfDay, wakeMinOfDay)` = `((wake − start) mod 1440) || 1440`.
 - `validate(points)`: rejects empty or unsorted points and setpoints outside `limits` from `model.json`.
 
-**Contract:** `test/schedule.test.ts` parses `hub/esphome/components/opod/test/schedule.txt`, the file generated by
-`python -m opod.golden` that the C++ port is already tested against.
+**Contract:** `test/schedule.test.ts` parses `hub/esphome/components/obc/test/schedule.txt`, the file generated by
+`python -m obc.golden` that the C++ port is already tested against.
 - The file has **two** P/R blocks: the default curve at lines 4–5 and a second curve `P 0 22 60 16 240 18.5` / `R 20 35`
   at lines 369–370. Each `S` line is checked against the P/R block before it.
 - `P` line: points. `R` line: ramp minutes and wake target.
@@ -292,7 +292,7 @@ That makes three ports (Python, C++ and TS) against one spec. The test also asse
 - **CSP-safe drawing:** handles and the curve move only through SVG attributes (`cx`, `cy`, `d`, `transform`) and class
   toggles, never `element.style` or `style="…"`. `style-src 'self'` blocks inline style attributes as well.
 - **Output:** a "Copy for your hub" button generates the exact `points:` / `wake_ramp:` / `wake_temperature:` YAML
-  block from `hub/esphome/opod-hub.yaml`, for example `- { at: 30min, temperature: 21 }`. No storage, no network.
+  block from `hub/esphome/obc-hub.yaml`, for example `- { at: 30min, temperature: 21 }`. No storage, no network.
 - **Accessibility:** a `<table>` of the points mirrors the chart and is editable. The SVG has `role="img"` and a
   generated `aria-label` summary.
 
@@ -340,7 +340,7 @@ That makes three ports (Python, C++ and TS) against one spec. The test also asse
     "test": "node --test \"test/*.test.ts\"",
     "budget": "node scripts/budget.mjs",
     "links": "linkinator dist --recurse --skip \"^https?://(?!localhost)\"",
-    "data": "cd ../software/opod && uv run python -m opod.site_data",
+    "data": "cd ../software/obc && uv run python -m obc.site_data",
     "guard": "node scripts/guard.mjs",
     "verify": "npm run check && npm test && npm run build && npm run budget && npm run guard && npm run links"
   }
@@ -492,7 +492,7 @@ export default defineConfig({
 website/
 ├── .nvmrc                          # 24
 ├── .gitignore                      # node_modules, dist, .astro
-├── README.md                       # dev commands, data flow (repo files → collections; opod.site_data → model.json)
+├── README.md                       # dev commands, data flow (repo files → collections; obc.site_data → model.json)
 ├── package.json / package-lock.json
 ├── astro.config.mjs
 ├── tsconfig.json
@@ -514,7 +514,7 @@ website/
     ├── content.config.ts           # all collections (§2)
     ├── site.ts                     # REPO_URL, SITE_NAME, NAV, FOOTER_NAV, MODULE_ORDER, STATUS_LABEL
     ├── data/
-    │   ├── model.json              # GENERATED by python -m opod.site_data. Do not edit.
+    │   ├── model.json              # GENERATED by python -m obc.site_data. Do not edit.
     │   ├── roadmap.yaml            # 01-content
     │   ├── help-wanted.yaml        # 01-content §5
     │   ├── sponsor-asks.yaml       # 01-content
@@ -526,7 +526,7 @@ website/
     ├── lib/
     │   ├── schemas.ts              # Zod schemas shared by content.config and tests
     │   ├── features.ts             # parseFeatureTable + featuresLoader
-    │   ├── schedule.ts             # port of opod/schedule.py
+    │   ├── schedule.ts             # port of obc/schedule.py
     │   ├── hub-yaml.ts             # schedule → hub YAML snippet
     │   ├── kits.ts                 # join kit entry + model.json, sorting, labels
     │   └── remark-repo-links.ts    # rewrite relative links in rendered repo docs
@@ -574,9 +574,9 @@ website/
 ```
 
 **Repo files touched outside `website/`:**
-- `software/opod/src/opod/site_data.py` (new)
-- `software/opod/src/opod/kit.py` (extract `coldest_water`; no behaviour change, and the existing tests prove it)
-- `software/opod/tests/test_kits.py` (adds `test_site_data_up_to_date`)
+- `software/obc/src/obc/site_data.py` (new)
+- `software/obc/src/obc/kit.py` (extract `coldest_water`; no behaviour change, and the existing tests prove it)
+- `software/obc/tests/test_kits.py` (adds `test_site_data_up_to_date`)
 - `.github/workflows/test.yml` (adds the `website` job)
 
 **Build order for the implementer:**

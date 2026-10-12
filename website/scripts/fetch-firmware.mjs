@@ -4,8 +4,8 @@
 //   public/firmware/release.json                 what /install/ renders from (tag, files, checksums)
 //   public/firmware/SHA256SUMS
 //   public/firmware/hub/manifest.json            ESP Web Tools manifest
-//   public/firmware/hub/opod-hub-factory.bin
-//   public/firmware/pico2/opod-pico2-<kit>.uf2
+//   public/firmware/hub/obc-hub-factory.bin
+//   public/firmware/pico2/obc-pico2-<kit>.uf2
 //
 // Source: the latest GitHub release (assets built by .github/workflows/release.yml), every file checked against
 // its SHA256SUMS. Uses github.com release URLs, not the API, so there is no rate limit on shared build machines.
@@ -22,9 +22,9 @@ import { join } from "node:path";
 const REPO = "https://github.com/moinsen-dev/open-bed-climate"; // = REPO_URL in src/site.ts
 const OUT = new URL("../public/firmware/", import.meta.url).pathname;
 const KITS = ["solo-starter", "duo-standard", "duo-reference"]; // hardware/kits/*.toml with a firmware build
-const HUB = "opod-hub-factory.bin";
-const FILES = [HUB, ...KITS.map((k) => `opod-pico2-${k}.uf2`)];
-const PROJECT = "moinsen-dev.open-bed-climate"; // esphome.project.name in hub/esphome/opod-hub-factory.yaml
+const HUB = "obc-hub-factory.bin";
+const FILES = [HUB, ...KITS.map((k) => `obc-pico2-${k}.uf2`)];
+const PROJECT = "moinsen-dev.open-bed-climate"; // esphome.project.name in hub/esphome/obc-hub-factory.yaml
 const TIMEOUT_MS = 20_000;
 
 const log = (msg) => console.log(`fetch-firmware: ${msg}`);
@@ -90,14 +90,14 @@ function write(tag, files) {
       2,
     ),
   );
-  for (const k of KITS) writeFileSync(join(tmp, "pico2", `opod-pico2-${k}.uf2`), files[`opod-pico2-${k}.uf2`]);
+  for (const k of KITS) writeFileSync(join(tmp, "pico2", `obc-pico2-${k}.uf2`), files[`obc-pico2-${k}.uf2`]);
   const meta = {
     tag,
     url: `${REPO}/releases/tag/${encodeURIComponent(tag)}`,
     hub: { path: `/firmware/hub/${HUB}`, manifest: "/firmware/hub/manifest.json", size: files[HUB].length, sha256: sha256(files[HUB]) },
     pico2: Object.fromEntries(
       KITS.map((k) => {
-        const n = `opod-pico2-${k}.uf2`;
+        const n = `obc-pico2-${k}.uf2`;
         return [k, { path: `/firmware/pico2/${n}`, file: n, size: files[n].length, sha256: sha256(files[n]) }];
       }),
     ),

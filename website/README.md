@@ -1,7 +1,7 @@
 # Open Bed Climate website
 
 Static Astro 7 site, English only. The repository is the CMS: every number on the site comes from a repo file
-at build time, and every computed number comes from the Python reference implementation (`software/opod`).
+at build time, and every computed number comes from the Python reference implementation (`software/obc`).
 Plans: `plan/01-content.md` (copy, honesty rules) · `plan/02-community-sponsors.md` (sponsor, legal) ·
 `plan/03-tech.md` (architecture) · `plan/04-design.md` + `/DESIGN.md` ("Thermal Night" visuals).
 
@@ -25,11 +25,11 @@ Node ≥ 22.18 (type stripping runs `src/lib/*.ts` directly in `node --test`). C
 | Site data | Source | How |
 |---|---|---|
 | Kits (`/kits/`, `/kits/[id]/`, home cards) | `hardware/kits/*.toml` | `glob` collection + `kitSchema` |
-| Model numbers (coldest water, power, room table) | `software/opod` | `python -m opod.site_data` → `src/data/model.json` (committed) |
+| Model numbers (coldest water, power, room table) | `software/obc` | `python -m obc.site_data` → `src/data/model.json` (committed) |
 | Parts catalog (`/parts/`, counts) | `hardware/parts.toml` | `file` collection, roles unwrapped |
 | Capability table (`/features/`) | `docs/FEATURES.md` | `src/lib/features.ts` parser + `src/data/feature-names.yaml` |
 | Rendered docs (`/docs/…`) | SAFETY, CONTRIBUTING, CODE_OF_CONDUCT, `docs/design/0*.md`, `hardware/WIRING.md` | `glob` collection; relative links rewritten by `src/lib/remark-repo-links.ts` |
-| Schedule curve (hero, `/schedule/`) | `opod.schedule.DEFAULT` via `model.json` | TS port `src/lib/schedule.ts`, tested against `hub/.../test/schedule.txt` |
+| Schedule curve (hero, `/schedule/`) | `obc.schedule.DEFAULT` via `model.json` | TS port `src/lib/schedule.ts`, tested against `hub/.../test/schedule.txt` |
 | Status, help wanted, sponsor asks | `src/data/*.yaml` | hand-maintained, each entry with a `source` |
 | Issue templates | `.github/ISSUE_TEMPLATE/*.yml` | `glob` collection |
 

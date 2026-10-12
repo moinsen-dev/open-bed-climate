@@ -1,5 +1,5 @@
-// Port of software/opod/src/opod/schedule.py. Tested against the same golden vectors as the C++ hub port
-// (hub/esphome/components/opod/test/schedule.txt), see test/schedule.test.ts.
+// Port of software/obc/src/obc/schedule.py. Tested against the same golden vectors as the C++ hub port
+// (hub/esphome/components/obc/test/schedule.txt), see test/schedule.test.ts.
 
 export type Point = [minute: number, celsius: number];
 export interface Schedule {

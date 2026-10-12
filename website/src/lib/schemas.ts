@@ -1,9 +1,9 @@
 import { z } from "astro/zod"; // Zod 4, re-exported by Astro; no separate zod dependency
 
-export const SENSING = ["none", "load_cells", "pneumatic", "piezo_grid"] as const; // = opod.kit.SENSING_OPTIONS
+export const SENSING = ["none", "load_cells", "pneumatic", "piezo_grid"] as const; // = obc.kit.SENSING_OPTIONS
 export const PART_STATUS = ["datasheet", "listing", "unverified", "rejected"] as const; // = render_parts.BADGE keys
 
-// Mirrors opod.kit.load_kit. Top level is strict: same rule as ALLOWED_TOP.
+// Mirrors obc.kit.load_kit. Top level is strict: same rule as ALLOWED_TOP.
 // Inner tables are not strict, because Python only rejects unknown *sections*. FORBIDDEN_KEYS stay Python's job (CI).
 export const kitSchema = z.strictObject({
   kit: z.object({
@@ -63,7 +63,7 @@ export const featureNameSchema = z.object({
   approach: z.string().optional(),
 });
 
-// hardware/shopping/*.toml (mirrors opod.shopping.load; Python stays the authority, CI runs both).
+// hardware/shopping/*.toml (mirrors obc.shopping.load; Python stays the authority, CI runs both).
 export const SHOP_STAGES = ["bench", "bed", "tool"] as const;
 export const shoppingSchema = z.strictObject({
   list: z.object({

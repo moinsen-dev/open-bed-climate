@@ -12,7 +12,7 @@ matter as much as code.
 | **A parts hunter** | Find a cheaper, better or locally available part for a role in [`hardware/parts.toml`](hardware/parts.toml) and open a **Part substitution** issue or PR. |
 | **Electronics / safety** | Review [SAFETY.md](SAFETY.md) and [`docs/design/02-electrical-safety.md`](docs/design/02-electrical-safety.md). Design the Tier 1 boards. |
 | **Mechanical / textile** | The water mat is the hardest part. Prototype mats, couplings and enclosures. |
-| **Firmware** | Bring up [`firmware/opod-pico2`](firmware/) on real hardware, add PWM and fan control, write the ESPHome OPL component. |
+| **Firmware** | Bring up [`firmware/obc-pico2`](firmware/) on real hardware, add PWM and fan control, write the ESPHome OPL component. |
 | **Software / Home Assistant** | Extend the [ESPHome hub](hub/esphome/) (schedules on the hub, sensing options), the Linux hub services, biometrics (BCG) algorithms. |
 | **Writer / translator** | Make the docs clearer. Docs are in English; translations are welcome under `docs/i18n/<lang>/`. |
 
@@ -33,13 +33,13 @@ Look for issues labelled `good first issue` and `help wanted`.
 ## Development
 
 ```sh
-cd software/opod
+cd software/obc
 uv run pytest -q          # thermal model, control/safety, protocol, schedule, kit checks
 cd ../../firmware
 cargo test                # Rust core replays the Python golden vectors
 ```
 
-Behaviour changes start in the Python reference: change it, run `uv run python -m opod.golden`, then make
+Behaviour changes start in the Python reference: change it, run `uv run python -m obc.golden`, then make
 the Rust core pass.
 
 - Python reference code: small, typed, no dependencies outside the standard library (tests use pytest).

@@ -159,7 +159,7 @@ text names, never as marks.
 ## 6. Signature hero: "One night, live"
 
 A top-view bed outline (I1) with a soft temperature glow inside the mat area, and a mono readout that plays through
-the **real default night program** from `software/opod/src/opod/schedule.py:61`:
+the **real default night program** from `software/obc/src/obc/schedule.py:61`:
 
 ```
 DEFAULT = Schedule(points=((0, 24.0), (30, 21.0), (120, 20.0), (300, 23.0), (420, 25.0)))
@@ -319,7 +319,7 @@ Kit detail /kits/solo-starter:
 │   each: what you'd do · skills · "good first issue" link                 │
 ├──────────────────────────────────────────────────────────────────────────┤
 │ RUN IT IN 2 MINUTES (no hardware needed)                                 │
-│ $ cd software/opod && uv run pytest -q          [⧉]                      │ CodeSnippet ×2
+│ $ cd software/obc && uv run pytest -q          [⧉]                      │ CodeSnippet ×2
 │ $ cd firmware && cargo test                     [⧉]                      │
 ├──────────────────────────────────────────────────────────────────────────┤
 │ HOW WE WORK: CONTRIBUTING · Code of Conduct · open decisions list        │
@@ -425,6 +425,6 @@ exploded kit (I3) has a simplified mobile variant with fewer labels.
   `@fontsource-variable/jetbrains-mono`.
 - `ScheduleCurve`: an Astro component rendering the static SVG + a tiny vanilla-TS island for animation; the
   schedule points live in one JSON file (`src/data/default-schedule.json`) generated from or checked against
-  `software/opod/src/opod/schedule.py` so the site never drifts from the code.
+  `software/obc/src/obc/schedule.py` so the site never drifts from the code.
 - Kit numbers come from `hardware/kits/*.toml` at build time, not hand-typed copy.
 - Performance budget: < 100 KB JS total, LCP < 2.0 s on 4G, CLS < 0.05.

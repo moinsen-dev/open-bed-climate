@@ -15,7 +15,7 @@ and adapt it, so this page defines clearly what is yours to customise and what i
 
 ## What you must not change
 These limits protect against burns, flooding and fire. They are **not** in any config file. They are compiled
-constants in the control firmware (`software/opod/src/opod/control.py` is the reference), backed by hardware that
+constants in the control firmware (`software/obc/src/obc/control.py` is the reference), backed by hardware that
 works even if all software fails.
 
 | Limit | Value | Software | Independent hardware backstop |

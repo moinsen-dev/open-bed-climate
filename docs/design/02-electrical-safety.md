@@ -30,7 +30,7 @@ afterthought. **Do not build or sleep on a prototype without a qualified review*
 
 ## Layers of protection
 
-| Hazard | Layer 1 (firmware, `opod.control`) | Layer 2 (hardware, independent of MCU) |
+| Hazard | Layer 1 (firmware, `obc.control`) | Layer 2 (hardware, independent of MCU) |
 |---|---|---|
 | Water too hot (burns) | trip at 45 °C water, latching; heating current tapers above ~37 °C so the TEC water-side face stays ≤ ~45 °C (`heat_limit`, verified in `test_heating_to_cap_keeps_tec_face_below_hardware_cutoff`) | bimetal thermal cutoff on each cold-plate block, opening at 50 °C |
 | TEC hot face too hot | trip at 75 °C, latching | 80 °C bimetal on the heatsink base |
@@ -53,7 +53,7 @@ Rules:
 ## Condensation
 Below the room dew point (often 12–16 °C), cold plates and cover lines sweat. Insulate the cold plates and
 supply lines, put a condensate path into the drip tray, and add a humidity/dew-point check on the hub. The setpoint
-should never go below dew point + 1 K when cooling below 16 °C. **`opod-core` on the hub enforces this**,
+should never go below dew point + 1 K when cooling below 16 °C. **`obc-core` on the hub enforces this**,
 because the SHT4x is read there (implemented in the ESPHome hub: `room_temperature` / `room_humidity`).
 The MCU only enforces the fixed 13 °C floor.
 

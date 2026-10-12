@@ -1,6 +1,6 @@
 (footprint "RaspberryPi_Pico2_Socket"
 	(version 20241229)
-	(generator "opod_carrier")
+	(generator "obc_carrier")
 	(layer "F.Cu")
 	(descr "Raspberry Pi Pico 2 on two 1x20 2.54 mm female headers")
 	(attr through_hole)

@@ -1,6 +1,6 @@
 (footprint "ESP32-S3-DevKitC-1_Socket"
 	(version 20241229)
-	(generator "opod_carrier")
+	(generator "obc_carrier")
 	(layer "F.Cu")
 	(descr "ESP32-S3-DevKitC-1 on two 1x22 2.54 mm female headers, rows 22.86 mm apart (Espressif DXF v1.1)")
 	(attr through_hole)

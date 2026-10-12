@@ -33,4 +33,4 @@ Status: ✅ in the design now · 🔜 planned, contributions welcome · 🔌 via
 - **Local-first and private.** No cloud, and biometric data never leaves your home unless you export it.
 - **Repairable and adaptable.** Standard parts, documented roles and kit files you can change.
 - **Measurable claims.** Each kit's performance claims are checked against the thermal model in CI
-  (`software/opod/tests/test_kits.py`).
+  (`software/obc/tests/test_kits.py`).

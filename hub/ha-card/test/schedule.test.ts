@@ -12,10 +12,10 @@ import {
   type Schedule,
 } from "../src/schedule";
 
-// Golden vectors from the Python reference (python -m opod.golden), shared with the C++ port in the hub component.
-const VECTORS = fileURLToPath(new URL("../../esphome/components/opod/test/schedule.txt", import.meta.url));
+// Golden vectors from the Python reference (python -m obc.golden), shared with the C++ port in the hub component.
+const VECTORS = fileURLToPath(new URL("../../esphome/components/obc/test/schedule.txt", import.meta.url));
 
-describe("schedule port matches opod.schedule (golden vectors)", () => {
+describe("schedule port matches obc.schedule (golden vectors)", () => {
   it("passes every S and W vector", () => {
     let sched: Schedule = DEFAULT_SCHEDULE;
     let checked = 0;
@@ -44,7 +44,7 @@ describe("schedule port matches opod.schedule (golden vectors)", () => {
     expect(checked).toBeGreaterThanOrEqual(700);
   });
 
-  it("default curve equals opod.schedule.DEFAULT", () => {
+  it("default curve equals obc.schedule.DEFAULT", () => {
     expect(DEFAULT_SCHEDULE.points).toEqual([[0, 24], [30, 21], [120, 20], [300, 23], [420, 25]]);
     expect(DEFAULT_SCHEDULE.wakeRampMin).toBe(30);
     expect(DEFAULT_SCHEDULE.wakeTargetC).toBe(32);

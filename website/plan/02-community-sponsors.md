@@ -235,7 +235,7 @@ a link to a filtered issue list, a Discussions category or a template.
   - Write a new kit TOML variant (e.g. "Solo Quiet") and let the tests judge it.
   - Example Home Assistant dashboard card / automation for the ESPHome entities.
   - Docs: proofread one design doc; start a translation under `docs/i18n/<lang>/`.
-  - Code (`help wanted`, not GFI): port `opod.schedule` into the ESPHome component; fan/pump PWM in the firmware.
+  - Code (`help wanted`, not GFI): port `obc.schedule` into the ESPHome component; fan/pump PWM in the firmware.
 - **Labels:** `good first issue`, `help wanted`, `needs-measurement`, `needs-hardware`, `safety`, `area:thermal`,
   `area:firmware`, `area:hub`, `area:sensing`, `area:docs`, `area:parts`.
 - **Every GFI issue states:** goal, files, how to verify (which test), expected time, and a named maintainer who

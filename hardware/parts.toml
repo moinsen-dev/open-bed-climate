@@ -5,7 +5,7 @@
 #          "listing"    = only seen in a distributor/retailer listing
 #          "unverified" = plausible, not yet confirmed; please verify and open a PR
 #          "rejected"   = checked and found unsuitable (kept so nobody re-checks it)
-# PARTS.md is generated from this file:  cd software/opod && uv run python -m opod.render_parts
+# PARTS.md is generated from this file:  cd software/obc && uv run python -m obc.render_parts
 # Found a better part? See CONTRIBUTING.md ("parts hunter").
 
 [[role]]
@@ -115,7 +115,7 @@ requirement = "DPDT, ≥ 20 A contacts at 24 V DC, 12 V coil; plus a per-zone en
 id = "control_mcu"
 module = "Control"
 safety = true
-requirement = "Runs the Open Bed Climate control firmware (port of opod.control): PID, supervisor, watchdog. Separate from any Wi-Fi/network chip."
+requirement = "Runs the Open Bed Climate control firmware (port of obc.control): PID, supervisor, watchdog. Separate from any Wi-Fi/network chip."
 
   [[role.example]]
   name = "Raspberry Pi Pico 2 (RP2350)"

@@ -37,7 +37,7 @@ const docs = [
         <p class="eyebrow">Thermal module</p>
         <h2 id="thermal" class="h-md">Peltier modules move heat, both ways.</h2>
         <p class="muted">A Peltier (thermo-electric) module pumps heat from one face to the other when current flows. Clamped between a cold plate that the water runs through and a heatsink with a fan, it cools the water. Reverse the current and it warms the water instead. There is no compressor and no refrigerant: just solid-state modules, a pump and PC-watercooling parts.</p>
-        <p class="muted">Each zone has its own module, so each side of the bed has its own temperature. The kits use three or four standard modules per zone; the thermal model in <a href={repoTree("software/opod")}>software/opod</a> sizes them and checks every kit's claims.</p>
+        <p class="muted">Each zone has its own module, so each side of the bed has its own temperature. The kits use three or four standard modules per zone; the thermal model in <a href={repoTree("software/obc")}>software/obc</a> sizes them and checks every kit's claims.</p>
       </div>
       <div class="facts card">
         <dl>
@@ -106,7 +106,7 @@ const docs = [
         <div class="card stack">
           <h3 class="h-sm">Reference model (Python)</h3>
           <p class="small muted">The thermal model, control and safety logic, protocol and schedules, all tested. Every number on this site comes from it or from the repository files.</p>
-          <p><a class="text-link small" href={repoTree("software/opod")}>software/opod<span class="arrow"></span></a></p>
+          <p><a class="text-link small" href={repoTree("software/obc")}>software/obc<span class="arrow"></span></a></p>
         </div>
         <div class="card stack">
           <h3 class="h-sm">Firmware (Rust, embassy)</h3>
@@ -116,7 +116,7 @@ const docs = [
       </div>
       <div class="quickstart">
         <h3 class="h-sm">Run it in two minutes, no hardware needed</h3>
-        <pre><code>cd software/opod && uv run pytest -q    # reference model, safety logic, kit checks
+        <pre><code>cd software/obc && uv run pytest -q    # reference model, safety logic, kit checks
 cd firmware && cargo test               # firmware core vs. golden vectors</code></pre>
       </div>
     </div>

@@ -23,7 +23,7 @@ The rest of this page describes the `piezo_grid` reference design.
 - Piezo → charge amplifier / high-impedance buffer → 0.5–25 Hz band-pass → 16-bit ADC.
 - Sampling: 500 Hz per channel, all 18 channels simultaneously.
   - 18 ch × 500 Hz × 2 B = 18 kB/s raw. With OPL framing this fits easily on RS-485 at 921600 baud.
-  - `SensorBlock` in `opod.protocol` carries 50 samples per frame (10 frames/s/side).
+  - `SensorBlock` in `obc.protocol` carries 50 samples per frame (10 frames/s/side).
 - Cover MCU: RP2040, with PIO driving an external multi-channel ADC (e.g. ADS131M08 ×3) for simultaneous sampling.
 - Galvanic: everything is SELV. The RS-485 transceiver is isolated (ISO1410-class) to keep hub ground noise
   out of the piezo front end.

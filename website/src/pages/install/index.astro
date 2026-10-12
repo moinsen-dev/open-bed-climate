@@ -51,7 +51,7 @@ const kb = (n: number) => `${Math.round(n / 1024)} KB`;
             </esp-web-install-button>
             <a class="btn btn--secondary" href={release.hub.path} download>Download .bin ({kb(release.hub.size)})</a>
           </div>
-          <p class="small muted">Needs <strong>Chrome or Edge</strong> on a desktop computer (Web Serial). The board isn't listed? Install the USB driver for its serial chip, or hold BOOT while plugging it in. Manual install: <span class="mono">esptool.py write_flash 0x0 opod-hub-factory.bin</span>. SHA-256 <span class="mono hash">{release.hub.sha256}</span></p>
+          <p class="small muted">Needs <strong>Chrome or Edge</strong> on a desktop computer (Web Serial). The board isn't listed? Install the USB driver for its serial chip, or hold BOOT while plugging it in. Manual install: <span class="mono">esptool.py write_flash 0x0 obc-hub-factory.bin</span>. SHA-256 <span class="mono hash">{release.hub.sha256}</span></p>
         </>
       ) : (
         <p>No firmware release yet, so there is nothing to install from here. Watch the <a href={`${REPO_URL}/releases`}>releases on GitHub</a>, or build the hub yourself with ESPHome: <a href={repoTree("hub/esphome")}>hub/esphome</a>.</p>

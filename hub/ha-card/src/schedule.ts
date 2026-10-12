@@ -1,5 +1,5 @@
-// Night curve: port of software/opod/src/opod/schedule.py (and hub/esphome/components/opod/schedule.h).
-// Tested against the same golden vectors (hub/esphome/components/opod/test/schedule.txt).
+// Night curve: port of software/obc/src/obc/schedule.py (and hub/esphome/components/obc/schedule.h).
+// Tested against the same golden vectors (hub/esphome/components/obc/test/schedule.txt).
 
 /** (minutes after bedtime, °C), sorted by time. */
 export type Point = readonly [number, number];
@@ -10,7 +10,7 @@ export interface Schedule {
   wakeTargetC: number;
 }
 
-/** Same as opod.schedule.DEFAULT and the default `points` in opod-hub-common.yaml. */
+/** Same as obc.schedule.DEFAULT and the default `points` in obc-hub-common.yaml. */
 export const DEFAULT_SCHEDULE: Schedule = {
   points: [
     [0, 24],

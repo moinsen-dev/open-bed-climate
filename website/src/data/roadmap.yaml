@@ -4,12 +4,12 @@
   area: Reference software
   state: done
   text: Thermal model and kit checks
-  source: README status · software/opod
+  source: README status · software/obc
 - id: control
   area: Reference software
   state: done
   text: Control and safety logic (setpoint clamp, flow interlock, heating taper, watchdog)
-  source: README status · software/opod
+  source: README status · software/obc
 - id: protocol
   area: Protocol
   state: done

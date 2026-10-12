@@ -2,10 +2,10 @@
 
 | Crate | What | Runs on |
 |---|---|---|
-| [`opod-core`](opod-core) | zone controller + safety supervisor, OPL protocol, Modbus frames for DPS-class TEC drivers, NTC conversion. `no_std`, no allocation, no clock access. | anywhere (host-tested) |
-| [`opod-pico2`](opod-pico2) | control firmware for the Raspberry Pi Pico 2 (RP2350) on the Tier 0 board, built with [embassy](https://embassy.dev) | Pico 2 |
+| [`obc-core`](obc-core) | zone controller + safety supervisor, OPL protocol, Modbus frames for DPS-class TEC drivers, NTC conversion. `no_std`, no allocation, no clock access. | anywhere (host-tested) |
+| [`obc-pico2`](obc-pico2) | control firmware for the Raspberry Pi Pico 2 (RP2350) on the Tier 0 board, built with [embassy](https://embassy.dev) | Pico 2 |
 
-**Status:** `opod-core` matches the Python reference (golden vectors, see below). `opod-pico2` compiles
+**Status:** `obc-core` matches the Python reference (golden vectors, see below). `obc-pico2` compiles
 (~50 KB flash, ~7.6 KB RAM) but **has not run on hardware yet**. Bring it up with the order in
 [`hardware/WIRING.md`](../hardware/WIRING.md).
 
@@ -16,14 +16,14 @@ cd firmware
 cargo test            # unit tests + golden-vector replay against the Python model
 ```
 
-`opod-core/tests/vectors/golden.json` is generated from the Python reference (`cd software/opod && uv run python -m opod.golden`).
+`obc-core/tests/vectors/golden.json` is generated from the Python reference (`cd software/obc && uv run python -m obc.golden`).
 The Rust controller must make the same decisions (mode, faults, pump, polarity relay) and produce the same TEC current
 (±0.02 A; currently 0.00001 A) in every scenario, and produce byte-identical OPL frames. **If you change behaviour,
 change the Python reference first, regenerate the vectors, then make Rust pass.** CI checks that the vectors are current.
 
 ## Install a release (no toolchain)
-Every release has one Pico 2 image per kit: `opod-pico2-solo-starter.uf2`, `opod-pico2-duo-standard.uf2`,
-`opod-pico2-duo-reference.uf2` ([releases](https://github.com/moinsen-dev/open-bed-climate/releases), or
+Every release has one Pico 2 image per kit: `obc-pico2-solo-starter.uf2`, `obc-pico2-duo-standard.uf2`,
+`obc-pico2-duo-reference.uf2` ([releases](https://github.com/moinsen-dev/open-bed-climate/releases), or
 <https://openbedclimate.moinsen.dev/install/>). Hold BOOTSEL, plug the Pico 2 in, and drop **your kit's** file on the
 `RP2350` drive. The kit sets the zones and the TEC current limit, so another kit's image can overdrive your parts.
 Checksums are in `SHA256SUMS`. CI builds them (`.github/workflows/release.yml`, on a `v*` tag) with the prebuilt
@@ -34,29 +34,29 @@ Checksums are in `SHA256SUMS`. CI builds them (`.github/workflows/release.yml`, 
 
 ```sh
 rustup target add thumbv8m.main-none-eabihf
-cd firmware/opod-pico2
+cd firmware/obc-pico2
 cargo build --release                                                      # Duo Standard (default)
 cargo build --release --no-default-features --features kit-solo-starter    # or kit-duo-reference
 cargo run --release              # flash + log via a debug probe (probe-rs), see .cargo/config.toml
 # or, without a probe: hold BOOTSEL, plug in, then
-picotool load -u -v -x -t elf target/thumbv8m.main-none-eabihf/release/opod-pico2
+picotool load -u -v -x -t elf target/thumbv8m.main-none-eabihf/release/obc-pico2
 ```
 
 ## Configure for your kit
 The kit limits come from a Cargo feature (`kit-solo-starter`, `kit-duo-standard` (default), `kit-duo-reference`), one
-block per kit in [`opod-pico2/src/board.rs`](opod-pico2/src/board.rs): zones, `TECS_PER_ZONE` and `MAX_TEC_CURRENT_A`
-from the kit file. `software/opod/tests/test_kits.py` checks each block against `hardware/kits/<kit>.toml`. For your
+block per kit in [`obc-pico2/src/board.rs`](obc-pico2/src/board.rs): zones, `TECS_PER_ZONE` and `MAX_TEC_CURRENT_A`
+from the kit file. `software/obc/tests/test_kits.py` checks each block against `hardware/kits/<kit>.toml`. For your
 own kit, add a TOML, a feature and a block. On a 1-zone kit, zone 1 is inert: its outputs stay low, its driver is never
 addressed, it reports no faults, its telemetry side is off with no temperatures, and any non-off target is rejected.
 Also in `board.rs`: the NTC calibration, the flow-sensor factor, and the TEC driver register map (`DPS_MAP`: **verify
 it against your module's protocol document**). The safety limits are not in this file; they are constants in
-`opod-core::control` and need a safety review to change (see [SAFETY.md](../SAFETY.md)).
+`obc-core::control` and need a safety review to change (see [SAFETY.md](../SAFETY.md)).
 
 ## Design notes
 - Control loop at 10 Hz with the measured `dt`. The supervisor runs every cycle.
 - Hardware watchdog with a 1 s timeout. All outputs start low; relay drivers need pull-downs (see WIRING.md).
 - Time is `f64` seconds; tested with a one-year uptime offset. Flow is computed over the measured window.
-- TEC driver sequencing is a host-tested state machine (`opod-core::driver`), with at most one Modbus transaction
+- TEC driver sequencing is a host-tested state machine (`obc-core::driver`), with at most one Modbus transaction
   per zone per cycle:
   - The voltage ceiling is written once and re-verified every 60 s.
   - Current is written on change: decreases immediately, increases at most once per second.
